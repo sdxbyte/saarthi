@@ -2,6 +2,30 @@
 
 All notable changes to the SAARTHI project are documented in this file.
 
+## [1.6.2] - 2026-08-19
+
+### Title
+SAARTHI v1.6.2 Automated Email Automation Suite, Play Store CI/CD Fixes & Light Mode Contrast Polish
+
+### Added
+- **Automated Update Emails & SMTP Configuration Gateway**: Created an interactive SMTP configuration and test interface in Super Admin Developer Settings supporting Gmail SMTP (port 465 SSL & port 587 TLS), 1-click test verification email dispatch, and instant manual release report generation.
+- **Interactive Custom Quantity Multiplier in Currency Cards**: Added intuitive multiplier calculation inputs allowing real-time buying and selling currency recalculations for arbitrary unit volumes.
+- **Multi-Alias Global Currency Search Engine**: Enhanced currency search filters across 160+ world currencies to support country names, country initials (e.g. USA, UK, UAE, KSA), and capital city aliases.
+
+### Updated
+- **Android Play Store CI/CD Workflow (`.github/workflows/build-playstore-aab.yml`)**: Fixed `--skipVersionUpgrade` CLI parameter for Bubblewrap, added `chmod +x gradlew` permissions, exported Android SDK command-line tools to `$PATH`, and enabled `fail_on_unmatched_files: false` on GitHub release creation.
+- **Light Mode UI & Contrast Refactoring**: Refactored CSS variables, card backgrounds, and text contrast across light theme variants to ensure crisp, WCAG-compliant legibility across all financial and utility modules.
+- **Version Catalog & Applet Manifest**: Synchronized `twa-manifest.json` to version `1.6.2` (code `10602`).
+
+### Fixed
+- Fixed email dispatch fallback by introducing dedicated SMTP credentials management.
+- Fixed GitHub Actions runner failure during Bubblewrap AAB and APK compilation.
+
+### Technical & Security
+- Fully compliant with SAARTHI Master Rule 1 (Immutable Audit Logging), Rule 2 (Dual Date System: 2026-08-19 AD / २०८३-०५-०३ BS), and Rule 17 (Automated GitHub Synchronization to `sdxbyte/saarthi`).
+
+---
+
 ## [1.6.0] - 2026-08-17
 
 ### Title
