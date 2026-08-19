@@ -16,24 +16,7 @@ export interface SmtpConfig {
 const SMTP_CONFIG_FILE = path.join(process.cwd(), 'docs', 'smtp-credentials.json');
 
 export function loadSmtpConfig(): SmtpConfig {
-  // Precedence 1: Cloud Run / Environment variables (Primary authoritative source)
-  const envPass = process.env.SMTP_PASS;
-  const envUser = process.env.SMTP_USER;
-  if (envPass && envPass.trim().length >= 8 && envUser && envUser.trim().length > 3) {
-    return {
-      smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
-      smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
-      smtpUser: envUser.trim(),
-      smtpPass: envPass.replace(/\s+/g, ''),
-      smtpSecure: process.env.SMTP_SECURE === 'true',
-      fromAddress: process.env.EMAIL_FROM_ADDRESS || envUser.trim(),
-      fromName: process.env.EMAIL_FROM_NAME || 'SAARTHI Citizen Portal',
-      adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
-      updatedAt: 'ENVIRONMENT_VARIABLE',
-    };
-  }
-
-  // Precedence 2: Server-side JSON persistent file (Local/Docker fallback)
+  // Precedence 1: Server-side JSON persistent file (Super Admin configured credentials)
   try {
     if (fs.existsSync(SMTP_CONFIG_FILE)) {
       const data = JSON.parse(fs.readFileSync(SMTP_CONFIG_FILE, 'utf-8'));
@@ -45,7 +28,7 @@ export function loadSmtpConfig(): SmtpConfig {
           smtpPass: String(data.smtpPass).replace(/\s+/g, ''),
           smtpSecure: data.smtpSecure ?? (process.env.SMTP_SECURE === 'true'),
           fromAddress: data.fromAddress || process.env.EMAIL_FROM_ADDRESS || data.smtpUser,
-          fromName: data.fromName || process.env.EMAIL_FROM_NAME || 'SAARTHI Citizen Portal',
+          fromName: data.fromName || process.env.EMAIL_FROM_NAME || 'SAARTHI Master System',
           adminEmail: data.adminEmail || process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
           updatedAt: data.updatedAt,
         };
@@ -53,6 +36,23 @@ export function loadSmtpConfig(): SmtpConfig {
     }
   } catch (e) {
     console.warn('[SMTP Config] Failed to load custom SMTP config file:', e);
+  }
+
+  // Precedence 2: Cloud Run / Environment variables
+  const envPass = process.env.SMTP_PASS;
+  const envUser = process.env.SMTP_USER;
+  if (envPass && envPass.trim().length >= 8 && envUser && envUser.trim().length > 3) {
+    return {
+      smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
+      smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
+      smtpUser: envUser.trim(),
+      smtpPass: envPass.replace(/\s+/g, ''),
+      smtpSecure: process.env.SMTP_SECURE === 'true',
+      fromAddress: process.env.EMAIL_FROM_ADDRESS || envUser.trim(),
+      fromName: process.env.EMAIL_FROM_NAME || 'SAARTHI Master System',
+      adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
+      updatedAt: 'ENVIRONMENT_VARIABLE',
+    };
   }
 
   // Precedence 3: Environment variable fallback (No hardcoded credentials)

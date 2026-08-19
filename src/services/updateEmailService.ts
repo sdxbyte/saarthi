@@ -296,27 +296,15 @@ export async function dispatchUpdateEmail(
   let primarySuccess = false;
   let primaryError = '';
 
-  // Try Port 465 (SSL) first if Gmail
-  const portsToTry = host.includes('gmail')
-    ? [
-        { port: 465, secure: true },
-        { port: 587, secure: false, requireTLS: true },
-      ]
-    : [{ port: smtpConfig.smtpPort, secure: smtpConfig.smtpSecure }];
-
-  for (const p of portsToTry) {
+  // Primary attempt: If Gmail service, use nodemailer built-in service: 'gmail'
+  if (host.includes('gmail') || user.includes('@gmail.com')) {
     try {
-      const transporter = nodemailer.createTransport({
-        host,
-        port: p.port,
-        secure: p.secure,
-        requireTLS: (p as any).requireTLS,
+      const gmailTransporter = nodemailer.createTransport({
+        service: 'gmail',
         auth: { user, pass },
-        tls: { rejectUnauthorized: false },
-        connectionTimeout: 10000,
       });
 
-      await transporter.sendMail({
+      await gmailTransporter.sendMail({
         from: `"${smtpConfig.fromName}" <${user}>`,
         to: recipient,
         subject,
@@ -324,10 +312,46 @@ export async function dispatchUpdateEmail(
       });
 
       primarySuccess = true;
-      break;
     } catch (err: any) {
       primaryError = err.message || String(err);
-      console.warn(`[Update Email Service] SMTP attempt on port ${p.port} failed: ${primaryError}`);
+      console.warn(`[Update Email Service] Gmail service direct transport failed: ${primaryError}`);
+    }
+  }
+
+  // Fallback direct port attempts
+  if (!primarySuccess) {
+    const portsToTry = host.includes('gmail')
+      ? [
+          { port: 465, secure: true },
+          { port: 587, secure: false, requireTLS: true },
+        ]
+      : [{ port: smtpConfig.smtpPort, secure: smtpConfig.smtpSecure }];
+
+    for (const p of portsToTry) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host,
+          port: p.port,
+          secure: p.secure,
+          requireTLS: (p as any).requireTLS,
+          auth: { user, pass },
+          tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+        });
+
+        await transporter.sendMail({
+          from: `"${smtpConfig.fromName}" <${user}>`,
+          to: recipient,
+          subject,
+          html: emailHtml,
+        });
+
+        primarySuccess = true;
+        break;
+      } catch (err: any) {
+        primaryError = err.message || String(err);
+        console.warn(`[Update Email Service] SMTP attempt on port ${p.port} failed: ${primaryError}`);
+      }
     }
   }
 
