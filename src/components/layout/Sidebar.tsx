@@ -201,16 +201,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r flex flex-col justify-between transition-transform duration-200 ease-in-out ${
-          theme === 'dark'
-            ? 'bg-[#14161b] border-[#262a31] text-[#edeef0]'
-            : 'bg-[#f4f6fa] border-[#d3dbe6] text-slate-900 shadow-sm'
-        } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r flex flex-col justify-between transition-transform duration-200 ease-in-out bg-[#14161b] border-[#262a31] text-[#edeef0] ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
       >
         <div className="p-3 overflow-y-auto custom-scrollbar flex-1">
-          <div className={`px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-between ${
-            theme === 'dark' ? 'text-[#8b909b]' : 'text-slate-700'
-          }`}>
+          <div className="px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-between text-[#8b909b]">
             <span>{currentLang === 'ne' ? 'मुख्य सेवाहरू' : 'Civic Navigation'}</span>
             <button
               onClick={() => setIsOpen(false)}
@@ -223,11 +219,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
           <nav className="space-y-4 mt-1">
             {navGroups.map((group, groupIdx) => (
               <div key={groupIdx} className="space-y-1">
-                <div
-                  className={`px-3 pt-2 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-[#8b909b]' : 'text-slate-600'
-                  }`}
-                >
+                <div className="px-3 pt-2 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[#8b909b]">
                   {group.groupTitle}
                 </div>
                 {group.items.map((item) => {
@@ -304,20 +296,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         </div>
 
         {/* Footer info inside sidebar */}
-        <div className={`p-3 border-t space-y-2 ${
-          theme === 'dark' ? 'border-[#262a31] bg-[#14161b]/50' : 'border-[#d3dbe6] bg-[#eef2f7]'
-        }`}>
+        <div className="p-3 border-t border-[#262a31] bg-[#14161b] space-y-2">
           {/* User Account / Login Toggle Card */}
           <button
             onClick={onOpenAuthModal}
             className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between group ${
               userProfile?.isLoggedIn
-                ? theme === 'dark'
-                  ? 'bg-slate-800/90 border-emerald-500/40 hover:border-emerald-500 text-white'
-                  : 'bg-emerald-50 border-emerald-300 hover:border-emerald-400 text-slate-900'
-                : theme === 'dark'
-                ? 'bg-red-950/20 border-red-500/30 hover:border-red-500 text-slate-200'
-                : 'bg-red-50 border-red-200 hover:border-red-300 text-slate-800'
+                ? 'bg-[#1b1e24] border-emerald-500/40 hover:border-emerald-500 text-white'
+                : 'bg-[#1b1e24] border-[#262a31] hover:border-red-500/50 text-[#edeef0]'
             }`}
           >
             <div className="flex items-center gap-2.5 overflow-hidden">
@@ -327,11 +313,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                 {userProfile?.isLoggedIn ? userProfile.name.charAt(0) : <User className="w-4 h-4" />}
               </div>
               <div className="overflow-hidden">
-                <div className="font-bold text-xs truncate flex items-center gap-1">
+                <div className="font-bold text-xs truncate flex items-center gap-1 text-[#edeef0]">
                   <span>{userProfile?.isLoggedIn ? userProfile.name : (currentLang === 'ne' ? 'साइन इन / खाता' : 'Sign In / Account')}</span>
                   {userProfile?.isLoggedIn && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 inline shrink-0" />}
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                <p className="text-[10px] text-[#8b909b] truncate">
                   {userProfile?.isLoggedIn
                     ? userProfile.email
                     : (currentLang === 'ne' ? 'कागजात म्याद सेभ गर्न' : 'Save & track vault expiry')}
@@ -340,36 +326,10 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             </div>
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
               userProfile?.isLoggedIn
-                ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 border border-emerald-500/30'
-                : 'bg-red-600/20 text-red-800 dark:text-red-400 border border-red-500/30'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                : 'bg-red-600/20 text-red-400 border border-red-500/30'
             }`}>
               {userProfile?.isLoggedIn ? (currentLang === 'ne' ? 'प्रोफाइल' : 'Profile') : (currentLang === 'ne' ? 'लगइन' : 'Login')}
-            </span>
-          </button>
-
-          {/* Theme Switch Control */}
-          <button
-            onClick={onToggleTheme}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
-              theme === 'dark'
-                ? 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700'
-                : 'bg-white border-slate-200 text-slate-800 hover:bg-slate-100'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-700" />
-              )}
-              <span>
-                {currentLang === 'ne'
-                  ? theme === 'dark' ? 'लाइट मोडमा जानुहोस्' : 'डार्क मोडमा जानुहोस्'
-                  : theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              </span>
-            </div>
-            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-600/10 text-red-500 border border-red-500/20">
-              {theme}
             </span>
           </button>
         </div>

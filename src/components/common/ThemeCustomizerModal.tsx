@@ -149,39 +149,20 @@ export const ThemeCustomizerModal: React.FC<ThemeCustomizerModalProps> = ({
           </button>
         </div>
 
-        {/* Display Mode Switcher (Dark vs Light) */}
-        <div className="mb-6 space-y-2">
-          <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block font-mono">
-            {currentLang === 'ne' ? '१. डिस्प्ले मोड (Light / Dark)' : '1. Appearance Mode'}
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => onToggleTheme('light')}
-              className={`p-3.5 rounded-2xl border flex items-center justify-center gap-2.5 font-bold text-xs transition-all ${
-                currentTheme === 'light'
-                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-500 shadow-md ring-2 ring-blue-500/30'
-                  : isDark
-                  ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800'
-                  : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <Sun className="w-4 h-4 text-amber-400" />
-              <span>{currentLang === 'ne' ? 'लाइट मोड (उज्यालो)' : 'Crisp Light Mode'}</span>
-            </button>
-
-            <button
-              onClick={() => onToggleTheme('dark')}
-              className={`p-3.5 rounded-2xl border flex items-center justify-center gap-2.5 font-bold text-xs transition-all ${
-                currentTheme === 'dark'
-                  ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-red-500 shadow-md ring-2 ring-red-500/30'
-                  : isDark
-                  ? 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800'
-                  : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <Moon className="w-4 h-4 text-indigo-400" />
-              <span>{currentLang === 'ne' ? 'डार्क मोड (अध्यारो)' : 'Sovereign Dark Mode'}</span>
-            </button>
+        {/* Permanent Dim Dark Mode Active Notice */}
+        <div className="mb-6 p-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+            <Moon className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-amber-400 font-mono">
+              {currentLang === 'ne' ? 'स्थायी डिम डार्क मोड सक्रिय' : 'PERMANENT DIM DARK MODE ACTIVE'}
+            </p>
+            <p className="text-[11px] text-slate-300">
+              {currentLang === 'ne'
+                ? 'आँखालाई आराम दिन र सेतो प्रकाशको चमक हटाउन प्रणाली पूर्ण रूपमा डार्क मोडमा राखिएको छ।'
+                : 'The platform is permanently calibrated in zero-glare, eye-soothing dim obsidian dark mode.'}
+            </p>
           </div>
         </div>
 

@@ -57,38 +57,38 @@ export const Header: React.FC<HeaderProps> = React.memo(({
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#f4f6fa]/95 dark:bg-[#0a0b0d]/95 backdrop-blur-md border-b border-[#d3dbe6] dark:border-[#262a31] transition-colors">
+    <header className="sticky top-0 z-50 w-full bg-[#0a0b0d]/95 backdrop-blur-md border-b border-[#262a31] transition-colors">
       {/* Top Live Ticker / Date & Time Bar */}
-      <div className="bg-[#e9edf2] dark:bg-[#14161b] border-b border-[#d3dbe6] dark:border-[#262a31] px-3 sm:px-4 py-1.5 text-xs text-slate-700 dark:text-[#8b909b] flex items-center justify-between font-mono">
+      <div className="bg-[#14161b] border-b border-[#262a31] px-3 sm:px-4 py-1.5 text-xs text-[#8b909b] flex items-center justify-between font-mono">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
-          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-[#00e599] shrink-0">
+          <div className="flex items-center gap-1.5 text-[#00e599] shrink-0">
             <span className="strix-live-dot" />
             <span className="font-bold uppercase tracking-wider text-[10px] sm:text-[11px]">LIVE SAARTHI</span>
           </div>
-          <span className="text-slate-300 dark:text-[#262a31]">|</span>
-          <div className="flex items-center gap-1 text-slate-900 dark:text-[#edeef0] truncate text-[11px] font-medium">
-            <Calendar className="w-3.5 h-3.5 text-emerald-700 dark:text-[#00e599] shrink-0" />
+          <span className="text-[#262a31]">|</span>
+          <div className="flex items-center gap-1 text-[#edeef0] truncate text-[11px] font-medium">
+            <Calendar className="w-3.5 h-3.5 text-[#00e599] shrink-0" />
             <span className="truncate">{currentLang === 'ne' ? timeState.bsFormattedNp : timeState.bsFormattedEn}</span>
-            <span className="text-slate-600 dark:text-[#8b909b] text-[10px] hidden sm:inline">({timeState.adDateFormatted})</span>
+            <span className="text-[#8b909b] text-[10px] hidden sm:inline">({timeState.adDateFormatted})</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-1.5 text-slate-900 dark:text-[#edeef0]">
-            <Clock className="w-3.5 h-3.5 text-emerald-700 dark:text-[#00e599]" />
+          <div className="hidden md:flex items-center gap-1.5 text-[#edeef0]">
+            <Clock className="w-3.5 h-3.5 text-[#00e599]" />
             <span className="font-bold">{timeState.time12h}</span>
-            <span className="text-slate-600 dark:text-[#8b909b] text-[10px]">({timeState.tzAbbrev})</span>
+            <span className="text-[#8b909b] text-[10px]">({timeState.tzAbbrev})</span>
           </div>
-          <span className="hidden md:inline text-slate-300 dark:text-[#262a31]">|</span>
-          <div className="flex items-center gap-1 text-slate-700 dark:text-[#8b909b]">
-            <MapPin className="w-3 h-3 text-emerald-700 dark:text-[#00e599]" />
+          <span className="hidden md:inline text-[#262a31]">|</span>
+          <div className="flex items-center gap-1 text-[#8b909b]">
+            <MapPin className="w-3 h-3 text-[#00e599]" />
             <select
               value={selectedTimeZone}
               onChange={(e) => setSelectedTimeZone(e.target.value)}
-              className="bg-transparent text-slate-900 dark:text-[#edeef0] text-[11px] focus:outline-none cursor-pointer font-mono font-medium"
+              className="bg-transparent text-[#edeef0] text-[11px] focus:outline-none cursor-pointer font-mono font-medium"
             >
               {SUPPORTED_TIMEZONES.map((tz) => (
-                <option key={tz.iana} value={tz.iana} className="bg-white dark:bg-[#14161b] text-slate-900 dark:text-[#edeef0]">
+                <option key={tz.iana} value={tz.iana} className="bg-[#14161b] text-[#edeef0]">
                   {tz.flag} {tz.label}
                 </option>
               ))}
@@ -103,7 +103,7 @@ export const Header: React.FC<HeaderProps> = React.memo(({
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={onToggleSidebar}
-            className="lg:hidden p-2 rounded-lg bg-slate-100 dark:bg-[#14161b] border border-slate-200 dark:border-[#262a31] text-slate-700 dark:text-[#8b909b] hover:text-slate-900 dark:hover:text-[#edeef0] hover:border-slate-400 dark:hover:border-[#8b909b] transition-all"
+            className="lg:hidden p-2 rounded-lg bg-[#14161b] border border-[#262a31] text-[#8b909b] hover:text-[#edeef0] hover:border-[#8b909b] transition-all"
             title="Toggle Menu"
           >
             <Menu className="w-5 h-5" />
@@ -142,41 +142,35 @@ export const Header: React.FC<HeaderProps> = React.memo(({
           })}
         </nav>
 
-        {/* Right: Actions (Search, Theme Toggle, Language, Auth CTA) */}
+        {/* Right: Actions (Search, Permanent Dim Dark Badge, Language, Auth CTA) */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Search Trigger (Mobile icon + Desktop full bar) */}
           <button
             onClick={onOpenSearch}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#14161b] border border-slate-200 dark:border-[#262a31] text-slate-600 dark:text-[#8b909b] hover:text-slate-900 dark:hover:text-[#edeef0] text-xs font-mono transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[#14161b] border border-[#262a31] text-[#8b909b] hover:text-[#edeef0] hover:border-[#8b909b] text-xs font-mono transition-all"
             title="Search Platform (⌘K)"
           >
-            <Search className="w-3.5 h-3.5 text-emerald-600 dark:text-[#00e599]" />
+            <Search className="w-3.5 h-3.5 text-[#00e599]" />
             <span className="hidden sm:inline">Search...</span>
             <kbd className="raycast-kbd ml-1 hidden md:inline-flex">⌘K</kbd>
           </button>
 
-          {/* Theme Toggle Button (Light / Dark) */}
-          <button
-            onClick={onToggleTheme}
-            className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg bg-slate-100 dark:bg-[#14161b] border border-slate-200 dark:border-[#262a31] text-slate-700 dark:text-amber-400 hover:text-slate-900 dark:hover:text-amber-300 font-mono text-xs transition-all flex items-center gap-1"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            aria-label="Toggle Theme"
+          {/* Dim Obsidian Dark Mode Active Badge */}
+          <div
+            className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg bg-[#14161b] border border-[#262a31] text-amber-400 font-mono text-xs flex items-center gap-1 select-none"
+            title="Permanent Dim Obsidian Dark Mode Active"
           >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-700" />
-            )}
-            <span className="hidden sm:inline font-semibold">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-          </button>
+            <Moon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span className="hidden sm:inline font-bold text-[11px] tracking-wide text-amber-400">DIM DARK</span>
+          </div>
 
           {/* Language Toggle */}
           <button
             onClick={onToggleLang}
-            className="px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-[#14161b] border border-slate-200 dark:border-[#262a31] text-slate-700 dark:text-[#8b909b] hover:text-slate-900 dark:hover:text-[#edeef0] font-mono text-xs font-bold transition-all flex items-center gap-1"
+            className="px-2 sm:px-2.5 py-1.5 rounded-lg bg-[#14161b] border border-[#262a31] text-[#8b909b] hover:text-[#edeef0] hover:border-[#8b909b] font-mono text-xs font-bold transition-all flex items-center gap-1"
             title="Toggle Language"
           >
-            <Languages className="w-3.5 h-3.5 text-emerald-600 dark:text-[#00e599]" />
+            <Languages className="w-3.5 h-3.5 text-[#00e599]" />
             <span>{currentLang === 'ne' ? 'NE' : 'EN'}</span>
           </button>
 
@@ -184,9 +178,9 @@ export const Header: React.FC<HeaderProps> = React.memo(({
           {userProfile?.isLoggedIn ? (
             <button
               onClick={onOpenAuthModal}
-              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-[#00e599]/30 text-emerald-700 dark:text-[#00e599] text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+              className="px-2.5 sm:px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-[#00e599]/30 text-[#00e599] text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all hover:bg-emerald-900/50"
             >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-[#00e599]" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00e599]" />
               <span className="truncate max-w-[60px] sm:max-w-[80px]">
                 {userProfile.name ? userProfile.name.split(' ')[0] : 'User'}
               </span>

@@ -8,22 +8,7 @@
     --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-    /* SAARTHI Light Mode Tokens (Eye-Care Calibrated Soft Slate Paper, Zero Glare, High Contrast) */
-    --strix-bg: #e9edf2;
-    --strix-panel: #f7f9fc;
-    --strix-panel-hover: #eef2f7;
-    --strix-border: #d3dbe6;
-    --strix-border-strong: #bac6d5;
-    --strix-text: #0f172a;
-    --strix-text-secondary: #334155;
-    --strix-muted: #475569;
-    --strix-accent: #047857;
-    --strix-accent-glow: rgba(4, 120, 87, 0.15);
-    --strix-card-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.07), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-  }
-
-  .dark {
-    /* SAARTHI Dark Mode Tokens (Deep Obsidian / Strix Matrix) */
+    /* SAARTHI Permanent Dim Dark Mode Tokens (Deep Obsidian / Matrix Slate) */
     --strix-bg: #0a0b0d;
     --strix-panel: #14161b;
     --strix-panel-hover: #1b1e24;
@@ -38,21 +23,17 @@
   }
 
   html {
-    color-scheme: light;
-  }
-
-  html.dark {
-    color-scheme: dark;
+    color-scheme: dark !important;
+    background-color: #0a0b0d;
   }
 
   body {
     font-family: var(--font-sans);
     letter-spacing: -0.015em;
     overflow-x: hidden;
-    background-color: var(--strix-bg);
-    color: var(--strix-text);
+    background-color: #0a0b0d;
+    color: #edeef0;
     min-height: 100vh;
-    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {
@@ -63,75 +44,23 @@
   code, kbd, pre, .font-mono, [data-mono="true"] {
     font-family: var(--font-mono);
   }
+
+  input, select, textarea {
+    background-color: #14161b;
+    color: #edeef0;
+    border-color: #262a31;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: #8b909b;
+  }
 }
 
 /* =========================================================================
-   LIGHT MODE COMPREHENSIVE CONTRAST ENGINE (Zero Invisible Text)
+   PERMANENT OBSIDIAN & DIM DARK SYSTEM
    ========================================================================= */
-html:not(.dark) {
-  /* Text Contrast Overrides */
-  --tw-prose-body: #1e293b;
-  --tw-prose-headings: #0f172a;
-}
-
-html:not(.dark) input,
-html:not(.dark) select,
-html:not(.dark) textarea {
-  color: #0f172a !important;
-  background-color: #ffffff;
-}
-
-html:not(.dark) input::placeholder,
-html:not(.dark) textarea::placeholder {
-  color: #64748b !important;
-}
-
-/* Adaptive Typography in Light Mode */
-html:not(.dark) .text-slate-400,
-html:not(.dark) .text-zinc-400,
-html:not(.dark) .text-gray-400,
-html:not(.dark) .text-neutral-400 {
-  color: #475569 !important; /* Deep Slate 600 - Passes WCAG AAA (7:1+) */
-}
-
-html:not(.dark) .text-slate-500,
-html:not(.dark) .text-zinc-500,
-html:not(.dark) .text-gray-500,
-html:not(.dark) .text-neutral-500 {
-  color: #334155 !important; /* Deep Slate 700 */
-}
-
-html:not(.dark) .text-slate-300,
-html:not(.dark) .text-zinc-300,
-html:not(.dark) .text-gray-300,
-html:not(.dark) .text-neutral-300 {
-  color: #1e293b !important; /* Slate 800 */
-}
-
-html:not(.dark) .text-slate-200,
-html:not(.dark) .text-zinc-200,
-html:not(.dark) .text-gray-200,
-html:not(.dark) .text-slate-100,
-html:not(.dark) .text-zinc-100,
-html:not(.dark) .text-gray-100 {
-  color: #0f172a !important; /* Pure Slate 900 */
-}
-
-/* Safe White Text Rule: In light mode, turn text-white into text-slate-900 UNLESS inside a solid colored element */
-html:not(.dark) :not([class*="bg-red-"]):not([class*="bg-emerald-"]):not([class*="bg-green-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]):not([class*="from-"]):not([class*="strix-btn-primary"]):not(button.bg-gradient-to-r) > .text-white,
-html:not(.dark) h1.text-white,
-html:not(.dark) h2.text-white,
-html:not(.dark) h3.text-white,
-html:not(.dark) h4.text-white,
-html:not(.dark) p.text-white,
-html:not(.dark) span.text-white:not([class*="bg-"]) {
-  color: #0f172a;
-}
-
-/* Golden/Amber Gradient Text in Light Mode (High Contrast Fallback) */
-html:not(.dark) .from-amber-400.via-amber-200.to-amber-500,
-html:not(.dark) .from-amber-400.to-amber-500 {
-  background-image: linear-gradient(to right, #b45309, #d97706, #92400e) !important;
+html {
+  background-color: #0a0b0d !important;
 }
 
 /* =========================================================================

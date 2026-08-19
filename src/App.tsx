@@ -162,11 +162,8 @@ export function App() {
     }
   }, []);
 
-  // Theme & Preset Persistence
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    const savedTheme = localStorage.getItem('saarthi_theme') as ThemeMode;
-    return savedTheme || 'dark';
-  });
+  // Theme: Permanent Dim Obsidian Dark Mode
+  const theme: ThemeMode = 'dark';
 
   const [themePreset, setThemePreset] = useState<ThemePreset>(() => {
     const savedPreset = localStorage.getItem('saarthi_theme_preset') as ThemePreset;
@@ -174,14 +171,10 @@ export function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('saarthi_theme', theme);
+    localStorage.setItem('saarthi_theme', 'dark');
     localStorage.setItem('saarthi_theme_preset', themePreset);
 
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.add('dark');
 
     document.documentElement.classList.remove(
       'theme-crimson',
@@ -191,10 +184,10 @@ export function App() {
       'theme-obsidian'
     );
     document.documentElement.classList.add(`theme-${themePreset}`);
-  }, [theme, themePreset]);
+  }, [themePreset]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    // Permanent dim dark mode enabled
   };
 
   const toggleLanguage = () => {
@@ -327,9 +320,7 @@ export function App() {
   }
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors selection:bg-red-600 selection:text-white ${
-      theme === 'dark' ? 'bg-[#0a0b0d] text-[#edeef0]' : 'bg-[#e9edf2] text-slate-900'
-    }`}>
+    <div className="min-h-screen flex flex-col font-sans bg-[#0a0b0d] text-[#edeef0] selection:bg-red-600 selection:text-white">
       {/* Top Header */}
       <Header
         currentLang={currentLang}
