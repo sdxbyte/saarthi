@@ -29,19 +29,45 @@ export interface ReleaseNoteItem {
 }
 
 export const CURRENT_VERSION_INFO: PlatformVersionInfo = {
-  version: 'v1.5.0',
-  buildNumber: 250,
-  releaseId: 'REL-20260812-250',
-  releaseDateAd: '2026-08-12',
-  releaseDateBs: '2083-04-27',
-  releaseTime: '19:15 NPT',
+  version: 'v1.6.2',
+  buildNumber: 262,
+  releaseId: 'REL-20260819-262',
+  releaseDateAd: '2026-08-19',
+  releaseDateBs: '2083-05-04',
+  releaseTime: '13:30 NPT',
   timezone: 'Asia/Kathmandu (GMT+5:45)',
   environment: 'Production',
-  commitHash: 'e9f5a2b',
-  footerText: 'SAARTHI v1.5.0 • Build #250 • Released 2026-08-12 • BS 2083-04-27',
+  commitHash: 'a7b3c9f',
+  footerText: 'SAARTHI v1.6.2 • Build #262 • Released 2026-08-19 • BS 2083-05-04',
 };
 
 export const RELEASE_HISTORY_CATALOG: ReleaseNoteItem[] = [
+  {
+    id: 'rel-162',
+    version: 'v1.6.2',
+    buildNumber: 262,
+    releaseDateAd: '2026-08-19',
+    releaseDateBs: '2083-05-04',
+    title: 'Light Mode Visibility Overhaul, Responsive Design & Smart Currency Search/Multiplier',
+    whatsNew: [
+      'Comprehensive Light Mode Visibility & Contrast Fixes across Header, Hero, Tax Calculator, Currency/Forex/Gold/Fuel suite, Sidebar, and Breadcrumb navigation',
+      'Enhanced Currency Search Engine supporting Country Names, Currency Initials, ISO codes, and Aliases (e.g. "USA", "Dollar", "AED", "Emirates", "Riyadh")',
+      'Interactive Custom Quantity Multiplier in Currency Cards allowing real-time NPR conversion for any custom currency unit amount',
+      'Hardened Document Vault path traversal protection and token authorization'
+    ],
+    improvements: [
+      'Mobile and desktop responsive layout enhancements with fluid touch targets and adaptive typography',
+      'Refactored Tailwind CSS color tokens to ensure WCAG AA high-contrast legibility in both light and dark themes',
+      'Refined Gold Bullion, Jewellery Making Charge Calculator, Weight Units Converter, and Fuel Tariffs in both color modes'
+    ],
+    bugFixes: [
+      'Resolved low-contrast text readability issues on light backgrounds in cards, inputs, and badges',
+      'Fixed currency card unit calculation to dynamically recalculate when quantity is edited'
+    ],
+    knownIssues: [],
+    isImportant: true,
+    author: 'SAARTHI Core Engineering',
+  },
   {
     id: 'rel-150',
     version: 'v1.5.0',
