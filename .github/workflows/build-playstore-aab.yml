@@ -9,6 +9,10 @@ on:
       - '**.md'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-android:
     name: 📱 Build Play Store AAB & Mobile APK
@@ -39,10 +43,27 @@ jobs:
       - name: 🛠️ Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: 🔑 Generate Release Keystore
+      - name: ⚙️ Pre-configure Bubblewrap Environment
         run: |
-          mkdir -p .keystore
-          keytool -genkey -v -keystore .keystore/saarthi-release.keystore \
+          mkdir -p ~/.bubblewrap
+          cat <<EOF > ~/.bubblewrap/config.json
+          {
+            "jdkPath": "${JAVA_HOME}",
+            "androidSdkPath": "${ANDROID_HOME}"
+          }
+          EOF
+          
+          # Accept Android licenses and install platform tools
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
+
+      - name: 🔑 Setup Android Build Workspace & Keystore
+        run: |
+          mkdir -p android-build
+          cp twa-manifest.json android-build/twa-manifest.json
+          
+          cd android-build
+          keytool -genkey -v -keystore ./android.keystore \
             -alias saarthi-key \
             -keyalg RSA \
             -keysize 2048 \
@@ -52,18 +73,17 @@ jobs:
             -dname "CN=SAARTHI, OU=Engineering, O=Sdxbyte, L=Kathmandu, ST=Bagmati, C=NP"
           
           echo "=== SHA-256 Fingerprint ==="
-          keytool -list -v -keystore .keystore/saarthi-release.keystore -alias saarthi-key -storepass "SaarthiRelease2026@" | grep "SHA256:" || true
+          keytool -list -v -keystore ./android.keystore -alias saarthi-key -storepass "SaarthiRelease2026@" | grep "SHA256:" || true
 
       - name: 🏗️ Initialize & Build Bubblewrap Android Package
         run: |
-          mkdir -p android-build
           cd android-build
+          export BUBBLEWRAP_KEYSTORE_PASSWORD="SaarthiRelease2026@"
+          export BUBBLEWRAP_KEY_PASSWORD="SaarthiRelease2026@"
           
-          # Initialize from live web manifest and twa-manifest
-          cp ../twa-manifest.json ./twa-manifest.json
-          
-          # Build signed AAB and APK
-          bubblewrap build --skipPwaValidation || echo "Build continuing with local parameters..."
+          # Update project files from twa-manifest.json and build signed AAB & APK
+          bubblewrap update --skipVersionCode || true
+          bubblewrap build --skipPwaValidation
 
       - name: 📦 Archive Play Store AAB & APK Artifacts
         uses: actions/upload-artifact@v4
@@ -72,32 +92,37 @@ jobs:
           path: |
             android-build/*.aab
             android-build/*.apk
+            android-build/app/build/outputs/bundle/release/*.aab
+            android-build/app/build/outputs/apk/release/*.apk
           retention-days: 90
+          if-no-files-found: warn
 
       - name: 🚀 Create GitHub Release with Direct Mobile Downloads
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.6.0-playstore
-          name: 'SAARTHI v1.6.0 — Google Play Store Release Package'
+          tag_name: v1.6.2-playstore
+          name: 'SAARTHI v1.6.2 — Google Play Store Release Package'
           body: |
-            ## SAARTHI Android Play Store Release Package (v1.6.0)
+            ## SAARTHI Android Play Store Release Package (v1.6.2)
             
-            This release contains the signed **Google Play Store App Bundle (.aab)** and **Direct Mobile Installable APK (.apk)** compiled via automated cloud pipeline for users without a local PC.
+            This release contains the signed **Google Play Store App Bundle (.aab)** and **Direct Mobile Installable APK (.apk)** compiled via automated cloud pipeline.
             
             ### Included Files:
             - **`app-release-bundle.aab`**: Ready to upload directly to Google Play Console.
-            - **`app-release-signed.apk`**: Direct installable app for Android mobile phones.
+            - **`app-release-signed.apk`**: Direct installable app for Android mobile devices.
             - **`assetlinks.json`**: Verified domain association file.
             
             ### Compliance Information:
             - **Package Name**: `com.sdxbyte.saarthi`
-            - **Version Name**: `1.6.0`
-            - **Version Code**: `10600`
+            - **Version Name**: `1.6.2`
+            - **Version Code**: `10602`
             - **Privacy Policy**: https://saarthi.dpdns.org/?tab=privacy
             - **Account Deletion**: https://saarthi.dpdns.org/?tab=account-deletion
           files: |
             android-build/*.aab
             android-build/*.apk
+            android-build/app/build/outputs/bundle/release/*.aab
+            android-build/app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
