@@ -151,65 +151,65 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('nepse')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
             }`}
           >
-            <p className="text-slate-400 text-xs font-mono uppercase tracking-wider">NEPSE INDEX</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">NEPSE INDEX</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-white">2,748.15</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <span className="font-mono font-black text-xl text-slate-900 dark:text-white">2,748.15</span>
+              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                 +1.42%
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">Turnover: NPR 6.82B</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Turnover: NPR 6.82B</p>
           </div>
 
           <div
             onClick={() => handleNav('forex')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
             }`}
           >
-            <p className="text-slate-400 text-xs font-mono uppercase tracking-wider">USD / NPR RATE</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">USD / NPR RATE</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-white">134.85</span>
-              <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <span className="font-mono font-black text-xl text-slate-900 dark:text-white">134.85</span>
+              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                 Official NRB
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">Buy: 134.25 | Sell: 134.85</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Buy: 134.25 | Sell: 134.85</p>
           </div>
 
           <div
             onClick={() => handleNav('forex')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
             }`}
           >
-            <p className="text-slate-400 text-xs font-mono uppercase tracking-wider">GOLD 24K / TOLA</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">GOLD 24K / TOLA</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-amber-400">1,68,500</span>
-              <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+              <span className="font-mono font-black text-xl text-amber-600 dark:text-amber-400">1,68,500</span>
+              <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                 FENGODA Rate
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">Fine Gold 999.9</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Fine Gold 999.9</p>
           </div>
 
           <div
             onClick={() => handleNav('tax')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
             }`}
           >
-            <p className="text-slate-400 text-xs font-mono uppercase tracking-wider">INCOME TAX ENGINE</p>
+            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">INCOME TAX ENGINE</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-white">FY 2081/82</span>
-              <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
+              <span className="font-mono font-black text-xl text-slate-900 dark:text-white">FY 2081/82</span>
+              <span className="text-xs font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
                 IRD Verified
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono mt-1">1% SST to 39% Top Slab</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">1% SST to 39% Top Slab</p>
           </div>
         </div>
       </section>
@@ -218,12 +218,12 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           FEATURED MODULE CARDS GRID
           ========================================================================= */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
-          <h2 className="text-xl font-black text-white flex items-center gap-2.5">
-            <Compass className="w-5 h-5 text-amber-400" />
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3">
+          <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+            <Compass className="w-5 h-5 text-amber-500 dark:text-amber-400" />
             <span>{currentLang === 'ne' ? 'मुख्य नागरिक सेवाहरू' : 'Core Civic & Financial Suite'}</span>
           </h2>
-          <span className="text-xs font-mono text-slate-400">4 CORE MODULES</span>
+          <span className="text-xs font-mono text-slate-500 dark:text-slate-400">4 CORE MODULES</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -231,18 +231,18 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('nepse')}
             className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
             }`}
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
               <TrendingUp className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-white group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
                 <span>NEPSE Market</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
+                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
               </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
                 Live indices, top gainers/losers, company profiles, and real-time trading floor updates.
               </p>
             </div>
@@ -252,18 +252,18 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('tax')}
             className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
             }`}
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
               <Receipt className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-white group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
                 <span>Income Tax Engine</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
+                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
               </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
                 Automated IRD tax calculations for individual and married income slabs with e-PAN guidance.
               </p>
             </div>
@@ -273,18 +273,18 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('forex')}
             className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
             }`}
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
               <Landmark className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-white group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
                 <span>NRB Forex & Commodities</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
+                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
               </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
                 Official Nepal Rastra Bank exchange rates, gold/silver bullion, and NOC fuel prices.
               </p>
             </div>
@@ -294,18 +294,18 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('gov-services')}
             className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
             }`}
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-all">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
               <Building2 className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-white group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
                 <span>Government Services</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-500 group-hover:text-amber-400" />
+                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
               </h3>
-              <p className="text-slate-400 text-xs leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
                 Direct access to Nagarik App, Lok Sewa, Bluebook tax guidance, and official ministry portals.
               </p>
             </div>

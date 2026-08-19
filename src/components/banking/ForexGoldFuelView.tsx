@@ -276,17 +276,17 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Title Header */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Coins className="w-6 h-6 text-amber-400" />
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white">
+            <Coins className="w-6 h-6 text-amber-500 dark:text-amber-400" />
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
               {currentLang === 'ne'
                 ? 'विदेशी मुद्रा, सुनचाँदी भाउ र इन्धन दर'
                 : 'Foreign Exchange, Bullion & NOC Fuel Suite'}
             </h1>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {currentLang === 'ne'
               ? 'नेपाल राष्ट्र बैंक (NRB) आधिकारिक विनिमय दर, विश्वका १६०+ देशका मुद्रा, सुनचाँदी व्यवसायी महासंघ र नेपाल आयल निगम'
               : 'Nepal Rastra Bank (NRB) official daily forex rates, all 160+ world currencies, FENEGOSIDA gold, and NOC fuel'}
@@ -298,20 +298,20 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           <button
             onClick={handleRefreshLiveData}
             disabled={isRefreshingLive}
-            className="p-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 text-slate-300 hover:text-emerald-400 transition-all flex items-center gap-1.5 text-xs font-mono"
+            className="p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 text-slate-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all flex items-center gap-1.5 text-xs font-mono"
             title="Refresh Live Data Feeds"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingLive ? 'animate-spin text-emerald-400' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshingLive ? 'animate-spin text-emerald-500' : ''}`} />
             <span className="hidden md:inline">Sync Live</span>
           </button>
 
-          <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800 shrink-0">
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-950 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
             <button
               onClick={() => setActiveTab('forex')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'forex'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md font-extrabold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 shadow-md font-extrabold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Coins className="w-3.5 h-3.5" />
@@ -322,8 +322,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               onClick={() => setActiveTab('gold')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'gold'
-                  ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-amber-600 dark:bg-amber-500 text-white dark:text-slate-950 shadow-md font-extrabold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Gem className="w-3.5 h-3.5" />
@@ -334,8 +334,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               onClick={() => setActiveTab('fuel')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                 activeTab === 'fuel'
-                  ? 'bg-orange-500 text-slate-950 shadow-md font-extrabold'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-orange-600 dark:bg-orange-500 text-white dark:text-slate-950 shadow-md font-extrabold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Fuel className="w-3.5 h-3.5" />
@@ -346,12 +346,12 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
       </div>
 
       {/* Provenance & Live State Banner */}
-      <div className="px-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs flex flex-wrap items-center justify-between gap-3 text-slate-400 font-mono">
+      <div className="px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs flex flex-wrap items-center justify-between gap-3 text-slate-600 dark:text-slate-400 font-mono">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>
             Primary Source:{' '}
-            <strong className="text-slate-200">
+            <strong className="text-slate-900 dark:text-slate-200">
               {activeTab === 'forex'
                 ? 'Nepal Rastra Bank (NRB) Official Feed & Interbank Rates'
                 : activeTab === 'gold'
@@ -361,7 +361,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           </span>
         </div>
         <div className="flex items-center gap-3 text-[11px]">
-          <span className="bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
+          <span className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1">
             <Radio className="w-2.5 h-2.5 animate-pulse" /> Live Stream Active ({lastLiveSyncedAt})
           </span>
           <span className="text-slate-500">AD: 2026-08-16 | BS: २०८३-०४-३२</span>
@@ -374,16 +374,16 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
       {activeTab === 'forex' && (
         <div className="space-y-6">
           {/* Universal Forex Calculator Card */}
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <ArrowRightLeft className="w-5 h-5 text-emerald-400" />
-                  <h2 className="font-extrabold text-white text-base sm:text-lg">
+                  <ArrowRightLeft className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                  <h2 className="font-extrabold text-slate-900 dark:text-white text-base sm:text-lg">
                     {currentLang === 'ne' ? 'विश्वव्यापी मुद्रा रूपान्तरण क्याल्कुलेटर' : 'Universal Multi-Currency Converter'}
                   </h2>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {currentLang === 'ne'
                     ? 'नेपाल राष्ट्र बैंकको आधिकारिक विनिमय दरमा प्रत्यक्ष आधारित (खरिद र बिक्री दर स्प्रेड सहित)'
                     : 'Calculate real-time exchange rates with NRB buy/sell spread and cross-currency conversion'}
@@ -391,11 +391,11 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               </div>
 
               {/* Conversion Direction Selector */}
-              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
                 <button
                   onClick={() => setConvertMode('foreignToNpr')}
                   className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                    convertMode === 'foreignToNpr' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                    convertMode === 'foreignToNpr' ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Foreign ➔ NPR (रू)
@@ -403,7 +403,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setConvertMode('nprToForeign')}
                   className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                    convertMode === 'nprToForeign' ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                    convertMode === 'nprToForeign' ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   NPR (रू) ➔ Foreign
@@ -411,7 +411,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setConvertMode('cross')}
                   className={`px-3 py-1.5 rounded-lg font-semibold transition-all ${
-                    convertMode === 'cross' ? 'bg-indigo-500 text-white font-bold' : 'text-slate-400 hover:text-white'
+                    convertMode === 'cross' ? 'bg-indigo-600 dark:bg-indigo-500 text-white font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Cross Currency
@@ -421,8 +421,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
             {/* Quick Select Popular Buttons */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <span className="text-[11px] font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
-                <Sparkles className="w-3 h-3 text-amber-400" />
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-500 dark:text-amber-400" />
                 {currentLang === 'ne' ? 'प्रमुख मुद्राहरू:' : 'Popular:'}
               </span>
               {['USD', 'QAR', 'AED', 'SAR', 'MYR', 'EUR', 'GBP', 'AUD', 'CAD', 'JPY', 'INR', 'KWD', 'KRW'].map((code) => {
@@ -433,8 +433,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                     onClick={() => setSelectedCurrencyCode(code)}
                     className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold transition-all shrink-0 border ${
                       isSelected
-                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-300'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     {code}
@@ -444,10 +444,10 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             </div>
 
             {/* Main Interactive Converter Box */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center p-5 rounded-2xl bg-slate-950/70 border border-slate-800">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
               {/* Left Column: Source Input */}
               <div className="lg:col-span-5 space-y-3">
-                <label className="block text-xs font-semibold text-slate-400">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-400">
                   {convertMode === 'nprToForeign' ? 'Source Amount in NPR (नेपाली रूपैयाँ)' : 'Source Currency & Amount'}
                 </label>
 
@@ -456,7 +456,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                     <select
                       value={selectedCurrencyCode}
                       onChange={(e) => setSelectedCurrencyCode(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-bold outline-none text-sm focus:ring-1 focus:ring-emerald-500"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-900 dark:text-white font-bold outline-none text-sm focus:ring-1 focus:ring-emerald-500"
                     >
                       {forexRates.map((f) => {
                         const item = f as ForexCurrencyRate;
@@ -469,7 +469,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                     </select>
 
                     <div className="relative">
-                      <span className="absolute left-3.5 top-2.5 text-slate-400 font-mono font-bold text-sm">
+                      <span className="absolute left-3.5 top-2.5 text-slate-500 dark:text-slate-400 font-mono font-bold text-sm">
                         {activeForex?.symbol || activeForex?.code}
                       </span>
                       <input
@@ -478,20 +478,20 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                         step="any"
                         value={foreignAmount}
                         onChange={(e) => setForeignAmount(Math.max(0, Number(e.target.value)))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-12 pr-4 py-2 text-white font-mono font-bold text-lg outline-none focus:border-emerald-500"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-12 pr-4 py-2 text-slate-900 dark:text-white font-mono font-bold text-lg outline-none focus:border-emerald-500"
                       />
                     </div>
                   </div>
                 ) : (
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2.5 text-slate-400 font-mono font-bold text-sm">NPR (रू)</span>
+                    <span className="absolute left-3.5 top-2.5 text-slate-500 dark:text-slate-400 font-mono font-bold text-sm">NPR (रू)</span>
                     <input
                       type="number"
                       min="0"
                       step="100"
                       value={nprAmount}
                       onChange={(e) => setNprAmount(Math.max(0, Number(e.target.value)))}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-20 pr-4 py-2 text-white font-mono font-bold text-lg outline-none focus:border-emerald-500"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl pl-20 pr-4 py-2 text-slate-900 dark:text-white font-mono font-bold text-lg outline-none focus:border-emerald-500"
                     />
                   </div>
                 )}
@@ -499,10 +499,10 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
               {/* Middle Column: Swap & Formula Indicator */}
               <div className="lg:col-span-2 flex flex-col items-center justify-center gap-2 py-2">
-                <div className="p-3 rounded-full bg-slate-800 border border-slate-700 text-emerald-400 shadow-inner">
+                <div className="p-3 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm">
                   <ArrowUpDown className="w-5 h-5" />
                 </div>
-                <div className="text-[11px] font-mono text-slate-400 text-center">
+                <div className="text-[11px] font-mono text-slate-600 dark:text-slate-400 text-center">
                   {convertMode === 'foreignToNpr' && `Unit: ${activeForex?.unit || 1} ${activeForex?.code}`}
                   {convertMode === 'nprToForeign' && `Sell: Rs ${activeForex?.sell || 0}`}
                   {convertMode === 'cross' && `${activeForex?.code} ➔ ${targetForex?.code}`}
@@ -513,13 +513,13 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               <div className="lg:col-span-5 space-y-3">
                 {convertMode === 'cross' && (
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-400 mb-1">
                       Target Currency (प्राप्त हुने मुद्रा)
                     </label>
                     <select
                       value={targetCurrencyCode}
                       onChange={(e) => setTargetCurrencyCode(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-bold outline-none text-sm focus:ring-1 focus:ring-indigo-500 mb-2"
+                      className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-slate-900 dark:text-white font-bold outline-none text-sm focus:ring-1 focus:ring-indigo-500 mb-2"
                     >
                       {forexRates.map((f) => {
                         const item = f as ForexCurrencyRate;
@@ -533,7 +533,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                   </div>
                 )}
 
-                <label className="block text-xs font-bold text-slate-300">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   {convertMode === 'foreignToNpr'
                     ? (currentLang === 'ne' ? 'कुल नेपाली रूपैयाँ (Total NPR)' : 'Converted Total in Nepali Rupees (NPR)')
                     : convertMode === 'nprToForeign'
@@ -542,20 +542,20 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 </label>
 
                 {/* Big Result Box */}
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between space-y-2">
-                  <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-400">
+                <div className="p-4 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-2 shadow-xs">
+                  <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400">
                     {convertMode === 'foreignToNpr' && `रू ${convertedToNpr.toLocaleString()}`}
                     {convertMode === 'nprToForeign' && `${activeForex?.symbol || ''} ${convertedFromNpr.toLocaleString()} ${activeForex?.code}`}
                     {convertMode === 'cross' && `${targetForex?.symbol || ''} ${convertedCrossAmount.toLocaleString()} ${targetForex?.code}`}
                   </div>
 
-                  <div className="text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80 pt-2 font-mono">
+                  <div className="text-xs text-slate-600 dark:text-slate-400 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 dark:border-slate-800/80 pt-2 font-mono">
                     <span>
                       {convertMode === 'foreignToNpr' && `Rate: 1 ${activeForex?.code} = NPR ${(activeForex?.buy / unitFactor).toFixed(4)}`}
                       {convertMode === 'nprToForeign' && `Rate: 1 NPR = ${oneNprToForeign} ${activeForex?.code}`}
                       {convertMode === 'cross' && `1 ${activeForex?.code} ≈ ${(activeForex?.buy / targetForex?.sell).toFixed(4)} ${targetForex?.code}`}
                     </span>
-                    <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                    <span className="text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
                       {activeForex?.isNrbOfficial ? 'Official NRB Spread' : 'Interbank Rate'}
                     </span>
                   </div>
@@ -567,7 +567,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           {/* Filter, Region, Custom Multiplier & Search Bar */}
           <div className="space-y-4">
             {/* Top Toolbar: Search + Layout + Export */}
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-md">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-md">
               {/* Search Box with Country, Initials & Aliases */}
               <div className="relative flex-1">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -580,12 +580,12 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-500 outline-none focus:border-emerald-500"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-white bg-slate-800 px-2 py-0.5 rounded-md"
+                    className="absolute right-3 top-2.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded-md"
                   >
                     Clear
                   </button>
@@ -596,16 +596,16 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setViewLayout(viewLayout === 'table' ? 'cards' : 'table')}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-all"
                   title="Toggle View"
                 >
-                  <Layers className="w-3.5 h-3.5 text-amber-400" />
+                  <Layers className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
                   <span>{viewLayout === 'table' ? 'Cards View' : 'Table View'}</span>
                 </button>
 
                 <button
                   onClick={handleExportCsv}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-emerald-400 flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 transition-all"
                   title="Download CSV"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -615,21 +615,21 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             </div>
 
             {/* Custom Multiplier & Unit Controller */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900 border border-emerald-500/30 shadow-md space-y-3">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-900 border border-emerald-500/40 shadow-xs space-y-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <Calculator className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs sm:text-sm font-bold text-white">
+                  <Calculator className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                     {currentLang === 'ne' ? 'अनुकूलित एकाइ / परिमाण क्याल्कुलेटर (Custom Unit Multiplier):' : 'Custom Quantity / Unit Multiplier:'}
                   </span>
-                  <span className="text-[11px] text-slate-400 hidden sm:inline font-mono">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline font-mono">
                     {currentLang === 'ne' ? '(कुनै पनि संख्या प्रविष्ट गर्नुहोस्, तल सबै दर स्वतः हिसाब हुन्छ)' : '(Enter any quantity to calculate all rates below)'}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="relative flex-1 sm:w-44">
-                    <span className="absolute left-3 top-2 text-xs font-mono font-bold text-slate-400">Qty:</span>
+                    <span className="absolute left-3 top-2 text-xs font-mono font-bold text-slate-500 dark:text-slate-400">Qty:</span>
                     <input
                       type="number"
                       min="0.01"
@@ -639,14 +639,14 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                         const val = Math.max(0.001, Number(e.target.value) || 1);
                         setCustomUnitMultiplier(val);
                       }}
-                      className="w-full bg-slate-950 border border-emerald-500/50 rounded-xl pl-12 pr-3 py-1.5 text-xs sm:text-sm font-mono font-black text-emerald-400 outline-none focus:ring-1 focus:ring-emerald-500"
+                      className="w-full bg-white dark:bg-slate-950 border border-emerald-500/50 rounded-xl pl-12 pr-3 py-1.5 text-xs sm:text-sm font-mono font-black text-emerald-700 dark:text-emerald-400 outline-none focus:ring-1 focus:ring-emerald-500"
                       placeholder="e.g. 500"
                     />
                   </div>
                   {customUnitMultiplier !== 1 && (
                     <button
                       onClick={() => setCustomUnitMultiplier(1)}
-                      className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono shrink-0"
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-mono shrink-0"
                       title="Reset to 1 unit"
                     >
                       Reset (1)
@@ -657,7 +657,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
               {/* Quick Amount Presets */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-                <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1">Presets:</span>
+                <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 shrink-0 mr-1">Presets:</span>
                 {[1, 5, 10, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 50000].map((preset) => (
                   <button
                     key={preset}
@@ -667,8 +667,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                     }}
                     className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all shrink-0 border ${
                       customUnitMultiplier === preset
-                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold shadow-sm'
-                        : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                        ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 border-emerald-500 dark:border-emerald-400 font-extrabold shadow-sm'
+                        : 'bg-white dark:bg-slate-950/80 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     {preset.toLocaleString()}
@@ -679,8 +679,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
             {/* Region Filter Chips */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-              <span className="text-[11px] font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
-                <Filter className="w-3 h-3 text-emerald-400" />
+              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                <Filter className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 {currentLang === 'ne' ? 'क्षेत्र अनुसार:' : 'Region:'}
               </span>
               {[
@@ -698,8 +698,8 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                   onClick={() => setRegionFilter(rf.id)}
                   className={`px-3 py-1.5 rounded-xl font-semibold transition-all shrink-0 border text-xs ${
                     regionFilter === rf.id
-                      ? 'bg-slate-800 border-emerald-500 text-emerald-300 font-bold'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                      ? 'bg-slate-200 dark:bg-slate-800 border-emerald-500 text-emerald-800 dark:text-emerald-300 font-bold'
+                      : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   {rf.label}
@@ -708,17 +708,17 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             </div>
 
             {/* Results count & active search summary */}
-            <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-mono">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 px-1 font-mono">
               <div>
-                Showing <strong className="text-slate-200">{filteredForexRates.length}</strong> of {forexRates.length} Currencies
+                Showing <strong className="text-slate-900 dark:text-slate-200">{filteredForexRates.length}</strong> of {forexRates.length} Currencies
                 {searchQuery && (
-                  <span className="text-emerald-400 ml-1.5">
+                  <span className="text-emerald-700 dark:text-emerald-400 ml-1.5">
                     (matching "{searchQuery}")
                   </span>
                 )}
               </div>
               {customUnitMultiplier !== 1 && (
-                <div className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                <div className="text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
                   Calculated for {customUnitMultiplier.toLocaleString()} Units
                 </div>
               )}
@@ -726,34 +726,34 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
             {/* Forex Table / Cards Rendering */}
             {viewLayout === 'table' ? (
-              <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-lg">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm dark:shadow-lg">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-950 text-slate-400 font-mono border-b border-slate-800">
+                      <tr className="bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-400 font-mono border-b border-slate-200 dark:border-slate-800">
                         <th className="py-3 px-4">Flag, Country & Currency</th>
                         <th className="py-3 px-3">Code / Initials</th>
                         <th className="py-3 px-3 text-center">
                           {customUnitMultiplier === 1 ? 'Unit' : 'Custom Qty'}
                         </th>
-                        <th className="py-3 px-4 text-right text-emerald-400">
+                        <th className="py-3 px-4 text-right text-emerald-700 dark:text-emerald-400">
                           Buy Rate (खरिद) {customUnitMultiplier !== 1 ? `(${customUnitMultiplier.toLocaleString()} Qty)` : ''}
                         </th>
-                        <th className="py-3 px-4 text-right text-slate-200">
+                        <th className="py-3 px-4 text-right text-slate-900 dark:text-slate-200">
                           Sell Rate (बिक्री) {customUnitMultiplier !== 1 ? `(${customUnitMultiplier.toLocaleString()} Qty)` : ''}
                         </th>
-                        <th className="py-3 px-4 text-right text-slate-400">
+                        <th className="py-3 px-4 text-right text-slate-600 dark:text-slate-400">
                           Mid Rate (औसत)
                         </th>
                         <th className="py-3 px-3 text-center">Source</th>
                         <th className="py-3 px-3 text-right">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-800/80">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                       {filteredForexRates.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="py-8 text-center text-slate-400">
-                            <div className="text-sm font-bold text-slate-300 mb-1">No matching currency found</div>
+                          <td colSpan={8} className="py-8 text-center text-slate-500 dark:text-slate-400">
+                            <div className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">No matching currency found</div>
                             <div className="text-xs text-slate-500">Try searching country name (e.g. United States, Dubai, India, Saudi), initials (e.g. US, UAE, KSA, UK), or currency code (USD, AED, SAR).</div>
                           </td>
                         </tr>
@@ -772,7 +772,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                           return (
                             <tr
                               key={f.code}
-                              className={`hover:bg-slate-800/50 transition-colors ${
+                              className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
                                 isSelected ? 'bg-emerald-500/10' : ''
                               }`}
                             >
@@ -780,73 +780,73 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                                 <div className="flex items-center gap-2.5">
                                   <span className="text-2xl shrink-0">{f.flag || '🌐'}</span>
                                   <div>
-                                    <div className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                                    <div className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm flex items-center gap-1.5">
                                       <span>{item.country || 'Global Interbank'}</span>
                                       {item.countryNp && (
-                                        <span className="text-[11px] text-slate-400 font-normal">({item.countryNp})</span>
+                                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">({item.countryNp})</span>
                                       )}
                                     </div>
-                                    <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-1 mt-0.5">
+                                    <div className="text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-1 mt-0.5">
                                       <span>{f.name}</span>
-                                      {item.nameNp && <span className="text-slate-500">• {item.nameNp}</span>}
+                                      {item.nameNp && <span className="text-slate-400 dark:text-slate-500">• {item.nameNp}</span>}
                                     </div>
                                   </div>
                                 </div>
                               </td>
 
                               <td className="py-3 px-3 font-mono">
-                                <div className="font-bold text-amber-300 text-sm">{f.code}</div>
+                                <div className="font-bold text-amber-700 dark:text-amber-300 text-sm">{f.code}</div>
                                 {item.initials && item.initials.length > 0 && (
-                                  <div className="text-[10px] text-slate-400 flex gap-1 mt-0.5">
+                                  <div className="text-[10px] text-slate-600 dark:text-slate-400 flex gap-1 mt-0.5">
                                     {item.initials.map((init) => (
-                                      <span key={init} className="bg-slate-800 px-1 rounded text-slate-300">{init}</span>
+                                      <span key={init} className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-slate-700 dark:text-slate-300">{init}</span>
                                     ))}
                                   </div>
                                 )}
                               </td>
 
                               <td className="py-3 px-3 text-center font-mono">
-                                <span className="font-bold text-white px-2 py-0.5 rounded bg-slate-950 border border-slate-800">
+                                <span className="font-bold text-slate-900 dark:text-white px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                                   {customUnitMultiplier.toLocaleString()}
                                 </span>
                                 {baseUnit > 1 && customUnitMultiplier === 1 && (
-                                  <div className="text-[10px] text-slate-400 mt-0.5">Base: {baseUnit}</div>
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Base: {baseUnit}</div>
                                 )}
                               </td>
 
                               <td className="py-3 px-4 text-right font-mono">
-                                <div className="font-bold text-emerald-400 text-sm">
+                                <div className="font-bold text-emerald-700 dark:text-emerald-400 text-sm">
                                   Rs. {scaledBuy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </div>
                                 {customUnitMultiplier !== 1 && (
-                                  <div className="text-[10px] text-slate-400">
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
                                     1 {f.code} = Rs. {(f.buy / baseUnit).toFixed(2)}
                                   </div>
                                 )}
                               </td>
 
                               <td className="py-3 px-4 text-right font-mono">
-                                <div className="font-bold text-slate-200 text-sm">
+                                <div className="font-bold text-slate-800 dark:text-slate-200 text-sm">
                                   Rs. {scaledSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </div>
                                 {customUnitMultiplier !== 1 && (
-                                  <div className="text-[10px] text-slate-400">
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400">
                                     1 {f.code} = Rs. {(f.sell / baseUnit).toFixed(2)}
                                   </div>
                                 )}
                               </td>
 
-                              <td className="py-3 px-4 text-right font-mono text-slate-400 text-xs">
+                              <td className="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400 text-xs">
                                 <div>Rs. {scaledMid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                               </td>
 
                               <td className="py-3 px-3 text-center">
                                 {f.isNrbOfficial ? (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
                                     NRB Official
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                                     Interbank
                                   </span>
                                 )}
@@ -859,7 +859,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                                     setForeignAmount(customUnitMultiplier);
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
                                   }}
-                                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-[11px] font-bold text-slate-300 transition-all shrink-0"
+                                  className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-slate-950 text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-all shrink-0"
                                 >
                                   Convert
                                 </button>
@@ -888,61 +888,61 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                         setSelectedCurrencyCode(f.code);
                         setForeignAmount(customUnitMultiplier);
                       }}
-                      className={`p-4 rounded-2xl bg-slate-900 border transition-all cursor-pointer space-y-3 shadow-md relative ${
+                      className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border transition-all cursor-pointer space-y-3 shadow-xs dark:shadow-md relative ${
                         isSelected
-                          ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-slate-900/90'
-                          : 'border-slate-800 hover:border-slate-700'
+                          ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-50/20 dark:bg-slate-900/90'
+                          : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-2xl">{f.flag || '🌐'}</span>
                           <div>
-                            <div className="font-extrabold text-white text-sm flex items-center gap-1.5">
+                            <div className="font-extrabold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
                               <span>{f.code}</span>
                               {item.initials && item.initials.length > 0 && (
-                                <span className="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">
+                                <span className="text-[10px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1 rounded">
                                   {item.initials[0]}
                                 </span>
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400">{item.country || 'Global'}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400">{item.country || 'Global'}</div>
                           </div>
                         </div>
                         {f.isNrbOfficial ? (
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300">
                             NRB Official
                           </span>
                         ) : (
-                          <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                          <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                             {item.region || 'World'}
                           </span>
                         )}
                       </div>
 
-                      <div className="text-xs text-slate-300 font-medium truncate">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
                         {f.name} {item.nameNp ? `(${item.nameNp})` : ''}
                       </div>
 
-                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 font-mono text-xs">
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 space-y-1.5 font-mono text-xs">
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-[11px]">
+                          <span className="text-slate-600 dark:text-slate-400 text-[11px]">
                             Buy ({customUnitMultiplier.toLocaleString()} {f.code}):
                           </span>
-                          <strong className="text-emerald-400 font-bold">
+                          <strong className="text-emerald-700 dark:text-emerald-400 font-bold">
                             Rs. {scaledBuy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </strong>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-[11px]">
+                          <span className="text-slate-600 dark:text-slate-400 text-[11px]">
                             Sell ({customUnitMultiplier.toLocaleString()} {f.code}):
                           </span>
-                          <strong className="text-slate-200 font-bold">
+                          <strong className="text-slate-800 dark:text-slate-200 font-bold">
                             Rs. {scaledSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </strong>
                         </div>
                         {customUnitMultiplier !== 1 && (
-                          <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                          <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-200 dark:border-slate-800/60 flex justify-between">
                             <span>Base unit: {baseUnit}</span>
                             <span>1 {f.code} = Rs. {(f.buy / baseUnit).toFixed(2)}</span>
                           </div>
@@ -967,17 +967,17 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             {rawBullionItems.map((item) => (
               <div
                 key={item.id}
-                className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 transition-all space-y-3 shadow-md relative overflow-hidden"
+                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 transition-all space-y-3 shadow-xs dark:shadow-md relative overflow-hidden"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-300">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     {currentLang === 'ne' ? item.categoryNp : item.categoryEn}
                   </span>
                   <span
                     className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
                       item.direction === 'UP'
-                        ? 'bg-emerald-500/20 text-emerald-400'
-                        : 'bg-rose-500/20 text-rose-400'
+                        ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-400'
+                        : 'bg-rose-500/20 text-rose-800 dark:text-rose-400'
                     }`}
                   >
                     {item.direction === 'UP' ? `▲ +${item.pointChange}` : `▼ -${Math.abs(item.pointChange)}`}
@@ -985,17 +985,17 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 </div>
 
                 <div>
-                  <div className="text-xs text-slate-400 font-mono">{item.purity}</div>
-                  <div className="text-2xl font-black font-mono text-amber-400 mt-1">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">{item.purity}</div>
+                  <div className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400 mt-1">
                     NPR {item.nprPerTola.toLocaleString()}
-                    <span className="text-xs font-normal text-slate-400 font-sans ml-1">/ तोल (11.66g)</span>
+                    <span className="text-xs font-normal text-slate-500 dark:text-slate-400 font-sans ml-1">/ तोल (11.66g)</span>
                   </div>
-                  <div className="text-xs font-mono text-slate-300 mt-1">
-                    १० ग्राम दर: <strong className="text-slate-100">NPR {item.nprPerTenGram.toLocaleString()}</strong>
+                  <div className="text-xs font-mono text-slate-700 dark:text-slate-300 mt-1">
+                    १० ग्राम दर: <strong className="text-slate-900 dark:text-slate-100">NPR {item.nprPerTenGram.toLocaleString()}</strong>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 font-mono">
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                   {item.conversionNotice}
                 </div>
               </div>
@@ -1003,16 +1003,16 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           </div>
 
           {/* DEDICATED SECTION: REAL-TIME GOLD & SILVER PRICE TRENDS */}
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl space-y-5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-amber-400" />
-                  <h2 className="font-extrabold text-white text-base sm:text-lg">
+                  <TrendingUp className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+                  <h2 className="font-extrabold text-slate-900 dark:text-white text-base sm:text-lg">
                     {currentLang === 'ne' ? 'सुन/चाँदी मूल्य उतारचढाव ट्रेन्ड (७ दिने विश्लेषण)' : 'Real-Time Gold & Silver Price Trends (7-Day Analysis)'}
                   </h2>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                   {currentLang === 'ne'
                     ? 'नेपाल सुनचाँदी व्यवसायी महासंघ (FENEGOSIDA) को पछिल्लो ७ दिनको दैनिक आधिकारिक कारोबार विश्लेषण'
                     : 'Historical benchmark tracking across 24K Fine Gold, 22K Tejabi, and Fine Silver'}
@@ -1020,11 +1020,11 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               </div>
 
               {/* Trend Commodity Selector */}
-              <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
                 <button
                   onClick={() => setSelectedTrendMetal('fineGold')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                    selectedTrendMetal === 'fineGold' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedTrendMetal === 'fineGold' ? 'bg-amber-500 text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Fine Gold 24K (छापावाल)
@@ -1032,7 +1032,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setSelectedTrendMetal('tejabiGold')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                    selectedTrendMetal === 'tejabiGold' ? 'bg-amber-600 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedTrendMetal === 'tejabiGold' ? 'bg-amber-600 text-white dark:text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Tejabi 22K (तेजाबी)
@@ -1040,7 +1040,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setSelectedTrendMetal('silver')}
                   className={`px-3 py-1.5 rounded-lg font-bold transition-all ${
-                    selectedTrendMetal === 'silver' ? 'bg-slate-200 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedTrendMetal === 'silver' ? 'bg-slate-300 dark:bg-slate-200 text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Silver (चाँदी)
@@ -1049,7 +1049,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             </div>
 
             {/* Visual Trend Bars Chart */}
-            <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-4">
               <div className="grid grid-cols-7 gap-2 sm:gap-4 items-end h-48 pt-6 pb-2">
                 {GOLD_SILVER_TREND_HISTORY.map((dayItem, idx) => {
                   const val = dayItem[selectedTrendMetal];
@@ -1060,21 +1060,21 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
                   return (
                     <div key={dayItem.dateAd} className="flex flex-col items-center justify-end h-full gap-2">
-                      <span className="text-[10px] font-mono font-bold text-slate-300">
+                      <span className="text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300">
                         {selectedTrendMetal === 'silver' ? `Rs ${val}` : `${(val / 1000).toFixed(1)}k`}
                       </span>
-                      <div className="w-full bg-slate-900 rounded-t-lg overflow-hidden h-32 flex items-end justify-center">
+                      <div className="w-full bg-slate-200 dark:bg-slate-900 rounded-t-lg overflow-hidden h-32 flex items-end justify-center">
                         <div
                           style={{ height: `${heightPct}%` }}
                           className={`w-full rounded-t transition-all duration-500 ${
                             isLatest
                               ? 'bg-gradient-to-t from-amber-600 to-amber-400 shadow-lg shadow-amber-500/20'
-                              : 'bg-slate-700 hover:bg-slate-600'
+                              : 'bg-slate-400 dark:bg-slate-700 hover:bg-slate-500 dark:hover:bg-slate-600'
                           }`}
                         />
                       </div>
                       <div className="text-center font-mono">
-                        <span className={`block text-[11px] font-bold ${isLatest ? 'text-amber-400' : 'text-slate-400'}`}>
+                        <span className={`block text-[11px] font-bold ${isLatest ? 'text-amber-600 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}>
                           {dayItem.day}
                         </span>
                         <span className="block text-[9px] text-slate-500">{dayItem.dateBs.slice(-5)}</span>
@@ -1084,14 +1084,14 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 })}
               </div>
 
-              <div className="flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 border-t border-slate-800/80 pt-3">
+              <div className="flex flex-wrap items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800/80 pt-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-emerald-400 font-bold flex items-center gap-0.5">
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-0.5">
                     <TrendingUp className="w-3.5 h-3.5" /> 7-Day Trajectory: +NPR 4,000 / Tola (Gold)
                   </span>
                   <span>| High: Rs 305,200 | Low: Rs 301,200</span>
                 </div>
-                <span className="text-[11px] bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                <span className="text-[11px] bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800">
                   FENEGOSIDA Benchmark Updated Daily at 11:00 AM NPT
                 </span>
               </div>
@@ -1101,26 +1101,26 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           {/* Interactive Tools: Jewellery Calculator & Unit Converter */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Jewellery Price Calculator */}
-            <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-lg">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-lg">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
-                  <Calculator className="w-5 h-5 text-amber-400" />
-                  <h2 className="font-bold text-white text-base">
+                  <Calculator className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+                  <h2 className="font-bold text-slate-900 dark:text-white text-base">
                     {currentLang === 'ne' ? 'नेपाली गहनाको ज्याला तथा जर्ती क्याल्कुलेटर' : 'Jewellery Making Charge & Wastage Calculator'}
                   </h2>
                 </div>
-                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full font-mono">
+                <span className="text-[10px] bg-amber-500/20 text-amber-800 dark:text-amber-300 px-2.5 py-0.5 rounded-full font-mono">
                   Standard Nepal Formula
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">सुनको प्रकार (Gold Type)</label>
+                  <label className="block text-slate-700 dark:text-slate-400 mb-1 font-semibold">सुनको प्रकार (Gold Type)</label>
                   <select
                     value={calcGoldType}
                     onChange={(e) => setCalcGoldType(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-bold outline-none"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-bold outline-none"
                   >
                     <option value="chhapawal">छापावाल सुन (24K Hallmark - Rs. {fineGoldRate.toLocaleString()})</option>
                     <option value="tejabi">तेजाबी सुन (22K Alloy - Rs. {tejabiGoldRate.toLocaleString()})</option>
@@ -1129,64 +1129,64 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">सुनको तौल (Weight in Tola)</label>
+                  <label className="block text-slate-700 dark:text-slate-400 mb-1 font-semibold">सुनको तौल (Weight in Tola)</label>
                   <input
                     type="number"
                     step="0.1"
                     min="0.1"
                     value={calcWeightTola}
                     onChange={(e) => setCalcWeightTola(Math.max(0.01, Number(e.target.value)))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono font-bold outline-none focus:ring-1 focus:ring-amber-500"
                   />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block">
                     Equivalent: {(calcWeightTola * 11.6638125).toFixed(2)} Grams
                   </span>
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">जर्ती प्रतिशत (Wastage Jarti %)</label>
+                  <label className="block text-slate-700 dark:text-slate-400 mb-1 font-semibold">जर्ती प्रतिशत (Wastage Jarti %)</label>
                   <input
                     type="number"
                     min="0"
                     max="25"
                     value={calcJartiPct}
                     onChange={(e) => setCalcJartiPct(Math.max(0, Number(e.target.value)))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono font-bold outline-none focus:ring-1 focus:ring-amber-500"
                   />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">Normally 3% to 8% in Nepal</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block">Normally 3% to 8% in Nepal</span>
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">ज्याला प्रति तोल (Labor Jyala)</label>
+                  <label className="block text-slate-700 dark:text-slate-400 mb-1 font-semibold">ज्याला प्रति तोल (Labor Jyala)</label>
                   <input
                     type="number"
                     step="500"
                     min="0"
                     value={calcJyalaPerTola}
                     onChange={(e) => setCalcJyalaPerTola(Math.max(0, Number(e.target.value)))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none focus:ring-1 focus:ring-amber-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono font-bold outline-none focus:ring-1 focus:ring-amber-500"
                   />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">Custom design / craftsmanship</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block">Custom design / craftsmanship</span>
                 </div>
               </div>
 
               {/* Estimate Calculation Summary */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs font-mono">
-                <div className="flex justify-between text-slate-300">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs font-mono">
+                <div className="flex justify-between text-slate-700 dark:text-slate-300">
                   <span>सुनको मूल लागत (Net Gold Cost):</span>
-                  <span className="text-white font-bold">NPR {jewelleryEstimate.baseGoldCostNpr.toLocaleString()}</span>
+                  <span className="text-slate-900 dark:text-white font-bold">NPR {jewelleryEstimate.baseGoldCostNpr.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-slate-700 dark:text-slate-300">
                   <span>जर्ती कट्टा ({calcJartiPct}% Jarti):</span>
-                  <span className="text-amber-400">+ NPR {jewelleryEstimate.wastageJartiNpr.toLocaleString()}</span>
+                  <span className="text-amber-700 dark:text-amber-400 font-bold">+ NPR {jewelleryEstimate.wastageJartiNpr.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-slate-300">
+                <div className="flex justify-between text-slate-700 dark:text-slate-300">
                   <span>कालिगड ज्याला (Labor Charge):</span>
-                  <span className="text-amber-400">+ NPR {jewelleryEstimate.makingChargeJyalaNpr.toLocaleString()}</span>
+                  <span className="text-amber-700 dark:text-amber-400 font-bold">+ NPR {jewelleryEstimate.makingChargeJyalaNpr.toLocaleString()}</span>
                 </div>
-                <div className="border-t border-slate-800 pt-2 flex justify-between items-center text-sm font-bold">
-                  <span className="text-amber-300">जम्मा अनुमानित भुक्तानी (Total Estimate):</span>
-                  <span className="text-emerald-400 text-lg font-black">
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-2 flex justify-between items-center text-sm font-bold">
+                  <span className="text-amber-700 dark:text-amber-300">जम्मा अनुमानित भुक्तानी (Total Estimate):</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 text-lg font-black">
                     NPR {jewelleryEstimate.totalEstimatedCostNpr.toLocaleString()}
                   </span>
                 </div>
@@ -1194,43 +1194,43 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             </div>
 
             {/* Nepalese Bullion Weight Converter */}
-            <div className="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-lg">
-              <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-                <Scale className="w-5 h-5 text-indigo-400" />
-                <h2 className="font-bold text-white text-base">
+            <div className="lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-lg">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <Scale className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                <h2 className="font-bold text-slate-900 dark:text-white text-base">
                   {currentLang === 'ne' ? 'नेपाली तौल रुपान्तरण (Weight Converter)' : 'Nepalese Bullion Weight Units'}
                 </h2>
               </div>
 
               <div className="space-y-4 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">तौल ( तोलामा - Tolas)</label>
+                  <label className="block text-slate-700 dark:text-slate-400 mb-1 font-semibold">तौल ( तोलामा - Tolas)</label>
                   <input
                     type="number"
                     step="0.25"
                     min="0.1"
                     value={convertTolaInput}
                     onChange={(e) => setConvertTolaInput(Math.max(0.01, Number(e.target.value)))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono font-bold outline-none text-base focus:ring-1 focus:ring-indigo-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono font-bold outline-none text-base focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
                 <div className="space-y-2 font-mono">
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center">
-                    <span className="text-slate-400">ग्राम (Grams):</span>
-                    <span className="font-bold text-amber-300 text-sm">{gramsEquivalent} g</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">ग्राम (Grams):</span>
+                    <span className="font-bold text-amber-700 dark:text-amber-300 text-sm">{gramsEquivalent} g</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center">
-                    <span className="text-slate-400">लाल / रत्ती (Lal / Ratti):</span>
-                    <span className="font-bold text-indigo-300 text-sm">{lalEquivalent} Lal (1 Tola = 100 Lal)</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">लाल / रत्ती (Lal / Ratti):</span>
+                    <span className="font-bold text-indigo-700 dark:text-indigo-300 text-sm">{lalEquivalent} Lal (1 Tola = 100 Lal)</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center">
-                    <span className="text-slate-400">मासा (Masa):</span>
-                    <span className="font-bold text-emerald-300 text-sm">{masaEquivalent} Masa (1 Tola = 12 Masa)</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">मासा (Masa):</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300 text-sm">{masaEquivalent} Masa (1 Tola = 12 Masa)</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center">
-                    <span className="text-slate-400">टुकडा / आउन्स (Troy Ounces):</span>
-                    <span className="font-bold text-rose-300 text-sm">{troyOunceEquivalent} oz</span>
+                  <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <span className="text-slate-600 dark:text-slate-400">टुकडा / आउन्स (Troy Ounces):</span>
+                    <span className="font-bold text-rose-700 dark:text-rose-300 text-sm">{troyOunceEquivalent} oz</span>
                   </div>
                 </div>
               </div>
@@ -1245,26 +1245,26 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
       {activeTab === 'fuel' && (
         <div className="space-y-6">
           {/* Main Fuel Tariffs Grid */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-lg">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-5 shadow-sm dark:shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2">
-                <Fuel className="w-5 h-5 text-orange-400" />
+                <Fuel className="w-5 h-5 text-orange-500 dark:text-orange-400" />
                 <div>
-                  <h2 className="font-bold text-white text-base sm:text-lg">
+                  <h2 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg">
                     {currentLang === 'ne' ? 'नेपाल आयल निगम (NOC) इन्धन खुद्रा दर' : 'NOC Retail Petroleum Tariffs & Depot Rates'}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     {currentLang === 'ne' ? 'वर्ग १, वर्ग २ र वर्ग ३ क्षेत्र अनुसार खुद्रा बिक्री दर' : 'Official consumer retail tariffs across regional depot groups'}
                   </p>
                 </div>
               </div>
 
               {/* Regional Category Filter Pills */}
-              <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs">
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
                 <button
                   onClick={() => setSelectedNocCategory('all')}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    selectedNocCategory === 'all' ? 'bg-orange-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedNocCategory === 'all' ? 'bg-orange-500 text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   All Products
@@ -1272,7 +1272,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setSelectedNocCategory('cat3')}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    selectedNocCategory === 'cat3' ? 'bg-orange-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedNocCategory === 'cat3' ? 'bg-orange-500 text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Cat III (KTM/PKR)
@@ -1280,7 +1280,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setSelectedNocCategory('cat2')}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    selectedNocCategory === 'cat2' ? 'bg-orange-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedNocCategory === 'cat2' ? 'bg-orange-500 text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Cat II (Dang/Surkhet)
@@ -1288,7 +1288,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 <button
                   onClick={() => setSelectedNocCategory('cat1')}
                   className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    selectedNocCategory === 'cat1' ? 'bg-orange-500 text-slate-950' : 'text-slate-400 hover:text-white'
+                    selectedNocCategory === 'cat1' ? 'bg-orange-500 text-slate-950' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   Cat I (Border)
@@ -1299,24 +1299,24 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             {/* Fuel Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredFuelList.map((fuel) => (
-                <div key={fuel.id} className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 hover:border-orange-500/40 transition-all">
+                <div key={fuel.id} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 hover:border-orange-500/40 transition-all">
                   <div className="flex items-center justify-between">
-                    <div className="font-bold text-slate-200 text-xs">
+                    <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">
                       {currentLang === 'ne' ? fuel.itemNp : fuel.item}
                     </div>
-                    <span className="text-[10px] font-mono text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
+                    <span className="text-[10px] font-mono text-orange-700 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">
                       {fuel.category}
                     </span>
                   </div>
 
-                  <div className="font-mono font-black text-orange-400 text-2xl">
+                  <div className="font-mono font-black text-orange-600 dark:text-orange-400 text-2xl">
                     {fuel.unit.includes('USD') ? `$${fuel.priceNpr.toLocaleString()}` : `NPR ${fuel.priceNpr.toLocaleString()}`}
-                    <span className="text-xs text-slate-400 font-sans ml-1">/ {fuel.unit}</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-sans ml-1">/ {fuel.unit}</span>
                   </div>
 
-                  <div className="text-[11px] text-slate-400 border-t border-slate-900 pt-2 flex items-center justify-between">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-900 pt-2 flex items-center justify-between">
                     <span>{fuel.note}</span>
-                    <span className="text-emerald-400 font-mono font-bold">
+                    <span className="text-emerald-700 dark:text-emerald-400 font-mono font-bold">
                       {fuel.change > 0 ? `▲ +${fuel.change}` : 'Stable'}
                     </span>
                   </div>
@@ -1326,15 +1326,15 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           </div>
 
           {/* DEDICATED SECTION: NOC STATUS UPDATES & OFFICIAL BULLETINS */}
-          <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-orange-400" />
+                <Bell className="w-5 h-5 text-orange-500 dark:text-orange-400" />
                 <div>
-                  <h2 className="font-extrabold text-white text-base sm:text-lg">
+                  <h2 className="font-extrabold text-slate-900 dark:text-white text-base sm:text-lg">
                     {currentLang === 'ne' ? 'नेपाल आयल निगम (NOC) आधिकारिक स्थिति तथा सूचनाहरू' : 'NOC Official Status Updates & Supply Bulletins'}
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     {currentLang === 'ne'
                       ? 'पेट्रोलियम आपूर्ति अवस्था, इन्डियन आयल कर्पोरेसन (IOC) समन्वय र पाक्षिक बुलेटिन'
                       : 'Live supply chain telemetry, IOC cross-border pipeline flows, and regulatory notices'}
@@ -1342,7 +1342,7 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                 </div>
               </div>
 
-              <span className="text-xs font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
+              <span className="text-xs font-mono text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5" /> All Terminals Normal
               </span>
             </div>
@@ -1352,31 +1352,31 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               {NOC_OFFICIAL_STATUS_UPDATES.map((update) => (
                 <div
                   key={update.id}
-                  className="p-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition-all space-y-2"
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-2"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <h3 className="text-xs sm:text-sm font-bold text-white">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                         {currentLang === 'ne' ? update.titleNp : update.titleEn}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-400">
+                    <div className="flex items-center gap-2 text-[10px] font-mono text-slate-500 dark:text-slate-400">
                       <span>{update.dateBs}</span>
                       <span>({update.dateAd})</span>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                     {currentLang === 'ne' ? update.detailsNp : update.detailsEn}
                   </p>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-900 text-[11px] text-slate-400 font-mono">
-                    <div className="flex items-center gap-1 text-slate-400">
-                      <Truck className="w-3.5 h-3.5 text-orange-400" />
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-slate-900 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                    <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                      <Truck className="w-3.5 h-3.5 text-orange-500 dark:text-orange-400" />
                       <span>{update.depot}</span>
                     </div>
-                    <span className="text-[10px] bg-slate-900 px-2 py-0.5 rounded text-orange-300 border border-slate-800">
+                    <span className="text-[10px] bg-white dark:bg-slate-900 px-2 py-0.5 rounded text-orange-700 dark:text-orange-300 border border-slate-200 dark:border-slate-800">
                       {update.category}
                     </span>
                   </div>

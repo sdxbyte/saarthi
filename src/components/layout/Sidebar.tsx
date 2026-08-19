@@ -248,7 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                         isActive
                           ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold shadow-lg shadow-red-900/30'
                           : item.isAdminLink
-                          ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 font-bold'
+                          ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 font-bold'
                           : item.highlight
                           ? theme === 'dark'
                             ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20'
@@ -331,7 +331,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                   <span>{userProfile?.isLoggedIn ? userProfile.name : (currentLang === 'ne' ? 'साइन इन / खाता' : 'Sign In / Account')}</span>
                   {userProfile?.isLoggedIn && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 inline shrink-0" />}
                 </div>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
                   {userProfile?.isLoggedIn
                     ? userProfile.email
                     : (currentLang === 'ne' ? 'कागजात म्याद सेभ गर्न' : 'Save & track vault expiry')}
@@ -340,8 +340,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
             </div>
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
               userProfile?.isLoggedIn
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'bg-red-600/20 text-red-400 border border-red-500/30'
+                ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-400 border border-emerald-500/30'
+                : 'bg-red-600/20 text-red-800 dark:text-red-400 border border-red-500/30'
             }`}>
               {userProfile?.isLoggedIn ? (currentLang === 'ne' ? 'प्रोफाइल' : 'Profile') : (currentLang === 'ne' ? 'लगइन' : 'Login')}
             </span>
