@@ -53,6 +53,8 @@ jobs:
           }
           EOF
           
+          export PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/tools/bin:${PATH}"
+          
           # Accept Android licenses and install platform tools
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
@@ -81,8 +83,15 @@ jobs:
           export BUBBLEWRAP_KEYSTORE_PASSWORD="SaarthiRelease2026@"
           export BUBBLEWRAP_KEY_PASSWORD="SaarthiRelease2026@"
           
-          # Update project files from twa-manifest.json and build signed AAB & APK
-          bubblewrap update --skipVersionCode || true
+          # Regenerate Android project from twa-manifest.json
+          bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json
+          
+          # Grant executable permissions to Gradle wrapper
+          if [ -f gradlew ]; then
+            chmod +x gradlew
+          fi
+          
+          # Build signed production Play Store AAB and APK
           bubblewrap build --skipPwaValidation
 
       - name: 📦 Archive Play Store AAB & APK Artifacts
@@ -103,6 +112,7 @@ jobs:
         with:
           tag_name: v1.6.2-playstore
           name: 'SAARTHI v1.6.2 — Google Play Store Release Package'
+          fail_on_unmatched_files: false
           body: |
             ## SAARTHI Android Play Store Release Package (v1.6.2)
             
