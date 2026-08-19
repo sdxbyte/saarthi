@@ -568,20 +568,19 @@ app.post('/api/smtp/test-email', verifyAdminAuth, async (req, res) => {
 app.post('/api/email/trigger-summary', verifyAdminAuth, async (req, res) => {
   try {
     const { getCurrentVersion } = await import('./services/updatePipelineService');
-    const { formatCentralDualDate } = await import('./utils/timeCalendarEngine');
     const currentVersion = getCurrentVersion();
-    const dual = formatCentralDualDate();
+    const dual = getServerDualDate();
 
     const result = await dispatchUpdateEmail({
       updateId: `SRT-MANUAL-EMAIL-${Date.now()}`,
       synchronizationId: `SYNC-MANUAL-${Date.now().toString(36)}`,
       updateNumber: 262,
       version: currentVersion,
-      adDateStr: dual.adDate,
-      adTimeStr: dual.formattedTime,
-      dayOfWeek: dual.dayOfWeekEn,
-      bsDateStr: `${dual.bsYear}-${String(dual.bsMonth).padStart(2, '0')}-${String(dual.bsDay).padStart(2, '0')}`,
-      timeZone: 'Asia/Kathmandu (GMT+5:45)',
+      adDateStr: dual.adDateStr,
+      adTimeStr: dual.timeStr,
+      dayOfWeek: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+      bsDateStr: dual.bsDateStr,
+      timeZone: dual.timeZone || 'Asia/Kathmandu (GMT+5:45)',
       updateType: 'System Summary & Release Dispatch',
       summary: 'Manual automated summary email trigger requested for SAARTHI release updates, mobile responsiveness, and Play Store package deployment.',
       added: [
