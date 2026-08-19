@@ -57,9 +57,9 @@ export const Header: React.FC<HeaderProps> = React.memo(({
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/95 dark:bg-[#0a0b0d]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#262a31] transition-colors">
+    <header className="sticky top-0 z-50 w-full bg-[#f4f6fa]/95 dark:bg-[#0a0b0d]/95 backdrop-blur-md border-b border-[#d3dbe6] dark:border-[#262a31] transition-colors">
       {/* Top Live Ticker / Date & Time Bar */}
-      <div className="bg-slate-100 dark:bg-[#14161b] border-b border-slate-200 dark:border-[#262a31] px-3 sm:px-4 py-1.5 text-xs text-slate-700 dark:text-[#8b909b] flex items-center justify-between font-mono">
+      <div className="bg-[#e9edf2] dark:bg-[#14161b] border-b border-[#d3dbe6] dark:border-[#262a31] px-3 sm:px-4 py-1.5 text-xs text-slate-700 dark:text-[#8b909b] flex items-center justify-between font-mono">
         <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
           <div className="flex items-center gap-1.5 text-emerald-700 dark:text-[#00e599] shrink-0">
             <span className="strix-live-dot" />

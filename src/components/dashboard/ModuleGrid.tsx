@@ -80,8 +80,8 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
               }
               className={`w-full border rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/50 transition-all ${
                 isDark
-                  ? 'bg-slate-900/90 border-slate-800 text-white placeholder-slate-500 shadow-inner'
-                  : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 shadow-sm'
+                  ? 'bg-[#14161b] border-[#262a31] text-white placeholder-slate-500 shadow-inner'
+                  : 'bg-[#f4f6fa] border-[#d3dbe6] text-slate-900 placeholder-slate-500 shadow-sm'
               }`}
             />
           </div>
@@ -97,8 +97,8 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
                 selectedCategory === cat.value
                   ? 'bg-gradient-to-r from-red-600 to-rose-600 border-red-500 text-white shadow-md shadow-red-900/30'
                   : isDark
-                  ? 'bg-slate-900/90 border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800'
-                  : 'bg-white border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-100 shadow-sm'
+                  ? 'bg-[#14161b] border-[#262a31] text-slate-400 hover:text-white hover:bg-slate-800'
+                  : 'bg-[#f4f6fa] border-[#d3dbe6] text-slate-700 hover:text-slate-900 hover:bg-[#eef2f7] shadow-sm'
               }`}
             >
               {currentLang === 'ne' ? cat.labelNp : cat.labelEn}
@@ -115,8 +115,8 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
             onClick={() => onSelectModule(module.id)}
             className={`group relative p-5 rounded-2xl border transition-all duration-200 hover:-translate-y-1 active:scale-[0.98] cursor-pointer flex flex-col justify-between space-y-3 ${
               isDark
-                ? 'bg-slate-900/90 border-slate-800/90 hover:border-red-500/60 hover:bg-slate-800/70 text-white shadow-md hover:shadow-xl hover:shadow-red-950/20'
-                : 'bg-white border-slate-200 hover:border-red-500/80 hover:bg-slate-50/80 text-slate-900 shadow-sm hover:shadow-md hover:shadow-red-900/10'
+                ? 'bg-[#14161b] border-[#262a31] hover:border-red-500/60 hover:bg-[#1b1e24] text-white shadow-md hover:shadow-xl hover:shadow-red-950/20'
+                : 'bg-[#f4f6fa] border-[#d3dbe6] hover:border-red-500/80 hover:bg-[#eef2f7] text-slate-900 shadow-sm hover:shadow-md hover:shadow-red-900/10'
             }`}
           >
             <div>

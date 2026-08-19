@@ -204,7 +204,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         className={`fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r flex flex-col justify-between transition-transform duration-200 ease-in-out ${
           theme === 'dark'
             ? 'bg-[#14161b] border-[#262a31] text-[#edeef0]'
-            : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+            : 'bg-[#f4f6fa] border-[#d3dbe6] text-slate-900 shadow-sm'
         } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         <div className="p-3 overflow-y-auto custom-scrollbar flex-1">
@@ -305,7 +305,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
 
         {/* Footer info inside sidebar */}
         <div className={`p-3 border-t space-y-2 ${
-          theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-200 bg-slate-50'
+          theme === 'dark' ? 'border-[#262a31] bg-[#14161b]/50' : 'border-[#d3dbe6] bg-[#eef2f7]'
         }`}>
           {/* User Account / Login Toggle Card */}
           <button

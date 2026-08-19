@@ -328,7 +328,7 @@ export function App() {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans transition-colors selection:bg-red-600 selection:text-white ${
-      theme === 'dark' ? 'bg-[#0a0b0d] text-[#edeef0]' : 'bg-slate-50 text-slate-900'
+      theme === 'dark' ? 'bg-[#0a0b0d] text-[#edeef0]' : 'bg-[#e9edf2] text-slate-900'
     }`}>
       {/* Top Header */}
       <Header

@@ -130,7 +130,7 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           LIVE TELEMETRY DASHBOARD BAR
           ========================================================================= */}
       <section className={`p-6 rounded-3xl border transition-all ${
-        isDark ? 'bg-slate-900/80 border-slate-800 shadow-xl' : 'bg-white border-slate-200 shadow-lg'
+        isDark ? 'bg-[#14161b] border-[#262a31] shadow-xl' : 'bg-[#f4f7fa] border-[#d3dbe6] shadow-md'
       }`}>
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/60 pb-4 mb-5">
           <div className="flex items-center gap-2.5">
@@ -151,7 +151,7 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('nepse')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
             }`}
           >
             <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">NEPSE INDEX</p>
@@ -167,7 +167,7 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('forex')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
             }`}
           >
             <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">USD / NPR RATE</p>
@@ -183,7 +183,7 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('forex')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
             }`}
           >
             <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">GOLD 24K / TOLA</p>
@@ -199,7 +199,7 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           <div
             onClick={() => handleNav('tax')}
             className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-slate-50 border-slate-200 hover:border-amber-500/40 shadow-xs'
+              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
             }`}
           >
             <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">INCOME TAX ENGINE</p>
