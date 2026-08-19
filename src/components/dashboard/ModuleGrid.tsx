@@ -42,16 +42,16 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
   return (
     <div className="space-y-6 pt-2">
       {/* Section Title Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800/60 pb-3">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+          <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400">
             <LayoutGrid className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="font-display font-extrabold text-base sm:text-lg text-white tracking-tight">
+            <h2 className="font-display font-extrabold text-base sm:text-lg text-slate-900 dark:text-white tracking-tight">
               {currentLang === 'ne' ? 'नागरिक सेवा मञ्च' : 'Civic Service Directory'}
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               {currentLang === 'ne'
                 ? 'सरकारी सेवा, सेयर बजार, कर र वित्तीय औजारहरू'
                 : 'Access public services, financial tools, tax calculators, and registries'}
@@ -59,7 +59,7 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
           </div>
         </div>
 
-        <span className="text-xs font-mono px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-slate-400 self-start sm:self-auto">
+        <span className="text-xs font-mono px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-700 dark:text-slate-400 self-start sm:self-auto font-semibold">
           {filteredModules.length} {currentLang === 'ne' ? 'सेवाहरू उपलब्ध' : 'Modules Showing'}
         </span>
       </div>

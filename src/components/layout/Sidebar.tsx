@@ -203,18 +203,18 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       <aside
         className={`fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r flex flex-col justify-between transition-transform duration-200 ease-in-out ${
           theme === 'dark'
-            ? 'bg-slate-900 border-slate-800 text-slate-300'
-            : 'bg-white border-slate-200 text-slate-700'
+            ? 'bg-[#14161b] border-[#262a31] text-[#edeef0]'
+            : 'bg-white border-slate-200 text-slate-900 shadow-sm'
         } ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         <div className="p-3 overflow-y-auto custom-scrollbar flex-1">
           <div className={`px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-between ${
-            theme === 'dark' ? 'text-slate-400' : 'text-slate-500'
+            theme === 'dark' ? 'text-[#8b909b]' : 'text-slate-700'
           }`}>
             <span>{currentLang === 'ne' ? 'मुख्य सेवाहरू' : 'Civic Navigation'}</span>
             <button
               onClick={() => setIsOpen(false)}
-              className="lg:hidden p-1 text-slate-400 hover:text-red-500 transition-colors"
+              className="lg:hidden p-1 text-slate-500 hover:text-red-500 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -225,7 +225,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
               <div key={groupIdx} className="space-y-1">
                 <div
                   className={`px-3 pt-2 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider ${
-                    theme === 'dark' ? 'text-slate-500' : 'text-slate-400'
+                    theme === 'dark' ? 'text-[#8b909b]' : 'text-slate-600'
                   }`}
                 >
                   {group.groupTitle}
@@ -248,14 +248,14 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                         isActive
                           ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold shadow-lg shadow-red-900/30'
                           : item.isAdminLink
-                          ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 font-bold'
+                          ? 'bg-amber-500/10 text-amber-900 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 font-bold'
                           : item.highlight
                           ? theme === 'dark'
                             ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20'
-                            : 'bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100'
+                            : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 font-semibold'
                           : theme === 'dark'
-                          ? 'hover:bg-slate-800/80 hover:text-white text-slate-300'
-                          : 'hover:bg-slate-100/90 hover:text-slate-900 text-slate-700'
+                          ? 'hover:bg-[#1b1e24] hover:text-white text-[#cbd5e1]'
+                          : 'hover:bg-slate-100 hover:text-slate-900 text-slate-800'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 truncate">
@@ -264,12 +264,12 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                             isActive
                               ? 'text-white'
                               : item.isAdminLink
-                              ? 'text-amber-400 animate-pulse'
+                              ? 'text-amber-500 animate-pulse'
                               : item.highlight
-                              ? 'text-amber-400 animate-pulse'
+                              ? 'text-amber-500 animate-pulse'
                               : theme === 'dark'
                               ? 'text-slate-400 group-hover:text-red-400'
-                              : 'text-slate-500 group-hover:text-red-600'
+                              : 'text-slate-600 group-hover:text-red-600'
                           }`}
                         />
                         <span className="truncate">{item.label}</span>
@@ -281,7 +281,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
                               ? 'bg-white/20 text-white'
                               : theme === 'dark'
                               ? 'bg-slate-800 text-red-400 border border-red-500/30'
-                              : 'bg-slate-100 text-red-600 border border-red-200'
+                              : 'bg-red-50 text-red-700 border border-red-200'
                           }`}
                         >
                           {item.badge}
