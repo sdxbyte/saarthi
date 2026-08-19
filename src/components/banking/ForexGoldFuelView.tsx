@@ -109,8 +109,9 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
   const [selectedCurrencyCode, setSelectedCurrencyCode] = useState<string>('USD');
   const [targetCurrencyCode, setTargetCurrencyCode] = useState<string>('EUR');
 
-  // Forex List Filter State
+  // Forex List Filter & Dynamic Custom Multiplier State
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [customUnitMultiplier, setCustomUnitMultiplier] = useState<number>(1);
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const [viewLayout, setViewLayout] = useState<'table' | 'cards'>('table');
   const [showNrbExplainer, setShowNrbExplainer] = useState<boolean>(false);
@@ -185,15 +186,18 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
   // Filtered Forex list based on Search & Region
   const filteredForexRates = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
     return forexRates.filter((f) => {
       const rateItem = f as ForexCurrencyRate;
       const matchesSearch =
-        searchQuery === '' ||
-        f.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (rateItem.country && rateItem.country.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (rateItem.nameNp && rateItem.nameNp.includes(searchQuery)) ||
-        (rateItem.countryNp && rateItem.countryNp.includes(searchQuery));
+        query === '' ||
+        f.code.toLowerCase().includes(query) ||
+        f.name.toLowerCase().includes(query) ||
+        (rateItem.country && rateItem.country.toLowerCase().includes(query)) ||
+        (rateItem.nameNp && rateItem.nameNp.toLowerCase().includes(query)) ||
+        (rateItem.countryNp && rateItem.countryNp.toLowerCase().includes(query)) ||
+        (rateItem.initials && rateItem.initials.some((init) => init.toLowerCase().includes(query))) ||
+        (rateItem.aliases && rateItem.aliases.some((alias) => alias.toLowerCase().includes(query)));
 
       if (!matchesSearch) return false;
 
@@ -560,30 +564,39 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
             </div>
           </div>
 
-          {/* Filter & Search Bar */}
+          {/* Filter, Region, Custom Multiplier & Search Bar */}
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900 p-3.5 rounded-2xl border border-slate-800">
-              {/* Search Box */}
+            {/* Top Toolbar: Search + Layout + Export */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-md">
+              {/* Search Box with Country, Initials & Aliases */}
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <input
                   type="text"
                   placeholder={
                     currentLang === 'ne'
-                      ? 'देश, मुद्राको नाम वा कोड खोज्नुहोस् (उदा: USD, कतार, Dubai, Euro, Japan, Saudi...)'
-                      : 'Search by Country, Currency Name or Code (e.g. USD, Qatar, Euro, Japan, AUD, Saudi...)'
+                      ? 'देश, नाम, सर्टकट/इनिसियल वा कोड खोज्नुहोस् (उदा: US, USA, Dubai, UAE, Saudi, KSA, UK, IN, Japan, AUD...)'
+                      : 'Search country, initials, alias or code (e.g. US, USA, Dubai, UAE, Saudi, KSA, UK, IN, Japan, AUD...)'
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder:text-slate-500 outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-white placeholder:text-slate-500 outline-none focus:border-emerald-500"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-white bg-slate-800 px-2 py-0.5 rounded-md"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
 
               {/* View Layout & Export */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setViewLayout(viewLayout === 'table' ? 'cards' : 'table')}
-                  className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-all"
                   title="Toggle View"
                 >
                   <Layers className="w-3.5 h-3.5 text-amber-400" />
@@ -592,13 +605,123 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
 
                 <button
                   onClick={handleExportCsv}
-                  className="px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-emerald-400 flex items-center gap-1.5 transition-all"
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-emerald-400 flex items-center gap-1.5 transition-all"
                   title="Download CSV"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Export CSV</span>
                 </button>
               </div>
+            </div>
+
+            {/* Custom Multiplier & Unit Controller */}
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900 border border-emerald-500/30 shadow-md space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Calculator className="w-4 h-4 text-emerald-400" />
+                  <span className="text-xs sm:text-sm font-bold text-white">
+                    {currentLang === 'ne' ? 'अनुकूलित एकाइ / परिमाण क्याल्कुलेटर (Custom Unit Multiplier):' : 'Custom Quantity / Unit Multiplier:'}
+                  </span>
+                  <span className="text-[11px] text-slate-400 hidden sm:inline font-mono">
+                    {currentLang === 'ne' ? '(कुनै पनि संख्या प्रविष्ट गर्नुहोस्, तल सबै दर स्वतः हिसाब हुन्छ)' : '(Enter any quantity to calculate all rates below)'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-44">
+                    <span className="absolute left-3 top-2 text-xs font-mono font-bold text-slate-400">Qty:</span>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      value={customUnitMultiplier}
+                      onChange={(e) => {
+                        const val = Math.max(0.001, Number(e.target.value) || 1);
+                        setCustomUnitMultiplier(val);
+                      }}
+                      className="w-full bg-slate-950 border border-emerald-500/50 rounded-xl pl-12 pr-3 py-1.5 text-xs sm:text-sm font-mono font-black text-emerald-400 outline-none focus:ring-1 focus:ring-emerald-500"
+                      placeholder="e.g. 500"
+                    />
+                  </div>
+                  {customUnitMultiplier !== 1 && (
+                    <button
+                      onClick={() => setCustomUnitMultiplier(1)}
+                      className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono shrink-0"
+                      title="Reset to 1 unit"
+                    >
+                      Reset (1)
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Amount Presets */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1">Presets:</span>
+                {[1, 5, 10, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 50000].map((preset) => (
+                  <button
+                    key={preset}
+                    onClick={() => {
+                      setCustomUnitMultiplier(preset);
+                      setForeignAmount(preset);
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold transition-all shrink-0 border ${
+                      customUnitMultiplier === preset
+                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-extrabold shadow-sm'
+                        : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    }`}
+                  >
+                    {preset.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Region Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[11px] font-bold text-slate-400 shrink-0 mr-1 flex items-center gap-1">
+                <Filter className="w-3 h-3 text-emerald-400" />
+                {currentLang === 'ne' ? 'क्षेत्र अनुसार:' : 'Region:'}
+              </span>
+              {[
+                { id: 'all', label: currentLang === 'ne' ? 'सबै (१६०+)' : 'All 160+' },
+                { id: 'nrb', label: currentLang === 'ne' ? 'राष्ट्र बैंक आधिकारिक (२२)' : 'NRB Official (22)' },
+                { id: 'gulf', label: currentLang === 'ne' ? 'खाडी देशहरू (Gulf)' : 'Gulf / Middle East' },
+                { id: 'saarc', label: currentLang === 'ne' ? 'सार्क र एसिया' : 'SAARC & Asia' },
+                { id: 'europe', label: currentLang === 'ne' ? 'युरोप (Europe)' : 'Europe' },
+                { id: 'americas', label: currentLang === 'ne' ? 'अमेरिका (Americas)' : 'Americas' },
+                { id: 'africa', label: currentLang === 'ne' ? 'अफ्रिका (Africa)' : 'Africa' },
+                { id: 'oceania', label: currentLang === 'ne' ? 'ओशिनिया (Oceania)' : 'Oceania' },
+              ].map((rf) => (
+                <button
+                  key={rf.id}
+                  onClick={() => setRegionFilter(rf.id)}
+                  className={`px-3 py-1.5 rounded-xl font-semibold transition-all shrink-0 border text-xs ${
+                    regionFilter === rf.id
+                      ? 'bg-slate-800 border-emerald-500 text-emerald-300 font-bold'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  {rf.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Results count & active search summary */}
+            <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-mono">
+              <div>
+                Showing <strong className="text-slate-200">{filteredForexRates.length}</strong> of {forexRates.length} Currencies
+                {searchQuery && (
+                  <span className="text-emerald-400 ml-1.5">
+                    (matching "{searchQuery}")
+                  </span>
+                )}
+              </div>
+              {customUnitMultiplier !== 1 && (
+                <div className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Calculated for {customUnitMultiplier.toLocaleString()} Units
+                </div>
+              )}
             </div>
 
             {/* Forex Table / Cards Rendering */}
@@ -608,78 +731,143 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-slate-950 text-slate-400 font-mono border-b border-slate-800">
-                        <th className="py-3 px-4">Flag & Currency</th>
-                        <th className="py-3 px-3">Code</th>
-                        <th className="py-3 px-3 text-center">Unit</th>
-                        <th className="py-3 px-4 text-right text-emerald-400">Buy Rate (खरिद)</th>
-                        <th className="py-3 px-4 text-right text-slate-200">Sell Rate (बिक्री)</th>
-                        <th className="py-3 px-4 text-right text-slate-400">Mid Rate (औसत)</th>
-                        <th className="py-3 px-3 text-center">Category</th>
+                        <th className="py-3 px-4">Flag, Country & Currency</th>
+                        <th className="py-3 px-3">Code / Initials</th>
+                        <th className="py-3 px-3 text-center">
+                          {customUnitMultiplier === 1 ? 'Unit' : 'Custom Qty'}
+                        </th>
+                        <th className="py-3 px-4 text-right text-emerald-400">
+                          Buy Rate (खरिद) {customUnitMultiplier !== 1 ? `(${customUnitMultiplier.toLocaleString()} Qty)` : ''}
+                        </th>
+                        <th className="py-3 px-4 text-right text-slate-200">
+                          Sell Rate (बिक्री) {customUnitMultiplier !== 1 ? `(${customUnitMultiplier.toLocaleString()} Qty)` : ''}
+                        </th>
+                        <th className="py-3 px-4 text-right text-slate-400">
+                          Mid Rate (औसत)
+                        </th>
+                        <th className="py-3 px-3 text-center">Source</th>
                         <th className="py-3 px-3 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/80">
-                      {filteredForexRates.map((f) => {
-                        const item = f as ForexCurrencyRate;
-                        const midRate = item.midRate || (f.buy + f.sell) / 2;
-                        const isSelected = selectedCurrencyCode === f.code;
+                      {filteredForexRates.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-slate-400">
+                            <div className="text-sm font-bold text-slate-300 mb-1">No matching currency found</div>
+                            <div className="text-xs text-slate-500">Try searching country name (e.g. United States, Dubai, India, Saudi), initials (e.g. US, UAE, KSA, UK), or currency code (USD, AED, SAR).</div>
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredForexRates.map((f) => {
+                          const item = f as ForexCurrencyRate;
+                          const baseUnit = f.unit || 1;
+                          const midRate = item.midRate || (f.buy + f.sell) / 2;
+                          const isSelected = selectedCurrencyCode === f.code;
 
-                        return (
-                          <tr
-                            key={f.code}
-                            className={`hover:bg-slate-800/50 transition-colors ${
-                              isSelected ? 'bg-emerald-500/10' : ''
-                            }`}
-                          >
-                            <td className="py-3 px-4">
-                              <div className="flex items-center gap-2.5">
-                                <span className="text-xl">{f.flag || '🌐'}</span>
-                                <div>
-                                  <div className="font-bold text-white text-xs sm:text-sm">
-                                    {item.country || 'Global Interbank'}
-                                  </div>
-                                  <div className="text-[11px] text-slate-400">
-                                    {f.name} {item.nameNp ? `• ${item.nameNp}` : ''}
+                          // Scaled calculations based on customUnitMultiplier
+                          const scaledBuy = (customUnitMultiplier / baseUnit) * f.buy;
+                          const scaledSell = (customUnitMultiplier / baseUnit) * f.sell;
+                          const scaledMid = (customUnitMultiplier / baseUnit) * midRate;
+
+                          return (
+                            <tr
+                              key={f.code}
+                              className={`hover:bg-slate-800/50 transition-colors ${
+                                isSelected ? 'bg-emerald-500/10' : ''
+                              }`}
+                            >
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="text-2xl shrink-0">{f.flag || '🌐'}</span>
+                                  <div>
+                                    <div className="font-bold text-white text-xs sm:text-sm flex items-center gap-1.5">
+                                      <span>{item.country || 'Global Interbank'}</span>
+                                      {item.countryNp && (
+                                        <span className="text-[11px] text-slate-400 font-normal">({item.countryNp})</span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-1 mt-0.5">
+                                      <span>{f.name}</span>
+                                      {item.nameNp && <span className="text-slate-500">• {item.nameNp}</span>}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="py-3 px-3 font-mono font-bold text-amber-300">{f.code}</td>
-                            <td className="py-3 px-3 text-center font-mono font-bold text-slate-300">{f.unit}</td>
-                            <td className="py-3 px-4 text-right font-mono font-bold text-emerald-400 text-sm">
-                              Rs. {f.buy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                            </td>
-                            <td className="py-3 px-4 text-right font-mono font-bold text-slate-200 text-sm">
-                              Rs. {f.sell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                            </td>
-                            <td className="py-3 px-4 text-right font-mono text-slate-400 text-xs">
-                              Rs. {midRate.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              {f.isNrbOfficial ? (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                  NRB Official
+                              </td>
+
+                              <td className="py-3 px-3 font-mono">
+                                <div className="font-bold text-amber-300 text-sm">{f.code}</div>
+                                {item.initials && item.initials.length > 0 && (
+                                  <div className="text-[10px] text-slate-400 flex gap-1 mt-0.5">
+                                    {item.initials.map((init) => (
+                                      <span key={init} className="bg-slate-800 px-1 rounded text-slate-300">{init}</span>
+                                    ))}
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-3 text-center font-mono">
+                                <span className="font-bold text-white px-2 py-0.5 rounded bg-slate-950 border border-slate-800">
+                                  {customUnitMultiplier.toLocaleString()}
                                 </span>
-                              ) : (
-                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                                  Interbank
-                                </span>
-                              )}
-                            </td>
-                            <td className="py-3 px-3 text-right">
-                              <button
-                                onClick={() => {
-                                  setSelectedCurrencyCode(f.code);
-                                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                                }}
-                                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-[11px] font-bold text-slate-300 transition-all"
-                              >
-                                Convert
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                                {baseUnit > 1 && customUnitMultiplier === 1 && (
+                                  <div className="text-[10px] text-slate-400 mt-0.5">Base: {baseUnit}</div>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-4 text-right font-mono">
+                                <div className="font-bold text-emerald-400 text-sm">
+                                  Rs. {scaledBuy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                                {customUnitMultiplier !== 1 && (
+                                  <div className="text-[10px] text-slate-400">
+                                    1 {f.code} = Rs. {(f.buy / baseUnit).toFixed(2)}
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-4 text-right font-mono">
+                                <div className="font-bold text-slate-200 text-sm">
+                                  Rs. {scaledSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                                {customUnitMultiplier !== 1 && (
+                                  <div className="text-[10px] text-slate-400">
+                                    1 {f.code} = Rs. {(f.sell / baseUnit).toFixed(2)}
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-4 text-right font-mono text-slate-400 text-xs">
+                                <div>Rs. {scaledMid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                              </td>
+
+                              <td className="py-3 px-3 text-center">
+                                {f.isNrbOfficial ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    NRB Official
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                                    Interbank
+                                  </span>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-3 text-right">
+                                <button
+                                  onClick={() => {
+                                    setSelectedCurrencyCode(f.code);
+                                    setForeignAmount(customUnitMultiplier);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-emerald-500 hover:text-slate-950 text-[11px] font-bold text-slate-300 transition-all shrink-0"
+                                >
+                                  Convert
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -688,11 +876,18 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredForexRates.map((f) => {
                   const item = f as ForexCurrencyRate;
+                  const baseUnit = f.unit || 1;
                   const isSelected = selectedCurrencyCode === f.code;
+                  const scaledBuy = (customUnitMultiplier / baseUnit) * f.buy;
+                  const scaledSell = (customUnitMultiplier / baseUnit) * f.sell;
+
                   return (
                     <div
                       key={f.code}
-                      onClick={() => setSelectedCurrencyCode(f.code)}
+                      onClick={() => {
+                        setSelectedCurrencyCode(f.code);
+                        setForeignAmount(customUnitMultiplier);
+                      }}
                       className={`p-4 rounded-2xl bg-slate-900 border transition-all cursor-pointer space-y-3 shadow-md relative ${
                         isSelected
                           ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-slate-900/90'
@@ -703,7 +898,14 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                         <div className="flex items-center gap-2">
                           <span className="text-2xl">{f.flag || '🌐'}</span>
                           <div>
-                            <div className="font-extrabold text-white text-sm">{f.code}</div>
+                            <div className="font-extrabold text-white text-sm flex items-center gap-1.5">
+                              <span>{f.code}</span>
+                              {item.initials && item.initials.length > 0 && (
+                                <span className="text-[10px] text-slate-400 bg-slate-800 px-1 rounded">
+                                  {item.initials[0]}
+                                </span>
+                              )}
+                            </div>
                             <div className="text-[10px] text-slate-400">{item.country || 'Global'}</div>
                           </div>
                         </div>
@@ -717,16 +919,34 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-300 font-medium truncate">{f.name}</div>
-                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1 font-mono text-xs">
+
+                      <div className="text-xs text-slate-300 font-medium truncate">
+                        {f.name} {item.nameNp ? `(${item.nameNp})` : ''}
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1.5 font-mono text-xs">
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-[11px]">Buy ({f.unit} {f.code}):</span>
-                          <strong className="text-emerald-400 font-bold">Rs. {f.buy}</strong>
+                          <span className="text-slate-400 text-[11px]">
+                            Buy ({customUnitMultiplier.toLocaleString()} {f.code}):
+                          </span>
+                          <strong className="text-emerald-400 font-bold">
+                            Rs. {scaledBuy.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </strong>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400 text-[11px]">Sell ({f.unit} {f.code}):</span>
-                          <strong className="text-slate-200 font-bold">Rs. {f.sell}</strong>
+                          <span className="text-slate-400 text-[11px]">
+                            Sell ({customUnitMultiplier.toLocaleString()} {f.code}):
+                          </span>
+                          <strong className="text-slate-200 font-bold">
+                            Rs. {scaledSell.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </strong>
                         </div>
+                        {customUnitMultiplier !== 1 && (
+                          <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/60 flex justify-between">
+                            <span>Base unit: {baseUnit}</span>
+                            <span>1 {f.code} = Rs. {(f.buy / baseUnit).toFixed(2)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );

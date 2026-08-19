@@ -70,6 +70,8 @@ export interface ForexRate {
   symbol?: string;
   isNrbOfficial?: boolean;
   rateCategory?: string;
+  aliases?: string[];
+  initials?: string[];
 }
 
 export interface GoldSilverRate {
