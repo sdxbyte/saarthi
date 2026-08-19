@@ -1,0 +1,64 @@
+{
+  "packageId": "com.sdxbyte.saarthi",
+  "host": "saarthi.dpdns.org",
+  "name": "SAARTHI",
+  "launcherName": "SAARTHI",
+  "themeColor": "#0F172A",
+  "themeColorDark": "#090D16",
+  "navigationColor": "#0F172A",
+  "navigationColorDark": "#090D16",
+  "navigationDividerColor": "#1E293B",
+  "navigationDividerColorDark": "#1E293B",
+  "backgroundColor": "#090D16",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png",
+  "maskableIconUrl": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "saarthi-key"
+  },
+  "appVersionName": "1.6.0",
+  "appVersionCode": 10600,
+  "shortcuts": [
+    {
+      "name": "Nepali Calendar",
+      "short_name": "Calendar",
+      "url": "/?tab=calendar-bs-ad",
+      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+    },
+    {
+      "name": "NRB Forex Rates",
+      "short_name": "Forex",
+      "url": "/?tab=forex",
+      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+    },
+    {
+      "name": "NEPSE Market Live",
+      "short_name": "NEPSE",
+      "url": "/?tab=stocks",
+      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+    },
+    {
+      "name": "CDSC IPO Result",
+      "short_name": "IPO",
+      "url": "/?tab=cdsc-ipo-result",
+      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isAndroidAutoEnabled": false
+}

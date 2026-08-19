@@ -1,0 +1,6 @@
+{
+  "name": "SAARTHI",
+  "description": "SAARTHI is a private, independent digital application providing financial tools, utilities, external service links, and issue report management.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

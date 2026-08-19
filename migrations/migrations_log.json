@@ -1,0 +1,14 @@
+[
+  {
+    "version": "0001_initial_saarthi_civic_schema",
+    "description": "Created users, civic_requests, tax_records, announcements, and ai_conversations tables",
+    "status": "APPLIED",
+    "appliedAt": "2026-08-01T00:00:00.000Z"
+  },
+  {
+    "version": "0002_add_developer_command_center",
+    "description": "Added audit_logs and release_history tables for Developer Command Center",
+    "status": "APPLIED",
+    "appliedAt": "2026-08-01T01:30:00.000Z"
+  }
+]

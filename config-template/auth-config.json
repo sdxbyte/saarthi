@@ -1,0 +1,7 @@
+{
+  "authProvider": "SAARTHI Native RBAC / Session Token",
+  "ownerEmail": "sudipadhikari8107@gmail.com",
+  "roles": ["CITIZEN", "OFFICIAL", "ADMIN", "DEVELOPER"],
+  "developerAccessPinRequired": true,
+  "sessionDurationHours": 24
+}

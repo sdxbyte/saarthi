@@ -1,0 +1,3 @@
+Analyze this receipt or bill from Nepal/international store. Extract the structured expense data.
+If currency is in NPR, Rs, or $, note it. Categorize into one of: Food & Dining, Groceries, Fuel & Travel, Utility & Bills, Health & Medical, Shopping, Government Fee, Education, or Miscellaneous.
+Return structured JSON containing merchantName, date, totalAmount, currency, taxAmount, category, items list, and summaryNotes.
