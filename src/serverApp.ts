@@ -105,11 +105,34 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Block direct public browser access to sensitive internal files
-  const blockedFiles = ['.env', '.git', 'database/seed.json', 'database/schema.sql', 'github-credentials.json', 'credentials.json'];
-  const reqUrl = req.url.toLowerCase();
+  // Decode URL safely to prevent encoded path traversal bypasses (%2e%2e, %2f, %5c)
+  let decodedUrl = '';
+  try {
+    decodedUrl = decodeURIComponent(req.url).toLowerCase();
+  } catch {
+    decodedUrl = req.url.toLowerCase();
+  }
 
-  if (blockedFiles.some((f) => reqUrl.includes(f))) {
+  // Prevent directory and path traversal sequences
+  if (decodedUrl.includes('..') || decodedUrl.includes('\\') || decodedUrl.includes('\0')) {
+    return res.status(403).json({ error: 'Access Denied: Path traversal prohibited' });
+  }
+
+  // Block direct public browser access to sensitive internal files & configs
+  const blockedPatterns = [
+    '.env',
+    '.git',
+    '.sqlite',
+    '.db',
+    'database/seed.json',
+    'database/schema.sql',
+    'github-credentials.json',
+    'credentials.json',
+    'server.ts',
+    'serverapp.ts',
+  ];
+
+  if (blockedPatterns.some((p) => decodedUrl.includes(p))) {
     return res.status(403).json({ error: 'Access Denied: Protected System Resource' });
   }
 
