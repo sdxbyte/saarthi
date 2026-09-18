@@ -1,0 +1,64 @@
+{
+  "id": "/",
+  "name": "SAARTHI — Authentic Nepali Services & Utilities",
+  "short_name": "SAARTHI",
+  "description": "All-in-one authentic digital platform providing Nepali calendar, NRB forex rates, NEPSE stock analysis, fuel prices, gold & silver bullion rates, and public utilities.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0f172a",
+  "background_color": "#090d16",
+  "categories": ["utilities", "finance", "productivity", "tools"],
+  "lang": "ne",
+  "icons": [
+    {
+      "src": "/saarthi_logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/saarthi_logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "नेपाली पात्रो (Calendar)",
+      "short_name": "पात्रो",
+      "description": "136-Year Bikram Sambat Calendar & Panchanga",
+      "url": "/?tab=calendar-bs-ad",
+      "icons": [{ "src": "/saarthi_logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "विदेशी मुद्रा विनिमय (NRB Forex)",
+      "short_name": "Forex",
+      "description": "Official NRB Foreign Exchange Rates",
+      "url": "/?tab=forex",
+      "icons": [{ "src": "/saarthi_logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "नेप्से शेयर बजार (NEPSE Market)",
+      "short_name": "NEPSE",
+      "description": "Authentic Stock Market Live Snapshot",
+      "url": "/?tab=stocks",
+      "icons": [{ "src": "/saarthi_logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "सिडिएससी आईपीओ नतिजा (CDSC IPO)",
+      "short_name": "IPO Result",
+      "description": "Direct Official CDSC Allotment Checker",
+      "url": "/?tab=cdsc-ipo-result",
+      "icons": [{ "src": "/saarthi_logo.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

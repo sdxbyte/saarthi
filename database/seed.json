@@ -1,0 +1,57 @@
+{
+  "system": {
+    "platformName": "SAARTHI Civic Technology Platform",
+    "version": "1.4.2",
+    "country": "Nepal",
+    "timeZone": "Asia/Kathmandu",
+    "fiscalYear": "2081/82"
+  },
+  "initialAdmins": [
+    {
+      "id": "admin-001",
+      "fullName": "Sudip Adhikari",
+      "email": "sudipadhikari8107@gmail.com",
+      "role": "DEVELOPER",
+      "isVerified": true,
+      "provinceId": 3,
+      "district": "Kathmandu",
+      "municipality": "Kathmandu Metropolitan City",
+      "wardNumber": 10
+    }
+  ],
+  "taxSlabs2081_82": {
+    "unmarried": [
+      { "limit": 500000, "rate": 0.01, "description": "1% Social Security Tax up to Rs 5,00,000" },
+      { "limit": 700000, "rate": 0.10, "description": "10% for next Rs 2,00,000 (Rs 5L to 7L)" },
+      { "limit": 1000000, "rate": 0.20, "description": "20% for next Rs 3,00,000 (Rs 7L to 10L)" },
+      { "limit": 2000000, "rate": 0.30, "description": "30% for next Rs 10,00,000 (Rs 10L to 20L)" },
+      { "limit": 5000000, "rate": 0.36, "description": "36% for next Rs 30,00,000 (Rs 20L to 50L)" },
+      { "limit": "above", "rate": 0.39, "description": "39% for income exceeding Rs 50,00,000" }
+    ],
+    "married": [
+      { "limit": 600000, "rate": 0.01, "description": "1% Social Security Tax up to Rs 6,00,000" },
+      { "limit": 800000, "rate": 0.10, "description": "10% for next Rs 2,00,000 (Rs 6L to 8L)" },
+      { "limit": 1100000, "rate": 0.20, "description": "20% for next Rs 3,00,000 (Rs 8L to 11L)" },
+      { "limit": 2000000, "rate": 0.30, "description": "30% for next Rs 9,00,000 (Rs 11L to 20L)" },
+      { "limit": 5000000, "rate": 0.36, "description": "36% for next Rs 30,00,000 (Rs 20L to 50L)" },
+      { "limit": "above", "rate": 0.39, "description": "39% for income exceeding Rs 50,00,000" }
+    ]
+  },
+  "utilityTariffs": {
+    "bluebookTwoWheeler": [
+      { "cc": "Up to 125cc", "annualTax": 3000 },
+      { "cc": "126cc to 150cc", "annualTax": 5000 },
+      { "cc": "151cc to 225cc", "annualTax": 6500 },
+      { "cc": "226cc to 400cc", "annualTax": 11000 },
+      { "cc": "401cc and above", "annualTax": 20000 }
+    ],
+    "electricityNEA": [
+      { "units": "0-20 units", "ratePerUnit": 3.0 },
+      { "units": "21-30 units", "ratePerUnit": 6.5 },
+      { "units": "31-50 units", "ratePerUnit": 8.0 },
+      { "units": "51-150 units", "ratePerUnit": 9.5 },
+      { "units": "151-250 units", "ratePerUnit": 10.0 },
+      { "units": "251+ units", "ratePerUnit": 12.0 }
+    ]
+  }
+}
