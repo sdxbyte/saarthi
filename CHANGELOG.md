@@ -2,6 +2,35 @@
 
 All notable changes to the SAARTHI project are documented in this file.
 
+## [1.7.0] - 2026-09-18
+
+### Title
+SAARTHI v1.7.0 Sajilo Daily Essentials Hub, Kalimati Wholesale Bazar & FM Radio Suite
+
+### Added
+- **Sajilo Daily Essentials Hub**: Integrated full daily utility workspace inspired by Sajilo, bringing Kalimati wholesale market prices, live Nepali FM radio streaming, offline reminders, bullion/fuel calculators, and emergency helplines into SAARTHI.
+- **Kalimati Wholesale Bazar Board**: Direct live rates from the Kalimati Fruit and Vegetable Market Development Board with commodity search, category filters (Vegetables, Fruits, Spices, Greens), and daily price movement indicators.
+- **Persistent Live FM Radio Player**: Integrated audio streaming player with singleton audio context and dockable floating mini-player supporting Radio Kantipur, Ujyaalo 90 Network, Radio Nepal, Hits FM, Image FM, Capital FM, and BBC Nepali.
+- **Offline Keeper Reminders & Scratchpad**: Client-side encrypted task and reminder management with priority badges, category tags, completion status, and persistent browser storage.
+- **Sajilo Everyday Utility Suite**:
+  - **Land Area Converter**: Precision bidirectional conversions between Hills (Ropani-Aana-Paisa-Daam) and Terai (Bigha-Katha-Dhur) units with Sq. Feet and Sq. Meters equivalence.
+  - **Gold & Silver Bullion Calculator**: Instant Tola to Gram calculator with impurity deductions and live base rates.
+  - **VAT & Service Charge Calculator**: Gross, Net, and 13% VAT breakdown engine.
+  - **24/7 Emergency Helplines**: Police (100), Ambulance (102), Fire (101), Traffic (103), Child Helpline (1098), APF (1114) with one-click direct dialing.
+- **Native-Style Menu-Bar Tray Popover**: Quick-access popup widget accessible via top navigation header or global shortcut (`Alt + S` or `Cmd/Ctrl + J`).
+- **Devanagari Numerals Toggle**: One-click numeral mode switch between English digits and Devanagari numerals across prices, dates, and calculations.
+
+### Updated
+- Synchronized top navigation bar and Himalayan Hero action buttons to launch Sajilo directly.
+- Updated `/src/services/serviceRegistry.ts` registering Sajilo as official 14th primary utility module.
+- Enhanced AudioContext handling with audio stream playback management.
+
+### Technical & Security
+- Fully compliant with SAARTHI Master Rule 1, 2, 3, 4, 16, and 17.
+- Zero external tracking, client-safe audio streaming, and sanitized input parsing.
+
+---
+
 ## [1.6.2] - 2026-08-19
 
 ### Title

@@ -1,5 +1,62 @@
 [
   {
+    "version": "v1.7.0",
+    "title": "SAARTHI v1.7.0 Sajilo Daily Essentials Hub, Kalimati Wholesale Bazar & FM Radio Suite",
+    "date": "Sep 18, 2026, 01:00:00 PM",
+    "timestamp": "2026-09-18T07:45:00.000Z",
+    "backupType": "Auto Sync",
+    "author": "sudipadhikari8107@gmail.com",
+    "commitHash": "041e369",
+    "repoUrl": "https://github.com/sdxbyte/saarthi",
+    "fileCount": 165,
+    "totalSize": "9.10 MB",
+    "summary": {
+      "added": [
+        "Sajilo (सजिलो) Daily Essentials Hub with 10 dedicated utility tabs.",
+        "Kalimati Fruit and Vegetable Market Development Board live wholesale commodity rates with category filtering.",
+        "Persistent Live Nepali FM Radio Player streaming verified radio stations across Nepal with background playback and mini-player.",
+        "Offline Keeper Reminders & Scratchpad for personal encrypted tasks.",
+        "Land Area Converter (Ropani-Aana-Paisa-Daam <-> Bigha-Katha-Dhur <-> Sq. Ft/Sq. M).",
+        "Bullion, VAT, Fuel, and 24/7 National Emergency Helplines with quick-dial support.",
+        "Native-Style Menu-Bar Tray Popover with keyboard shortcut (Alt+S or Cmd/Ctrl+J).",
+        "Devanagari Numerals toggle for prices and figures."
+      ],
+      "updated": [
+        "Updated serviceRegistry.ts registering Sajilo as 14th primary utility module.",
+        "Updated CinematicHimalayanHero.tsx with direct Sajilo launch action.",
+        "Updated App.tsx with AudioProvider and global routing."
+      ],
+      "fixed": [
+        "Fixed audio context lifecycle and station switching."
+      ],
+      "technical": [
+        "Compliant with SAARTHI Master Rules 1, 2, 3, 4, 16, and 17."
+      ],
+      "modifiedFiles": [
+        "src/components/sajilo/SajiloView.tsx",
+        "src/components/sajilo/SajiloBazarTab.tsx",
+        "src/components/sajilo/SajiloRadioTab.tsx",
+        "src/components/sajilo/SajiloKeeperTab.tsx",
+        "src/components/sajilo/SajiloToolsTab.tsx",
+        "src/components/sajilo/SajiloTrayPopover.tsx",
+        "src/components/sajilo/RadioMiniPlayer.tsx",
+        "src/context/RadioAudioContext.tsx",
+        "src/services/serviceRegistry.ts",
+        "src/components/home/CinematicHimalayanHero.tsx",
+        "src/App.tsx",
+        "package.json",
+        "docs/CHANGELOG.md",
+        "CHANGELOG.md"
+      ]
+    },
+    "developerNotes": "Integrated Sajilo daily essentials suite, wholesale market prices, FM radio, land converter, and utility calculators into SAARTHI.",
+    "preSyncReview": {
+      "approved": true,
+      "reviewedBy": "SAARTHI Release Automation Engine",
+      "timestamp": "2026-09-18T07:45:00.000Z"
+    }
+  },
+  {
     "version": "v1.5.1",
     "title": "SAARTHI v1.5.1 Bullion Benchmark & NOC Petroleum Automatic Pricing Synchronization",
     "date": "Aug 16, 2026, 02:18:00 AM",

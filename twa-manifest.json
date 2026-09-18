@@ -19,8 +19,8 @@
     "path": "./android.keystore",
     "alias": "saarthi-key"
   },
-  "appVersionName": "1.6.2",
-  "appVersionCode": 10602,
+  "appVersionName": "1.7.0",
+  "appVersionCode": 10700,
   "shortcuts": [
     {
       "name": "Nepali Calendar",
