@@ -9,10 +9,6 @@ import {
   Compass,
   CloudSun,
   LayoutDashboard,
-  Coins,
-  Layers,
-  ExternalLink,
-  ChevronRight,
   Maximize2,
 } from 'lucide-react';
 import { SajiloTab } from '../../types/sajiloTypes';
@@ -25,7 +21,6 @@ import { SajiloRadioTab } from './SajiloRadioTab';
 import { SajiloToolsTab } from './SajiloToolsTab';
 import { SajiloRashifalTab } from './SajiloRashifalTab';
 import { SajiloWeatherTab } from './SajiloWeatherTab';
-import { useGlobalTime } from '../../context/GlobalTimeContext';
 
 interface SajiloViewProps {
   currentLang: 'en' | 'ne';
@@ -41,7 +36,6 @@ export const SajiloView: React.FC<SajiloViewProps> = ({
   onOpenTrayModal,
 }) => {
   const [activeTab, setActiveTab] = useState<SajiloTab>('today');
-  const { timeState } = useGlobalTime();
 
   const tabs: { id: SajiloTab; labelEn: string; labelNp: string; icon: React.FC<{ className?: string }> }[] = [
     { id: 'today', labelEn: 'Today', labelNp: 'आज', icon: LayoutDashboard },
@@ -56,28 +50,28 @@ export const SajiloView: React.FC<SajiloViewProps> = ({
   ];
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      {/* 1. Header Banner */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[#14161b] border border-[#262a31] shadow-2xl relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div className="space-y-1.5">
+    <div className="max-w-7xl mx-auto space-y-4 pb-16">
+      {/* 1. Refined Header Banner */}
+      <div className="surface-card p-4 sm:p-5 rounded-[12px] space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#00e599]/15 text-[#00e599] border border-[#00e599]/30">
+              <span className="px-2 py-0.5 rounded-[4px] text-[10px] font-mono font-semibold bg-[var(--color-accent-muted)] text-[var(--color-accent-mark)] border border-[var(--color-accent-mark)]/30">
                 {currentLang === 'ne' ? 'सजिलो दैनिक आवश्यकताहरू' : 'SAJILO DAILY ESSENTIALS'}
               </span>
-              <span className="text-xs font-mono text-[#8b909b]">
+              <span className="text-[11px] font-mono text-[var(--color-text-secondary)]">
                 BS 2083 • Powered by SAARTHI & Sajilo Core
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-[#edeef0] tracking-tight flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--color-text)] tracking-tight flex items-center gap-2">
               <span>{currentLang === 'ne' ? 'सजिलो (Sajilo)' : 'Sajilo'}</span>
-              <span className="text-[#8b909b] font-normal text-lg sm:text-xl">
-                — {currentLang === 'ne' ? 'नेपाली दैनिक जीवनका सम्पूर्ण आवश्यकताहरू' : 'Nepali Daily Essentials'}
+              <span className="text-[var(--color-text-secondary)] font-normal text-sm sm:text-base">
+                — {currentLang === 'ne' ? 'नेपाली दैनिक जीवनका सम्पूर्ण आवश्यकताहरू' : 'Daily Life Essentials'}
               </span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-[#8b909b] max-w-3xl">
+            <p className="text-xs text-[var(--color-text-secondary)] max-w-3xl leading-relaxed">
               {currentLang === 'ne'
                 ? 'कालिमाटी तरकारी तथा फलफूल, सुनचाँदी, पेट्रोल, नेप्से, अनलाइन रेडियो, व्यक्तिगत किपर रिमाइन्डर, जग्गा क्षेत्रफल र आपतकालीन सेवाहरू एकै ठाउँमा।'
                 : 'Kalimati daily produce wholesale, Gold & Fuel rates, NEPSE stocks, Live FM radio, offline Keeper reminders, Land area calculators, and emergency hotlines.'}
@@ -88,7 +82,7 @@ export const SajiloView: React.FC<SajiloViewProps> = ({
             {/* Toggle Devanagari numerals */}
             <button
               onClick={onToggleDevanagariNumerals}
-              className="px-3 py-2 rounded-xl bg-[#1f232b] hover:bg-[#262a31] border border-[#262a31] text-xs font-mono text-[#edeef0] flex items-center gap-1.5 transition-colors"
+              className="px-2.5 py-1.5 rounded-[6px] bg-[var(--color-canvas)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-border)] text-xs font-mono text-[var(--color-text)] flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Toggle Devanagari (१२३) or English (123) numbers"
             >
               <span>{devanagariNumerals ? 'अंक: १२३' : 'Digits: 123'}</span>
@@ -98,18 +92,18 @@ export const SajiloView: React.FC<SajiloViewProps> = ({
             {onOpenTrayModal && (
               <button
                 onClick={onOpenTrayModal}
-                className="px-3.5 py-2 rounded-xl bg-[#00e599] hover:bg-[#00c985] text-[#0a0b0d] font-bold text-xs flex items-center gap-1.5 transition-all shadow-md active:scale-95"
+                className="px-3 py-1.5 rounded-[6px] bg-[var(--color-accent-fill)] text-[var(--color-accent-ink)] hover:opacity-90 font-medium text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
                 title="Launch macOS / Windows style menu-bar tray popover"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>{currentLang === 'ne' ? 'ट्रे पपओभर (Quick Tray)' : 'Quick Tray Popover'}</span>
+                <span>{currentLang === 'ne' ? 'ट्रे पपओभर (Quick Tray)' : 'Quick Tray'}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Tab Navigation Pill Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-5 mt-4 border-t border-[#262a31]/60 no-scrollbar">
+        {/* Tab Navigation Segmented Bar */}
+        <div className="flex items-center gap-1 overflow-x-auto pt-3 border-t border-[var(--color-divider)]">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -117,10 +111,10 @@ export const SajiloView: React.FC<SajiloViewProps> = ({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-[#00e599] text-[#0a0b0d] shadow-lg shadow-[#00e599]/20'
-                    : 'bg-[#1a1d24] text-[#8b909b] hover:text-[#edeef0] hover:bg-[#1f232b] border border-[#262a31]'
+                    ? 'bg-[var(--color-surface-hover)] text-[var(--color-accent-mark)] border border-[var(--color-border)] shadow-xs font-semibold'
+                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-hover)]/60'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

@@ -3,39 +3,19 @@ import {
   LayoutDashboard,
   TrendingUp,
   Calculator,
-  Shield,
-  ScanLine,
-  Building,
+  Lock,
   Coins,
   Calendar,
   Briefcase,
   Sparkles,
-  Compass,
   X,
-  Lock,
-  Landmark,
-  Sun,
-  Moon,
   FileCheck,
-  CheckCircle2,
-  RefreshCw,
-  Globe,
-  User,
-  ShieldCheck,
-  Info,
-  Activity,
-  Mail,
-  Megaphone,
-  PhoneCall,
-  FileText,
-  Heart,
   HelpCircle,
-  Scale,
+  Heart,
   Layers,
-  ShieldAlert,
-  Key,
   Code2,
   Car,
+  Key,
 } from 'lucide-react';
 import { UserProfile } from '../../types';
 import { PushNotificationWidget } from '../common/PushNotificationWidget';
@@ -60,9 +40,6 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
   isOpen,
   setIsOpen,
   theme,
-  onToggleTheme,
-  userProfile,
-  onOpenAuthModal,
   onOpenAdminModal,
 }) => {
   const navGroups = [
@@ -76,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
         },
         {
           id: 'services',
-          label: currentLang === 'ne' ? 'एकीकृत नागरिक सेवाहरू' : 'Unified Services Directory',
+          label: currentLang === 'ne' ? 'एकीकृत नागरिक सेवाहरू' : 'Services Directory',
           icon: Layers,
           badge: 'Popular',
         },
@@ -93,18 +70,18 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       items: [
         {
           id: 'nepse',
-          label: currentLang === 'ne' ? 'सेयर बजार र नयाँ आइपिओ' : 'NEPSE, Stocks & IPO',
+          label: currentLang === 'ne' ? 'सेयर बजार र नयाँ आइपिओ' : 'NEPSE & Live IPOs',
           icon: TrendingUp,
           badge: 'Live',
         },
         {
           id: 'forex',
-          label: currentLang === 'ne' ? 'विदेशी मुद्रा, सुनचाँदी र इन्धन' : 'Forex, Gold & Fuel Rates',
+          label: currentLang === 'ne' ? 'विदेशी मुद्रा र सुनचाँदी' : 'Forex, Gold & Fuel',
           icon: Coins,
         },
         {
           id: 'tax',
-          label: currentLang === 'ne' ? 'कर, इ-पान र ऋण क्याल्कुलेटर' : 'Tax, EMI & Receipt Scanner',
+          label: currentLang === 'ne' ? 'कर, इ-पान र क्याल्कुलेटर' : 'Tax & EMI Calculator',
           icon: Calculator,
         },
       ],
@@ -114,13 +91,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       items: [
         {
           id: 'vault',
-          label: currentLang === 'ne' ? 'डिजिटल कागजात भल्ट' : 'Encrypted Document Vault',
+          label: currentLang === 'ne' ? 'डिजिटल कागजात भल्ट' : 'Encrypted Vault',
           icon: Lock,
           badge: 'Vault',
         },
         {
           id: 'bluebook',
-          label: currentLang === 'ne' ? 'DoTM, लाइसेन्स र सवारी कर' : 'DOTM & Driving License Hub',
+          label: currentLang === 'ne' ? 'DoTM र सवारी कर' : 'DOTM & Vehicle Tax',
           icon: Car,
           badge: 'DOTM',
         },
@@ -131,13 +108,13 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       items: [
         {
           id: 'ird',
-          label: currentLang === 'ne' ? 'आन्तरिक राजस्व (IRD) & PAN' : 'IRD e-PAN & Tax Clearance',
+          label: currentLang === 'ne' ? 'आन्तरिक राजस्व (IRD)' : 'IRD e-PAN & Tax',
           icon: FileCheck,
           badge: 'IRD',
         },
         {
           id: 'loksewa',
-          label: currentLang === 'ne' ? 'लोक सेवा तथा रोजगार' : 'Lok Sewa & Job Vacancies',
+          label: currentLang === 'ne' ? 'लोक सेवा तथा रोजगार' : 'Lok Sewa Vacancies',
           icon: Briefcase,
           badge: 'Alerts',
         },
@@ -148,48 +125,36 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       items: [
         {
           id: 'public-apis',
-          label: currentLang === 'ne' ? 'सार्वजनिक खुला एपीआई हब' : 'Public APIs & Workbench',
+          label: currentLang === 'ne' ? 'खुला एपीआई हब' : 'Public APIs Hub',
           icon: Code2,
-          badge: 'Open APIs',
+          badge: 'Open',
         },
         {
           id: 'calendar',
-          label: currentLang === 'ne' ? 'नेपाली पात्रो, पञ्चाङ्ग र शुभ मुहूर्त' : 'Nepali Calendar, Panchanga & Muhurats',
+          label: currentLang === 'ne' ? 'नेपाली पात्रो र पञ्चाङ्ग' : 'Nepali Patro & Panchanga',
           icon: Calendar,
           badge: 'BS 2083',
         },
         {
           id: 'rashifal',
-          label: currentLang === 'ne' ? 'दैनिक तथा मासिक राशिफल' : 'Daily Rashifal & Horoscope',
+          label: currentLang === 'ne' ? 'दैनिक राशिफल' : 'Daily Rashifal',
           icon: Sparkles,
-          badge: 'Daily',
         },
       ],
     },
     {
-      groupTitle: currentLang === 'ne' ? 'खाता तथा सहायता' : 'Account & Support',
+      groupTitle: currentLang === 'ne' ? 'सहायता तथा परियोजना' : 'Support & Project',
       items: [
         {
           id: 'support',
-          label: currentLang === 'ne' ? 'सहायता तथा सहायता केन्द्र' : 'Help Desk & Contact',
+          label: currentLang === 'ne' ? 'सहायता केन्द्र' : 'Help Desk & Contact',
           icon: HelpCircle,
         },
         {
           id: 'donate',
-          label: currentLang === 'ne' ? 'परियोजना सहयोग (Donate)' : 'Support SAARTHI Project',
+          label: currentLang === 'ne' ? 'परियोजना सहयोग' : 'Support Project (Donate)',
           icon: Heart,
           highlight: true,
-        },
-      ],
-    },
-    {
-      groupTitle: currentLang === 'ne' ? 'प्रशासन पोर्टल' : 'Administration Portal',
-      items: [
-        {
-          id: 'admin_portal_gateway',
-          label: currentLang === 'ne' ? 'प्रशासक पोर्टल (Admin Gateway)' : 'Super Admin Gateway',
-          icon: Key,
-          isAdminLink: true,
         },
       ],
     },
@@ -201,143 +166,99 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(({
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="fixed inset-0 bg-slate-950/70 z-40 lg:hidden backdrop-blur-xs transition-opacity"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-xs transition-opacity"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed lg:sticky top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r flex flex-col justify-between transition-transform duration-200 ease-in-out bg-[#14161b] border-[#262a31] text-[#edeef0] ${
+        className={`fixed lg:sticky top-14 left-0 z-40 h-[calc(100vh-3.5rem)] w-60 border-r border-[var(--color-divider)] flex flex-col justify-between transition-transform duration-200 ease-in-out bg-[var(--color-canvas)] text-[var(--color-text)] ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <div className="p-3 overflow-y-auto custom-scrollbar flex-1">
-          <div className="px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center justify-between text-[#8b909b]">
-            <span>{currentLang === 'ne' ? 'मुख्य सेवाहरू' : 'Civic Navigation'}</span>
+        <div className="p-2.5 overflow-y-auto flex-1 space-y-4">
+          <div className="px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider flex items-center justify-between text-[var(--color-text-muted)]">
+            <span>{currentLang === 'ne' ? 'नेभिगेसन' : 'NAVIGATION'}</span>
             <button
               onClick={() => setIsOpen(false)}
-              className="lg:hidden p-1 text-slate-500 hover:text-red-500 transition-colors"
+              className="lg:hidden p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <nav className="space-y-4 mt-1">
-            {navGroups.map((group, groupIdx) => (
-              <div key={groupIdx} className="space-y-1">
-                <div className="px-3 pt-2 pb-1 text-[10px] font-mono font-bold uppercase tracking-wider text-[#8b909b]">
+          <nav className="space-y-4">
+            {navGroups.map((group, gIdx) => (
+              <div key={gIdx} className="space-y-0.5">
+                <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-[var(--color-text-muted)]">
                   {group.groupTitle}
                 </div>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        if (item.isAdminLink) {
-                          if (onOpenAdminModal) onOpenAdminModal();
-                        } else {
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const isActive = activeTab === item.id;
+                    const Icon = item.icon;
+
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
                           setActiveTab(item.id);
-                        }
-                        setIsOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl font-medium text-xs sm:text-sm transition-all group relative overflow-hidden ${
-                        isActive
-                          ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white font-bold shadow-lg shadow-red-900/30'
-                          : item.isAdminLink
-                          ? 'bg-amber-500/10 text-amber-900 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/20 font-bold'
-                          : item.highlight
-                          ? theme === 'dark'
-                            ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20'
-                            : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100 font-semibold'
-                          : theme === 'dark'
-                          ? 'hover:bg-[#1b1e24] hover:text-white text-[#cbd5e1]'
-                          : 'hover:bg-slate-100 hover:text-slate-900 text-slate-800'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        <Icon
-                          className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                            isActive
-                              ? 'text-white'
-                              : item.isAdminLink
-                              ? 'text-amber-500 animate-pulse'
-                              : item.highlight
-                              ? 'text-amber-500 animate-pulse'
-                              : theme === 'dark'
-                              ? 'text-slate-400 group-hover:text-red-400'
-                              : 'text-slate-600 group-hover:text-red-600'
-                          }`}
-                        />
-                        <span className="truncate">{item.label}</span>
-                      </div>
-                      {item.badge && (
-                        <span
-                          className={`px-1.5 py-0.5 text-[10px] rounded-md font-mono font-bold ${
-                            isActive
-                              ? 'bg-white/20 text-white'
-                              : theme === 'dark'
-                              ? 'bg-slate-800 text-red-400 border border-red-500/30'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}
-                        >
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+                          setIsOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-xs font-medium transition-all text-left cursor-pointer ${
+                          isActive
+                            ? 'bg-[var(--color-surface-hover)] text-[var(--color-accent-mark)] border border-[var(--color-border)] shadow-xs font-semibold'
+                            : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Icon
+                            className={`w-3.5 h-3.5 shrink-0 ${
+                              isActive ? 'text-[var(--color-accent-mark)]' : 'text-[var(--color-text-muted)]'
+                            }`}
+                          />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span
+                            className={`text-[9px] font-mono px-1.5 py-0.2 rounded-[4px] border ${
+                              isActive
+                                ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent-mark)] border-[var(--color-accent-mark)]/30'
+                                : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] border-[var(--color-border)]'
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ))}
           </nav>
+        </div>
 
-          {/* Simulated Push Notification Widget for Deadlines */}
+        {/* Sidebar Footer Info */}
+        <div className="p-2.5 border-t border-[var(--color-divider)] bg-[var(--color-chrome)] space-y-2">
           <PushNotificationWidget
             currentLang={currentLang}
             theme={theme}
             setActiveTab={setActiveTab}
             onCloseMobileSidebar={() => setIsOpen(false)}
           />
-        </div>
-
-        {/* Footer info inside sidebar */}
-        <div className="p-3 border-t border-[#262a31] bg-[#14161b] space-y-2">
-          {/* User Account / Login Toggle Card */}
-          <button
-            onClick={onOpenAuthModal}
-            className={`w-full p-2.5 rounded-xl border text-left transition-all flex items-center justify-between group ${
-              userProfile?.isLoggedIn
-                ? 'bg-[#1b1e24] border-emerald-500/40 hover:border-emerald-500 text-white'
-                : 'bg-[#1b1e24] border-[#262a31] hover:border-red-500/50 text-[#edeef0]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
-                userProfile?.isLoggedIn ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-              }`}>
-                {userProfile?.isLoggedIn ? userProfile.name.charAt(0) : <User className="w-4 h-4" />}
-              </div>
-              <div className="overflow-hidden">
-                <div className="font-bold text-xs truncate flex items-center gap-1 text-[#edeef0]">
-                  <span>{userProfile?.isLoggedIn ? userProfile.name : (currentLang === 'ne' ? 'साइन इन / खाता' : 'Sign In / Account')}</span>
-                  {userProfile?.isLoggedIn && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 inline shrink-0" />}
-                </div>
-                <p className="text-[10px] text-[#8b909b] truncate">
-                  {userProfile?.isLoggedIn
-                    ? userProfile.email
-                    : (currentLang === 'ne' ? 'कागजात म्याद सेभ गर्न' : 'Save & track vault expiry')}
-                </p>
-              </div>
-            </div>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-              userProfile?.isLoggedIn
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'bg-red-600/20 text-red-400 border border-red-500/30'
-            }`}>
-              {userProfile?.isLoggedIn ? (currentLang === 'ne' ? 'प्रोफाइल' : 'Profile') : (currentLang === 'ne' ? 'लगइन' : 'Login')}
-            </span>
-          </button>
+          
+          <div className="flex items-center justify-between text-[10px] text-[var(--color-text-muted)] font-mono px-1 pt-1">
+            <span>SAARTHI Core v1.7.0</span>
+            <button
+              onClick={() => onOpenAdminModal && onOpenAdminModal()}
+              className="hover:text-[var(--color-accent-mark)] transition-colors cursor-pointer flex items-center gap-1"
+              title="Super Admin Gateway"
+            >
+              <Key className="w-3 h-3" />
+              <span>Admin</span>
+            </button>
+          </div>
         </div>
       </aside>
     </>

@@ -10,15 +10,12 @@ import {
   Newspaper,
   Calendar,
   User,
-  Sparkles,
   ArrowRight,
   RotateCcw,
   Clock,
   ShieldCheck,
-  CheckCircle2,
   Info,
-  BadgeAlert,
-  Compass
+  Compass,
 } from 'lucide-react';
 import {
   PRIMARY_CATEGORIES,
@@ -26,9 +23,9 @@ import {
   getServicesByCategory,
   searchServices,
   getRecentServiceIds,
-  recordServiceUsage
+  recordServiceUsage,
 } from '../../services/serviceRegistry';
-import { PrimaryCategoryId, PrimaryCategory, ServiceDefinition } from '../../types/serviceRegistry';
+import { PrimaryCategoryId, ServiceDefinition } from '../../types/serviceRegistry';
 
 interface ServicesCentralDirectoryProps {
   currentLang: 'en' | 'ne';
@@ -39,9 +36,7 @@ interface ServicesCentralDirectoryProps {
 export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> = React.memo(({
   currentLang,
   onSelectService,
-  theme = 'dark',
 }) => {
-  const isDark = theme === 'dark';
   const [activeCategoryId, setActiveCategoryId] = useState<PrimaryCategoryId | 'all'>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -99,35 +94,31 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
   };
 
   return (
-    <div className="space-y-6 pt-2">
-      {/* Header Banner */}
-      <div className={`p-6 rounded-3xl border ${
-        isDark
-          ? 'bg-gradient-to-r from-slate-900 via-slate-900/90 to-[#14161b] border-slate-800'
-          : 'bg-gradient-to-r from-slate-50 via-white to-slate-100 border-slate-200'
-      }`}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-4 pt-1 max-w-7xl mx-auto w-full">
+      {/* Header Banner - Sajilo Surface Card Style */}
+      <div className="surface-card p-5 sm:p-6 rounded-[12px] space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500">
-                <Layers className="w-5 h-5" />
+              <div className="w-7 h-7 rounded-[6px] bg-[var(--color-accent-muted)] border border-[var(--color-accent-mark)]/30 text-[var(--color-accent-mark)] flex items-center justify-center">
+                <Layers className="w-3.5 h-3.5" />
               </div>
-              <h1 className="font-display font-extrabold text-xl sm:text-2xl text-slate-100 tracking-tight">
+              <h1 className="font-bold text-lg sm:text-xl text-[var(--color-text)] tracking-tight">
                 {currentLang === 'ne' ? 'केन्द्रीय नागरिक सेवा निर्देशिका' : 'Central Services Directory'}
               </h1>
-              <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-red-600/20 text-red-400 border border-red-500/30">
+              <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-[4px] bg-[var(--color-accent-muted)] text-[var(--color-accent-mark)] border border-[var(--color-accent-mark)]/30">
                 Unified Civic Directory
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-2xl">
+            <p className="text-xs text-[var(--color-text-secondary)] max-w-2xl leading-relaxed">
               {currentLang === 'ne'
                 ? 'सरल र प्रभावकारी पहुँचका लागि सबै प्रमुख नागरिक सेवा तथा वित्तीय सुविधाहरू एउटै मञ्चमा एकीकृत।'
                 : 'Comprehensive public services, financial portals, and civic tools organized for intuitive access.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-950/40 p-2.5 rounded-2xl border border-slate-800/80">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs font-mono text-[var(--color-text-secondary)] bg-[var(--color-canvas)] px-2.5 py-1.5 rounded-[6px] border border-[var(--color-border)]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-positive)] shrink-0" />
             <span>
               {currentLang === 'ne' ? 'प्रमाणित स्रोत & प्रत्यक्ष लिङ्क' : 'Verified Data & Direct Links'}
             </span>
@@ -135,8 +126,8 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
         </div>
 
         {/* Global Search Bar */}
-        <div className="mt-5 relative">
-          <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+        <div className="relative">
+          <Search className="w-4 h-4 text-[var(--color-text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
@@ -146,16 +137,12 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
                 ? 'सेवा खोज्नुहोस् (उदा: IPO, PAN, ब्लूबुक, राहदानी, कर, राशिफल)...'
                 : 'Search any service (e.g. IPO, PAN, Bluebook, Passport, Tax, Rashifal)...'
             }
-            className={`w-full border rounded-2xl pl-12 pr-10 py-3.5 text-sm font-medium outline-none transition-all ${
-              isDark
-                ? 'bg-slate-950/80 border-slate-800 text-white placeholder-slate-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-                : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 shadow-sm'
-            }`}
+            className="w-full border border-[var(--color-border)] rounded-[8px] pl-10 pr-16 py-2.5 text-xs font-medium outline-none bg-[var(--color-canvas)] text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent-mark)] transition-all"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-slate-800"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-text)] px-2 py-0.5 rounded-[4px] bg-[var(--color-surface)] border border-[var(--color-border)] cursor-pointer"
             >
               Clear
             </button>
@@ -165,23 +152,23 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
 
       {/* Interactive Breadcrumb Navigation when filtered */}
       {(activeCategoryId !== 'all' || searchQuery || selectedSubcategory !== 'all') && (
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-2 text-xs font-mono text-[var(--color-text-secondary)] bg-[var(--color-surface)] p-2.5 rounded-[8px] border border-[var(--color-border)]">
           <span
             onClick={() => {
               setActiveCategoryId('all');
               setSelectedSubcategory('all');
               setSearchQuery('');
             }}
-            className="hover:text-red-400 cursor-pointer text-slate-300 font-bold"
+            className="hover:text-[var(--color-accent-mark)] cursor-pointer text-[var(--color-text)] font-semibold"
           >
             Services
           </span>
           {activeCategory && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
+              <ChevronRight className="w-3.5 h-3.5 text-[var(--color-border)]" />
               <span
                 onClick={() => setSelectedSubcategory('all')}
-                className="hover:text-red-400 cursor-pointer text-slate-300 font-bold"
+                className="hover:text-[var(--color-accent-mark)] cursor-pointer text-[var(--color-text)] font-semibold"
               >
                 {currentLang === 'ne' ? activeCategory.titleNp : activeCategory.title}
               </span>
@@ -189,16 +176,16 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
           )}
           {selectedSubcategory !== 'all' && activeCategory && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-              <span className="text-red-400 font-bold">
+              <ChevronRight className="w-3.5 h-3.5 text-[var(--color-border)]" />
+              <span className="text-[var(--color-accent-mark)] font-semibold">
                 {activeCategory.subcategories.find((sc) => sc.id === selectedSubcategory)?.title || selectedSubcategory}
               </span>
             </>
           )}
           {searchQuery && (
             <>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-              <span className="text-amber-400 font-bold">
+              <ChevronRight className="w-3.5 h-3.5 text-[var(--color-border)]" />
+              <span className="text-[var(--color-accent-mark)] font-semibold">
                 Search: "{searchQuery}"
               </span>
             </>
@@ -209,7 +196,7 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
               setSelectedSubcategory('all');
               setSearchQuery('');
             }}
-            className="ml-auto text-[11px] text-red-400 hover:underline flex items-center gap-1 font-sans"
+            className="ml-auto text-xs text-[var(--color-accent-mark)] hover:underline flex items-center gap-1 font-sans cursor-pointer"
           >
             <RotateCcw className="w-3 h-3" />
             Reset Filters
@@ -219,10 +206,10 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
 
       {/* Main Parent Category Selector Cards (Shown when not searching) */}
       {!searchQuery && (
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <h2 className="font-display font-bold text-sm sm:text-base text-slate-200 uppercase tracking-wider font-mono">
-              {currentLang === 'ne' ? 'मुख्य सेवा समूहहरू (Parent Groups)' : 'Primary Service Categories'}
+            <h2 className="font-semibold text-xs text-[var(--color-text-secondary)] uppercase tracking-wider font-mono">
+              {currentLang === 'ne' ? 'मुख्य सेवा समूहहरू' : 'Primary Service Categories'}
             </h2>
             {activeCategoryId !== 'all' && (
               <button
@@ -230,14 +217,14 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
                   setActiveCategoryId('all');
                   setSelectedSubcategory('all');
                 }}
-                className="text-xs text-red-400 hover:underline"
+                className="text-xs text-[var(--color-accent-mark)] hover:underline cursor-pointer"
               >
                 Show All Categories
               </button>
             )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
             {PRIMARY_CATEGORIES.filter((cat) => cat.id !== 'home' && cat.id !== 'services').map((cat) => {
               const IconComponent = getCategoryIcon(cat.iconName);
               const isSelected = activeCategoryId === cat.id;
@@ -250,31 +237,31 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
                     setActiveCategoryId(isSelected ? 'all' : cat.id);
                     setSelectedSubcategory('all');
                   }}
-                  className={`p-4 rounded-2xl border text-left transition-all duration-200 relative overflow-hidden flex flex-col justify-between group ${
+                  className={`p-3 rounded-[8px] border text-left transition-all flex flex-col justify-between cursor-pointer ${
                     isSelected
-                      ? 'bg-gradient-to-b from-red-900/50 to-slate-900 border-red-500 shadow-lg shadow-red-950/40 text-white'
-                      : isDark
-                      ? 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/60 text-slate-200'
-                      : 'bg-white border-slate-200 hover:border-slate-300 text-slate-900 shadow-sm'
+                      ? 'bg-[var(--color-accent-muted)] border-[var(--color-accent-mark)] text-[var(--color-text)] shadow-xs'
+                      : 'surface-card hover:bg-[var(--color-surface-hover)] text-[var(--color-text)]'
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`p-2 rounded-xl ${
-                        isSelected ? 'bg-red-600 text-white' : 'bg-slate-800 text-red-400'
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className={`w-7 h-7 rounded-[6px] flex items-center justify-center ${
+                        isSelected
+                          ? 'bg-[var(--color-accent-mark)] text-[var(--color-accent-ink)]'
+                          : 'bg-[var(--color-canvas)] border border-[var(--color-border)] text-[var(--color-accent-mark)]'
                       }`}>
-                        <IconComponent className="w-4 h-4" />
+                        <IconComponent className="w-3.5 h-3.5" />
                       </div>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400 border border-slate-700">
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-[4px] bg-[var(--color-canvas)] text-[var(--color-text-secondary)] border border-[var(--color-border)]">
                         {count}
                       </span>
                     </div>
-                    <h3 className="font-bold text-xs sm:text-sm leading-snug line-clamp-1">
+                    <h3 className="font-semibold text-xs leading-snug line-clamp-1 text-[var(--color-text)]">
                       {currentLang === 'ne' ? cat.titleNp : cat.title}
                     </h3>
                   </div>
 
-                  <p className="text-[10px] text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+                  <p className="text-[10px] text-[var(--color-text-secondary)] mt-1.5 line-clamp-2 leading-relaxed">
                     {currentLang === 'ne' ? cat.descriptionNp : cat.description}
                   </p>
                 </button>
@@ -286,17 +273,17 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
 
       {/* Subcategory Filter Tabs if Category Selected */}
       {activeCategory && activeCategory.subcategories.length > 0 && !searchQuery && (
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
-          <div className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+        <div className="p-3 rounded-[8px] surface-card space-y-2">
+          <div className="text-[11px] font-mono font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
             {currentLang === 'ne' ? `${activeCategory.titleNp} का उप-समूहहरू` : `Subcategories in ${activeCategory.title}`}
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
             <button
               onClick={() => setSelectedSubcategory('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+              className={`px-2.5 py-1 rounded-[6px] text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
                 selectedSubcategory === 'all'
-                  ? 'bg-red-600 border-red-500 text-white'
-                  : 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white'
+                  ? 'bg-[var(--color-accent-muted)] border-[var(--color-accent-mark)] text-[var(--color-accent-mark)] font-semibold'
+                  : 'bg-[var(--color-canvas)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
               }`}
             >
               All Subcategories
@@ -305,10 +292,10 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
               <button
                 key={sub.id}
                 onClick={() => setSelectedSubcategory(sub.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border ${
+                className={`px-2.5 py-1 rounded-[6px] text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
                   selectedSubcategory === sub.id
-                    ? 'bg-red-600 border-red-500 text-white'
-                    : 'bg-slate-800/90 border-slate-700 text-slate-300 hover:text-white'
+                    ? 'bg-[var(--color-accent-muted)] border-[var(--color-accent-mark)] text-[var(--color-accent-mark)] font-semibold'
+                    : 'bg-[var(--color-canvas)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
                 }`}
               >
                 {currentLang === 'ne' ? sub.titleNp : sub.title}
@@ -320,32 +307,28 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
 
       {/* Recently Used Shortcuts (Shown when on All view) */}
       {activeCategoryId === 'all' && !searchQuery && recentServices.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-400 uppercase tracking-wider font-bold">
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-xs font-mono text-[var(--color-text-secondary)] uppercase tracking-wider font-semibold">
+            <Clock className="w-3.5 h-3.5 text-[var(--color-accent-mark)]" />
             <span>{currentLang === 'ne' ? 'हालसालै प्रयोग गरिएका सेवाहरू' : 'Recently Used Services'}</span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
             {recentServices.map((service) => (
               <button
                 key={service.id}
                 onClick={() => handleServiceClick(service)}
-                className={`p-3 rounded-xl border text-left transition-all hover:-translate-y-0.5 flex items-center justify-between group ${
-                  isDark
-                    ? 'bg-slate-900/90 border-slate-800 hover:border-amber-500/50 hover:bg-slate-800 text-slate-200'
-                    : 'bg-white border-slate-200 hover:border-amber-400 text-slate-900 shadow-xs'
-                }`}
+                className="p-2.5 rounded-[8px] surface-card hover:bg-[var(--color-surface-hover)] text-left transition-all flex items-center justify-between group cursor-pointer"
               >
-                <div className="truncate mr-2">
-                  <div className="text-xs font-bold truncate">
+                <div className="truncate mr-1.5">
+                  <div className="text-xs font-semibold truncate text-[var(--color-text)]">
                     {currentLang === 'ne' ? service.titleNp : service.title}
                   </div>
-                  <span className="text-[10px] font-mono text-slate-500 uppercase">
+                  <span className="text-[10px] font-mono text-[var(--color-text-muted)] uppercase">
                     #{service.number < 10 ? `0${service.number}` : service.number}
                   </span>
                 </div>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+                <ArrowRight className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-mark)] group-hover:translate-x-0.5 transition-all shrink-0" />
               </button>
             ))}
           </div>
@@ -353,9 +336,9 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
       )}
 
       {/* Services Grid */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-mono text-slate-400 font-bold uppercase tracking-wider flex items-center gap-2">
+          <div className="text-xs font-mono text-[var(--color-text-secondary)] font-semibold uppercase tracking-wider">
             <span>
               {filteredServices.length} {currentLang === 'ne' ? 'सेवाहरू फेला परे' : 'Services Displayed'}
             </span>
@@ -363,9 +346,9 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
         </div>
 
         {filteredServices.length === 0 ? (
-          <div className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
-            <Compass className="w-8 h-8 text-slate-500 mx-auto" />
-            <p className="text-sm text-slate-300 font-medium">
+          <div className="p-8 rounded-[12px] surface-card text-center space-y-3">
+            <Compass className="w-8 h-8 text-[var(--color-text-muted)] mx-auto" />
+            <p className="text-sm text-[var(--color-text)] font-medium">
               {currentLang === 'ne' ? 'कुनै पनि सेवा भेटिएन' : 'No matching services found'}
             </p>
             <button
@@ -374,59 +357,55 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
                 setSelectedSubcategory('all');
                 setSearchQuery('');
               }}
-              className="px-4 py-2 rounded-xl bg-red-600 text-white font-bold text-xs"
+              className="px-3.5 py-1.5 rounded-[6px] bg-[var(--color-accent-fill)] text-[var(--color-accent-ink)] font-medium text-xs cursor-pointer shadow-xs"
             >
               {currentLang === 'ne' ? 'सबै नागरिक सेवाहरू देखाउनुहोस्' : 'Show All Civic Services'}
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredServices.map((service) => (
               <div
                 key={service.id}
                 onClick={() => handleServiceClick(service)}
-                className={`group relative p-5 rounded-2xl border transition-all duration-200 hover:-translate-y-1 cursor-pointer flex flex-col justify-between space-y-3 ${
-                  isDark
-                    ? 'bg-slate-900/90 border-slate-800/90 hover:border-red-500/60 hover:bg-slate-800/80 text-white shadow-md hover:shadow-xl hover:shadow-red-950/20'
-                    : 'bg-white border-slate-200 hover:border-red-500/80 hover:bg-slate-50 text-slate-900 shadow-xs hover:shadow-md'
-                }`}
+                className="surface-card group relative p-4 rounded-[10px] hover:bg-[var(--color-surface-hover)] cursor-pointer flex flex-col justify-between space-y-2.5 transition-all"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-xs font-extrabold px-2 py-0.5 rounded border text-red-400 bg-red-950/60 border-red-800/60">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-mono text-xs font-semibold px-1.5 py-0.5 rounded-[4px] border text-[var(--color-accent-mark)] bg-[var(--color-accent-muted)] border-[var(--color-accent-mark)]/30">
                       #{service.number < 10 ? `0${service.number}` : service.number}
                     </span>
 
                     <div className="flex items-center gap-1.5">
                       {service.isExternal && (
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800 flex items-center gap-1">
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-[4px] bg-[var(--color-canvas)] text-[var(--color-text-secondary)] border border-[var(--color-border)] flex items-center gap-1">
                           <ExternalLink className="w-2.5 h-2.5" />
                           Gov Portal
                         </span>
                       )}
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-slate-800 text-slate-300 border-slate-700 capitalize">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] border bg-[var(--color-canvas)] text-[var(--color-text-secondary)] border-[var(--color-border)] capitalize">
                         {service.parentCategory}
                       </span>
                     </div>
                   </div>
 
-                  <h3 className="font-display font-bold text-sm text-slate-100 group-hover:text-red-400 transition-colors">
+                  <h3 className="font-semibold text-xs sm:text-sm text-[var(--color-text)] group-hover:text-[var(--color-accent-mark)] transition-colors">
                     {currentLang === 'ne' ? service.titleNp : service.title}
                   </h3>
 
-                  <p className="text-xs text-slate-400 leading-relaxed mt-1 line-clamp-2">
+                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mt-1 line-clamp-2">
                     {currentLang === 'ne' ? service.descriptionNp : service.description}
                   </p>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs font-medium text-slate-400">
-                  <span className="text-[11px] font-mono flex items-center gap-1 text-slate-400">
+                <div className="pt-2 border-t border-[var(--color-divider)] flex items-center justify-between text-xs font-medium text-[var(--color-text-secondary)]">
+                  <span className="text-[11px] font-mono flex items-center gap-1">
                     {service.isExternal ? 'Open Official External Site' : 'Launch Module'}
                   </span>
                   {service.isExternal ? (
-                    <ExternalLink className="w-3.5 h-3.5 text-sky-400 group-hover:translate-x-0.5 transition-all" />
+                    <ExternalLink className="w-3.5 h-3.5 text-[var(--color-accent-mark)] group-hover:translate-x-0.5 transition-all" />
                   ) : (
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-500 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-mark)] group-hover:translate-x-0.5 transition-all" />
                   )}
                 </div>
               </div>
@@ -436,10 +415,10 @@ export const ServicesCentralDirectory: React.FC<ServicesCentralDirectoryProps> =
       </div>
 
       {/* Official Government Disclaimer Box */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs text-slate-400 flex items-start gap-3">
-        <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-        <div>
-          <span className="font-bold text-slate-200">SAARTHI Navigation Standard: </span>
+      <div className="p-3.5 rounded-[8px] surface-card text-xs text-[var(--color-text-secondary)] flex items-start gap-2.5">
+        <Info className="w-4 h-4 text-[var(--color-accent-mark)] shrink-0 mt-0.5" />
+        <div className="leading-relaxed">
+          <span className="font-semibold text-[var(--color-text)]">SAARTHI Navigation Standard: </span>
           {currentLang === 'ne'
             ? 'SAARTHI एक निजी नागरिक प्रविधि प्लेटफर्म हो। सरकारी पोर्टल लिङ्कहरू आधिकारिक बाह्य वेबसाइटमा जान्छन्।'
             : 'SAARTHI is an independent civic portal. Official government service cards route directly to official public department portals with full transparency.'}

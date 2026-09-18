@@ -8,16 +8,9 @@ import {
   ArrowUpRight,
   Sparkles,
   Zap,
-  ChevronRight,
-  Cpu,
-  Globe,
-  Compass,
-  CheckCircle2,
   Building2,
-  Briefcase
 } from 'lucide-react';
 import { useGlobalTime } from '../../context/GlobalTimeContext';
-import { useLiveData } from '../../utils/liveDataEngine';
 
 interface CinematicHimalayanHeroProps {
   currentLang: 'en' | 'ne';
@@ -33,15 +26,9 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
   currentLang,
   onExploreModules,
   onNavigateTab,
-  theme = 'dark',
 }) => {
   const { timeState } = useGlobalTime();
-  const isDark = theme === 'dark';
 
-  // Fetch live market data preview
-  const liveMarket = useLiveData<any>('nepse-market');
-
-  // Handle direct navigation
   const handleNav = (tab: string) => {
     if (onNavigateTab) {
       onNavigateTab(tab);
@@ -51,173 +38,140 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
   };
 
   return (
-    <div className="space-y-10 pb-8 pt-4 max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="space-y-6 pb-6 pt-2 max-w-7xl mx-auto w-full">
       {/* =========================================================================
-          HERO BANNER - CINEMATIC SAARTHI HIMALAYAN BRANDING
+          HERO BANNER - REFINED SOLID SURFACE (SAJILO SPEC)
           ========================================================================= */}
-      <section className={`relative rounded-3xl p-8 sm:p-12 overflow-hidden border transition-colors ${
-        isDark
-          ? 'bg-slate-900 border-slate-800 shadow-xl text-white'
-          : 'bg-white border-slate-200 shadow-md text-slate-900'
-      }`}>
-        {/* Subtle Himalayan Decorative Ambient Backdrop Glow */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 max-w-4xl space-y-6">
-          {/* Eyebrow Status Badge with Live Clock */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 font-mono text-xs font-bold uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
-              <span>{currentLang === 'ne' ? 'सारथी नागरिक तथा वित्तीय इन्जिन' : 'SAARTHI CIVIC & FINANCIAL ENGINE'}</span>
-            </div>
-
-            <div className={`text-xs font-mono px-3 py-1 rounded-full border ${
-              isDark ? 'bg-slate-950/80 border-slate-800 text-slate-300' : 'bg-slate-100 border-slate-200 text-slate-800 font-medium'
-            }`}>
-              <span className="text-amber-700 dark:text-amber-400 font-bold">{timeState.bsFormattedEn} BS</span> ({timeState.adDateFormatted} AD) • {timeState.time12h}
-            </div>
+      <section className="surface-card p-6 sm:p-8 rounded-[12px] space-y-5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] bg-[var(--color-accent-muted)] border border-[var(--color-accent-mark)]/30 text-[var(--color-accent-mark)] font-mono text-[11px] font-semibold uppercase tracking-wider">
+            <span className="live-status-dot" />
+            <span>{currentLang === 'ne' ? 'सारथी नागरिक तथा वित्तीय इन्जिन' : 'SAARTHI CIVIC & FINANCIAL ENGINE'}</span>
           </div>
 
-          {/* Hero Main Heading */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.15] font-sans">
+          <div className="text-[11px] font-mono px-2.5 py-1 rounded-[6px] border border-[var(--color-border)] bg-[var(--color-canvas)] text-[var(--color-text-secondary)]">
+            <span className="text-[var(--color-accent-mark)] font-semibold">{timeState.bsFormattedEn} BS</span> ({timeState.adDateFormatted} AD) • {timeState.time12h}
+          </div>
+        </div>
+
+        {/* Hero Title & Description */}
+        <div className="space-y-2 max-w-3xl">
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight leading-tight text-[var(--color-text)]">
             {currentLang === 'ne' ? (
-              <>
-                नेपालको एकीकृत <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-rose-600 to-amber-700 dark:from-amber-400 dark:via-amber-200 dark:to-amber-500">नागरिक तथा वित्तीय</span> डिजिटल प्लेटफर्म
-              </>
+              <>नेपालको एकीकृत नागरिक तथा वित्तीय डिजिटल प्लेटफर्म</>
             ) : (
-              <>
-                Nepal’s Unified <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-rose-600 to-amber-700 dark:from-amber-400 dark:via-amber-200 dark:to-amber-500">Civic & Financial</span> Intelligence Platform
-              </>
+              <>Nepal’s Unified Civic & Financial Intelligence Platform</>
             )}
           </h1>
-
-          {/* Hero Description */}
-          <p className={`text-base sm:text-lg leading-relaxed max-w-2xl font-normal ${
-            isDark ? 'text-slate-300' : 'text-slate-700 font-medium'
-          }`}>
+          <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
             {currentLang === 'ne'
               ? 'नेप्से सेयर बजार, नेपाल राष्ट्र बैंकको विनिमय दर, आयकर गणक, ई-प्यान, लोक सेवा विज्ञापन र नागरिक सेवाहरूको आधिकारिक रियल-टाइम प्रणाली।'
-              : 'Access live NEPSE indices, verified NRB exchange rates, automated tax calculators, e-PAN guidelines, Lok Sewa notices, and civic utilities in one place.'}
+              : 'Authentic NEPSE stock market metrics, verified NRB exchange rates, IRD tax calculations, Bikram Sambat calendar, and citizen utilities in one clean, reliable workspace.'}
           </p>
+        </div>
 
-          {/* Hero Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 pt-2">
-            <button
-              onClick={() => handleNav('sajilo')}
-              className="px-5 sm:px-6 py-3.5 rounded-2xl bg-gradient-to-r from-[#00e599] to-emerald-400 hover:from-emerald-400 hover:to-[#00e599] text-[#0a0b0d] font-black text-sm shadow-xl shadow-[#00e599]/20 hover:shadow-[#00e599]/30 transition-all flex items-center gap-2.5 transform active:scale-95"
-            >
-              <Sparkles className="w-4 h-4 fill-[#0a0b0d]" />
-              <span>{currentLang === 'ne' ? 'सजिलो (दैनिक आवश्यकताहरू)' : 'Sajilo (Daily Essentials)'}</span>
-            </button>
+        {/* Primary Action Controls */}
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+          <button
+            onClick={() => handleNav('sajilo')}
+            className="px-3.5 py-2 rounded-[6px] bg-[var(--color-accent-fill)] text-[var(--color-accent-ink)] hover:opacity-90 active:scale-[0.99] font-medium text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{currentLang === 'ne' ? 'सजिलो (दैनिक जीवन)' : 'Sajilo (Daily Essentials)'}</span>
+          </button>
 
-            <button
-              onClick={onExploreModules}
-              className="px-5 sm:px-6 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center gap-2.5 transform active:scale-95"
-            >
-              <Zap className="w-4 h-4 fill-slate-950" />
-              <span>{currentLang === 'ne' ? 'सबै सेवाहरू हेर्नुहोस्' : 'Explore All Modules'}</span>
-            </button>
+          <button
+            onClick={onExploreModules}
+            className="px-3.5 py-2 rounded-[6px] bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] text-[var(--color-text)] border border-[var(--color-border)] text-xs font-medium transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Zap className="w-3.5 h-3.5 text-[var(--color-accent-mark)]" />
+            <span>{currentLang === 'ne' ? 'सबै सेवाहरू हेर्नुहोस्' : 'Explore All Services'}</span>
+          </button>
 
-            <button
-              onClick={() => handleNav('services')}
-              className={`px-5 sm:px-6 py-3.5 rounded-2xl border font-extrabold text-sm transition-all flex items-center gap-2.5 transform active:scale-95 ${
-                isDark
-                  ? 'bg-slate-950/80 border-slate-800 text-white hover:bg-slate-800 hover:border-slate-700'
-                  : 'bg-slate-100 border-slate-200 text-slate-900 hover:bg-slate-200'
-              }`}
-            >
-              <FileText className="w-4 h-4 text-emerald-400" />
-              <span>{currentLang === 'ne' ? 'सरकारी सेवा केन्द्र' : 'Government Services'}</span>
-            </button>
-          </div>
+          <button
+            onClick={() => handleNav('services')}
+            className="px-3.5 py-2 rounded-[6px] bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] border border-[var(--color-border)] text-xs font-medium transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <FileText className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+            <span>{currentLang === 'ne' ? 'सरकारी सेवाहरू' : 'Civic Portals'}</span>
+          </button>
         </div>
       </section>
 
       {/* =========================================================================
           LIVE TELEMETRY DASHBOARD BAR
           ========================================================================= */}
-      <section className={`p-6 rounded-3xl border transition-all ${
-        isDark ? 'bg-[#14161b] border-[#262a31] shadow-xl' : 'bg-[#f4f7fa] border-[#d3dbe6] shadow-md'
-      }`}>
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800/60 pb-4 mb-5">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-300">
-              {currentLang === 'ne' ? 'प्रत्यक्ष बजार तथा वित्तीय सूचक' : 'LIVE MARKET & FINANCIAL TELEMETRY'}
+      <section className="surface-card p-4 sm:p-5 rounded-[12px] space-y-3.5">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-divider)] pb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="live-status-dot" />
+            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
+              {currentLang === 'ne' ? 'प्रत्यक्ष बजार तथा वित्तीय सूचक' : 'LIVE FINANCIAL & MARKET TELEMETRY'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-mono text-slate-600 dark:text-slate-400 font-medium">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>NRB & NEPSE Sync Status: <strong className="text-emerald-700 dark:text-emerald-400">100% Operational</strong></span>
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-[var(--color-text-secondary)]">
+            <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-positive)]" />
+            <span>NRB & NEPSE Sync: <strong className="text-[var(--color-positive)]">100% Operational</strong></span>
           </div>
         </div>
 
         {/* 4 Stat Gauges */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           <div
             onClick={() => handleNav('nepse')}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
-            }`}
+            className="p-3 rounded-[8px] bg-[var(--color-canvas)] border border-[var(--color-border)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-all"
           >
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">NEPSE INDEX</p>
+            <p className="text-[var(--color-text-muted)] text-[10px] font-mono uppercase tracking-wider">NEPSE INDEX</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-slate-900 dark:text-white">2,748.15</span>
-              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <span className="font-mono font-semibold text-base sm:text-lg text-[var(--color-text)]">2,748.15</span>
+              <span className="text-[10px] font-mono font-medium text-[var(--color-positive)] bg-[var(--color-positive)]/10 px-1.5 py-0.2 rounded border border-[var(--color-positive)]/20">
                 +1.42%
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Turnover: NPR 6.82B</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-mono mt-0.5">Turnover: NPR 6.82B</p>
           </div>
 
           <div
             onClick={() => handleNav('forex')}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
-            }`}
+            className="p-3 rounded-[8px] bg-[var(--color-canvas)] border border-[var(--color-border)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-all"
           >
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">USD / NPR RATE</p>
+            <p className="text-[var(--color-text-muted)] text-[10px] font-mono uppercase tracking-wider">USD / NPR RATE</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-slate-900 dark:text-white">134.85</span>
-              <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <span className="font-mono font-semibold text-base sm:text-lg text-[var(--color-text)]">134.85</span>
+              <span className="text-[10px] font-mono font-medium text-[var(--color-positive)] bg-[var(--color-positive)]/10 px-1.5 py-0.2 rounded border border-[var(--color-positive)]/20">
                 Official NRB
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Buy: 134.25 | Sell: 134.85</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-mono mt-0.5">Buy: 134.25 | Sell: 134.85</p>
           </div>
 
           <div
             onClick={() => handleNav('forex')}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
-            }`}
+            className="p-3 rounded-[8px] bg-[var(--color-canvas)] border border-[var(--color-border)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-all"
           >
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">GOLD 24K / TOLA</p>
+            <p className="text-[var(--color-text-muted)] text-[10px] font-mono uppercase tracking-wider">GOLD 24K / TOLA</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-amber-600 dark:text-amber-400">1,68,500</span>
-              <span className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                FENGODA Rate
+              <span className="font-mono font-semibold text-base sm:text-lg text-[var(--color-accent-mark)]">1,68,500</span>
+              <span className="text-[10px] font-mono font-medium text-[var(--color-accent-mark)] bg-[var(--color-accent-muted)] px-1.5 py-0.2 rounded border border-[var(--color-accent-mark)]/30">
+                FENEGOSIDA
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">Fine Gold 999.9</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-mono mt-0.5">Fine Gold 999.9</p>
           </div>
 
           <div
             onClick={() => handleNav('tax')}
-            className={`p-4 rounded-2xl border cursor-pointer transition-all hover:scale-[1.02] ${
-              isDark ? 'bg-slate-950/90 border-slate-800 hover:border-amber-500/40' : 'bg-[#eef2f7] border-[#d3dbe6] hover:border-amber-500/50 shadow-xs'
-            }`}
+            className="p-3 rounded-[8px] bg-[var(--color-canvas)] border border-[var(--color-border)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-all"
           >
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-mono uppercase tracking-wider">INCOME TAX ENGINE</p>
+            <p className="text-[var(--color-text-muted)] text-[10px] font-mono uppercase tracking-wider">INCOME TAX ENGINE</p>
             <div className="flex items-baseline justify-between mt-1">
-              <span className="font-mono font-black text-xl text-slate-900 dark:text-white">FY 2081/82</span>
-              <span className="text-xs font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
+              <span className="font-mono font-semibold text-base sm:text-lg text-[var(--color-text)]">FY 2081/82</span>
+              <span className="text-[10px] font-mono font-medium text-[var(--color-text-secondary)] bg-[var(--color-surface)] px-1.5 py-0.2 rounded border border-[var(--color-border)]">
                 IRD Verified
               </span>
             </div>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-1">1% SST to 39% Top Slab</p>
+            <p className="text-[10px] text-[var(--color-text-muted)] font-mono mt-0.5">1% SST to 39% Top Slab</p>
           </div>
         </div>
       </section>
@@ -225,32 +179,29 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
       {/* =========================================================================
           FEATURED MODULE CARDS GRID
           ========================================================================= */}
-      <section className="space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3">
-          <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
-            <Compass className="w-5 h-5 text-amber-500 dark:text-amber-400" />
-            <span>{currentLang === 'ne' ? 'मुख्य नागरिक सेवाहरू' : 'Core Civic & Financial Suite'}</span>
+      <section className="space-y-3">
+        <div className="flex items-center justify-between border-b border-[var(--color-divider)] pb-2">
+          <h2 className="text-sm font-semibold text-[var(--color-text)] flex items-center gap-2">
+            <span>{currentLang === 'ne' ? 'मुख्य नागरिक सेवाहरू' : 'Core Civic & Financial Modules'}</span>
           </h2>
-          <span className="text-xs font-mono text-slate-500 dark:text-slate-400">4 CORE MODULES</span>
+          <span className="text-[10px] font-mono text-[var(--color-text-muted)]">4 CORE MODULES</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Module 1: NEPSE */}
           <div
             onClick={() => handleNav('nepse')}
-            className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
-            }`}
+            className="surface-card p-4 rounded-[10px] cursor-pointer hover:bg-[var(--color-surface-hover)] space-y-2.5 transition-all group"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
-              <TrendingUp className="w-6 h-6" />
+            <div className="w-8 h-8 rounded-[6px] bg-[var(--color-accent-muted)] border border-[var(--color-accent-mark)]/25 flex items-center justify-center text-[var(--color-accent-mark)]">
+              <TrendingUp className="w-4 h-4" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-[var(--color-text)] group-hover:text-[var(--color-accent-mark)] transition-colors flex items-center justify-between">
                 <span>NEPSE Market</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-mark)]" />
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+              <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed">
                 Live indices, top gainers/losers, company profiles, and real-time trading floor updates.
               </p>
             </div>
@@ -259,19 +210,17 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           {/* Module 2: Tax Calc */}
           <div
             onClick={() => handleNav('tax')}
-            className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
-            }`}
+            className="surface-card p-4 rounded-[10px] cursor-pointer hover:bg-[var(--color-surface-hover)] space-y-2.5 transition-all group"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
-              <Receipt className="w-6 h-6" />
+            <div className="w-8 h-8 rounded-[6px] bg-[var(--color-accent-muted)] border border-[var(--color-accent-mark)]/25 flex items-center justify-center text-[var(--color-accent-mark)]">
+              <Receipt className="w-4 h-4" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-[var(--color-text)] group-hover:text-[var(--color-accent-mark)] transition-colors flex items-center justify-between">
                 <span>Income Tax Engine</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-mark)]" />
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+              <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed">
                 Automated IRD tax calculations for individual and married income slabs with e-PAN guidance.
               </p>
             </div>
@@ -280,19 +229,17 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
           {/* Module 3: Forex & Gold */}
           <div
             onClick={() => handleNav('forex')}
-            className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
-            }`}
+            className="surface-card p-4 rounded-[10px] cursor-pointer hover:bg-[var(--color-surface-hover)] space-y-2.5 transition-all group"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
-              <Landmark className="w-6 h-6" />
+            <div className="w-8 h-8 rounded-[6px] bg-[var(--color-accent-muted)] border border-[var(--color-accent-mark)]/25 flex items-center justify-center text-[var(--color-accent-mark)]">
+              <Landmark className="w-4 h-4" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-[var(--color-text)] group-hover:text-[var(--color-accent-mark)] transition-colors flex items-center justify-between">
                 <span>NRB Forex & Commodities</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-mark)]" />
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+              <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed">
                 Official Nepal Rastra Bank exchange rates, gold/silver bullion, and NOC fuel prices.
               </p>
             </div>
@@ -300,20 +247,18 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
 
           {/* Module 4: Gov Portals */}
           <div
-            onClick={() => handleNav('gov-services')}
-            className={`p-6 rounded-3xl border cursor-pointer transition-all hover:border-amber-500/50 hover:shadow-xl space-y-4 group ${
-              isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 shadow-xs'
-            }`}
+            onClick={() => handleNav('services')}
+            className="surface-card p-4 rounded-[10px] cursor-pointer hover:bg-[var(--color-surface-hover)] space-y-2.5 transition-all group"
           >
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500 dark:text-amber-400 group-hover:scale-110 transition-all">
-              <Building2 className="w-6 h-6" />
+            <div className="w-8 h-8 rounded-[6px] bg-[var(--color-accent-muted)] border border-[var(--color-accent-mark)]/25 flex items-center justify-center text-[var(--color-accent-mark)]">
+              <Building2 className="w-4 h-4" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-black text-lg text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-[var(--color-text)] group-hover:text-[var(--color-accent-mark)] transition-colors flex items-center justify-between">
                 <span>Government Services</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-amber-500" />
+                <ArrowUpRight className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent-mark)]" />
               </h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+              <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed">
                 Direct access to Nagarik App, Lok Sewa, Bluebook tax guidance, and official ministry portals.
               </p>
             </div>
@@ -323,5 +268,3 @@ export const CinematicHimalayanHero: React.FC<CinematicHimalayanHeroProps> = ({
     </div>
   );
 };
-
-

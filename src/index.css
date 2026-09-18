@@ -2,361 +2,277 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@layer base {
-  :root {
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-display: 'Outfit', 'Plus Jakarta Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+/* =========================================================================
+   SAARTHI DESIGN SYSTEM — PATRO SKIN SYSTEM PALETTE (INSPIRATION: SAJILO)
+   Precision solid opaque surfaces, system fonts, Gilt gold & Sindoor red
+   ========================================================================= */
 
-    /* SAARTHI Permanent Dim Dark Mode Tokens (Deep Obsidian / Matrix Slate) */
-    --strix-bg: #0a0b0d;
-    --strix-panel: #14161b;
-    --strix-panel-hover: #1b1e24;
-    --strix-border: #262a31;
-    --strix-border-strong: #383d47;
-    --strix-text: #edeef0;
-    --strix-text-secondary: #cbd5e1;
-    --strix-muted: #8b909b;
-    --strix-accent: #00e599;
-    --strix-accent-glow: rgba(0, 229, 153, 0.18);
-    --strix-card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+:root {
+  /* Dark Mode Default (Sajilo Patro Canvas & Surfaces) */
+  --color-canvas: #1c1c1e;
+  --color-chrome: #1c1c1e;
+  --color-surface: #2c2c2e;
+  --color-surface-raised: #2c2c2e;
+  --color-surface-hover: #3a3a3c;
+  --color-surface-subtle: #242426;
+  
+  --color-border: #38383a;
+  --color-border-muted: #2f2f31;
+  --color-divider: #2f2f31;
+
+  --color-text: #f5f5f7;
+  --color-text-secondary: #aeaeb2;
+  --color-text-muted: #98989d;
+
+  --color-accent: #d4a84a;
+  --color-accent-mark: #d4a84a;
+  --color-accent-fill: #d4a84a;
+  --color-accent-ink: #1c1c1e;
+  --color-accent-muted: rgba(212, 168, 74, 0.14);
+
+  --color-holiday: #ff6a52;
+  --color-positive: #4ecf8a;
+  --color-negative: #ff6a52;
+
+  --color-weather-tint: #6aa9dd;
+  --color-forex-tint: #5cc79b;
+
+  --color-control-bg: #1c1c1e;
+  --color-control-border: #48484a;
+  --color-control-inset: inset 0 1px 0 rgb(255 255 255 / 3%);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 24%);
+  --shadow-card-hover: 0 2px 5px rgb(0 0 0 / 30%);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-card: 10px;
+}
+
+/* Light Theme Variables */
+:root.light,
+html[data-theme="light"],
+body[data-theme="light"] {
+  --color-canvas: #f2f2f7;
+  --color-chrome: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-surface-hover: #e8e8ed;
+  --color-surface-subtle: #f8f8fa;
+
+  --color-border: #d8d8dd;
+  --color-border-muted: #e3e3e8;
+  --color-divider: #e3e3e8;
+
+  --color-text: #1d1d1f;
+  --color-text-secondary: #545458;
+  --color-text-muted: #6e6e73;
+
+  --color-accent: #8a6414;
+  --color-accent-mark: #8a6414;
+  --color-accent-fill: #8a6414;
+  --color-accent-ink: #ffffff;
+  --color-accent-muted: rgba(138, 100, 20, 0.10);
+
+  --color-holiday: #c93a22;
+  --color-positive: #0f7a3d;
+  --color-negative: #c93a22;
+
+  --color-weather-tint: #2f6fa8;
+  --color-forex-tint: #1a7f52;
+
+  --color-control-bg: #ffffff;
+  --color-control-border: #c6c6cb;
+  --color-control-inset: inset 0 1px 1px rgb(0 0 0 / 4%);
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 6%);
+  --shadow-card-hover: 0 2px 4px rgb(0 0 0 / 10%);
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
   }
 
   html {
-    color-scheme: dark !important;
-    background-color: #0a0b0d;
+    color-scheme: dark light;
+    background-color: var(--color-canvas);
+    color: var(--color-text);
   }
 
   body {
-    font-family: var(--font-sans);
-    letter-spacing: -0.015em;
-    overflow-x: hidden;
-    background-color: #0a0b0d;
-    color: #edeef0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Noto Sans Devanagari", sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    letter-spacing: -0.011em;
+    background-color: var(--color-canvas);
+    color: var(--color-text);
     min-height: 100vh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: var(--font-display);
-    letter-spacing: -0.025em;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Noto Sans Devanagari", sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 600;
   }
 
   code, kbd, pre, .font-mono, [data-mono="true"] {
-    font-family: var(--font-mono);
+    font-family: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   }
 
-  input, select, textarea {
-    background-color: #14161b;
-    color: #edeef0;
-    border-color: #262a31;
-  }
-
-  input::placeholder, textarea::placeholder {
-    color: #8b909b;
+  /* Focus ring following macOS system specs */
+  :where(button, a, [role="button"], [tabindex]:not([tabindex="-1"]), summary, input, select, textarea):focus-visible {
+    outline: 2px solid var(--color-accent-mark);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 }
 
 /* =========================================================================
-   PERMANENT OBSIDIAN & DIM DARK SYSTEM
+   PRECISION COMPONENTS & SURFACES (SAJILO DESIGN SYSTEM)
    ========================================================================= */
-html {
-  background-color: #0a0b0d !important;
+
+/* Solid Opaque Surface Card */
+.surface-card {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-/* =========================================================================
-   ADAPTIVE SURFACE CLASSES (SAARTHI DESIGN SYSTEM)
-   ========================================================================= */
-.strix-bg {
-  background-color: var(--strix-bg);
+.surface-card:hover {
+  background-color: var(--color-surface-hover);
+  box-shadow: var(--shadow-card-hover);
 }
 
-.strix-panel {
-  background-color: var(--strix-panel);
-  border: 1px solid var(--strix-border);
-  color: var(--strix-text);
-  box-shadow: var(--strix-card-shadow);
+.surface-card-static {
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
 }
 
-.strix-panel-elevated {
-  background-color: var(--strix-panel-hover);
-  border: 1px solid var(--strix-border-strong);
-  color: var(--strix-text);
+/* Chrome Header & Navigation */
+.header-bar {
+  border-bottom: 1px solid var(--color-divider);
+  background-color: var(--color-chrome);
 }
 
-.strix-card {
-  background-color: var(--strix-panel);
-  border: 1px solid var(--strix-border);
-  border-radius: 1rem;
-  color: var(--strix-text);
-  box-shadow: var(--strix-card-shadow);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+/* macOS NSTextField Controls */
+.control-field {
+  background-color: var(--color-control-bg);
+  border: 1px solid var(--color-control-border);
+  box-shadow: var(--color-control-inset);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 13px;
+  transition: border-color 0.15s ease, outline 0.15s ease;
 }
 
-.strix-card:hover {
-  background-color: var(--strix-panel-hover);
-  border-color: var(--strix-border-strong);
-  transform: translateY(-2px);
-  box-shadow: 0 14px 32px -8px rgba(15, 23, 42, 0.12);
+.control-field:focus {
+  outline: none;
+  border-color: var(--color-accent-mark);
 }
 
-.dark .strix-card:hover {
-  box-shadow: 0 14px 32px -8px rgba(0, 0, 0, 0.6);
+.control-field::placeholder {
+  color: var(--color-text-muted);
 }
 
-/* Buttons */
-.strix-btn-primary {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  color: #ffffff;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.625rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.25);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+/* Live Breathing Status Dot */
+.live-status-dot {
+  position: relative;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--live-dot-color, var(--color-negative));
+  display: inline-block;
 }
 
-.dark .strix-btn-primary {
-  background: #00e599;
-  color: #0a0b0d;
-  box-shadow: 0 0 20px rgba(0, 229, 153, 0.3);
+.live-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid var(--live-dot-color, var(--color-negative));
+  border-radius: inherit;
+  animation: live-status-breathe 2.2s ease-out infinite;
 }
 
-.strix-btn-primary:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
-}
-
-.strix-btn-ghost {
-  background-color: transparent;
-  color: var(--strix-text);
-  font-weight: 600;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.03em;
-  padding: 0.625rem 1.25rem;
-  border: 1px solid var(--strix-border-strong);
-  border-radius: 0.625rem;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.strix-btn-ghost:hover {
-  background-color: var(--strix-panel-hover);
-  border-color: var(--strix-muted);
-  color: var(--strix-text);
-  transform: translateY(-1px);
-}
-
-/* Badges & Status Pills */
-.strix-pill-eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 9999px;
-  background-color: rgba(4, 120, 87, 0.08);
-  border: 1px solid rgba(4, 120, 87, 0.25);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #047857;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.dark .strix-pill-eyebrow {
-  background-color: rgba(0, 229, 153, 0.1);
-  border-color: rgba(0, 229, 153, 0.3);
-  color: #00e599;
-}
-
-.strix-badge-ok {
-  background-color: rgba(4, 120, 87, 0.08);
-  color: #047857;
-  border: 1px solid rgba(4, 120, 87, 0.25);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.dark .strix-badge-ok {
-  background-color: rgba(0, 229, 153, 0.1);
-  color: #00e599;
-  border-color: rgba(0, 229, 153, 0.3);
-}
-
-.strix-badge-warning {
-  background-color: rgba(217, 119, 6, 0.1);
-  color: #b45309;
-  border: 1px solid rgba(217, 119, 6, 0.3);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.dark .strix-badge-warning {
-  background-color: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.strix-badge-muted {
-  background-color: var(--strix-panel-hover);
-  color: var(--strix-text-secondary);
-  border: 1px solid var(--strix-border);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.2rem 0.6rem;
-  border-radius: 9999px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.strix-live-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 9999px;
-  background-color: #059669;
-  box-shadow: 0 0 8px #059669;
-  animation: strixPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.dark .strix-live-dot {
-  background-color: #00e599;
-  box-shadow: 0 0 8px #00e599;
-}
-
-@keyframes strixPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+@keyframes live-status-breathe {
+  0% {
+    opacity: 0.65;
+    transform: scale(0.55);
   }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.85);
+  75%,
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
   }
 }
 
-/* Custom Scrollbars */
-.custom-scrollbar::-webkit-scrollbar {
+@media (prefers-reduced-motion: reduce) {
+  .live-status-dot::after {
+    animation: none;
+    opacity: 0.35;
+  }
+}
+
+/* Native-style Pills & Badges */
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.badge-pill-accent {
+  background-color: var(--color-accent-muted);
+  color: var(--color-accent-mark);
+  border: 1px solid color-mix(in srgb, var(--color-accent-mark) 35%, transparent);
+}
+
+.badge-pill-neutral {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.badge-pill-positive {
+  background-color: color-mix(in srgb, var(--color-positive) 15%, transparent);
+  color: var(--color-positive);
+  border: 1px solid color-mix(in srgb, var(--color-positive) 30%, transparent);
+}
+
+.badge-pill-negative {
+  background-color: color-mix(in srgb, var(--color-negative) 15%, transparent);
+  color: var(--color-negative);
+  border: 1px solid color-mix(in srgb, var(--color-negative) 30%, transparent);
+}
+
+/* Compact Scrollbar */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-text-muted) 35%, transparent);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
   background: transparent;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.3);
-  border-radius: 9999px;
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.5);
-}
-
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Raycast / Glass Surface System (Adaptive) */
-.vision-glass-dark {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
-}
-
-.dark .vision-glass-dark {
-  background: rgba(10, 11, 13, 0.9);
-  border-color: #262a31;
-  color: #edeef0;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
-}
-
-.raycast-card-dark {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
-}
-
-.dark .raycast-card-dark {
-  background: #14161b;
-  border-color: #262a31;
-  color: #edeef0;
-}
-
-.raycast-card-dark:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.dark .raycast-card-dark:hover {
-  background: #1b1e24;
-  border-color: #383d47;
-}
-
-.raycast-kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: 4px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-}
-
-.dark .raycast-kbd {
-  background: #1b1e24;
-  border-color: #262a31;
-  color: #8b909b;
-}
-
-/* Shimmer Loading Animation */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 2.5s infinite;
 }
