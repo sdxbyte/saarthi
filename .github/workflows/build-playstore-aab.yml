@@ -122,7 +122,7 @@ jobs:
               m.iconUrl = 'http://127.0.0.1:8787/pwa-512x512.png';
               m.maskableIconUrl = 'http://127.0.0.1:8787/pwa-maskable-512x512.png';
               if (Array.isArray(m.shortcuts)) {
-                m.shortcuts = m.shortcuts.map((s) => ({ ...s, icon: 'http://127.0.0.1:8787/pwa-192x192.png' }));
+                m.shortcuts = m.shortcuts.map((s) => ({ ...s, chosenIconUrl: 'http://127.0.0.1:8787/pwa-192x192.png' }));
               }
             }
             fs.writeFileSync(p, JSON.stringify(m, null, 2));

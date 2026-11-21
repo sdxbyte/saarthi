@@ -25,27 +25,27 @@
   "shortcuts": [
     {
       "name": "Nepali Calendar",
-      "short_name": "Calendar",
+      "shortName": "Calendar",
       "url": "/?tab=calendar",
-      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
+      "chosenIconUrl": "https://saarthi.dpdns.org/pwa-192x192.png"
     },
     {
       "name": "NRB Forex Rates",
-      "short_name": "Forex",
+      "shortName": "Forex",
       "url": "/?tab=forex",
-      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
+      "chosenIconUrl": "https://saarthi.dpdns.org/pwa-192x192.png"
     },
     {
       "name": "NEPSE Market",
-      "short_name": "NEPSE",
+      "shortName": "NEPSE",
       "url": "/?tab=nepse",
-      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
+      "chosenIconUrl": "https://saarthi.dpdns.org/pwa-192x192.png"
     },
     {
       "name": "Report an Issue",
-      "short_name": "Support",
+      "shortName": "Support",
       "url": "/?tab=contact",
-      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
+      "chosenIconUrl": "https://saarthi.dpdns.org/pwa-192x192.png"
     }
   ],
   "generatorApp": "bubblewrap-cli",
