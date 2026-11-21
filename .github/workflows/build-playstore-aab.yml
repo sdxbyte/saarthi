@@ -28,9 +28,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK (API 35)
-        uses: android-actions/setup-android@v3
-
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
@@ -46,19 +43,36 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli@1.27.0
 
-      - name: Configure Bubblewrap & Android API 35 SDK
+      - name: Configure Bubblewrap & Android SDK (API 35 & Build Tools 36.1.0)
         run: |
+          SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          if [ ! -d "$SDK_DIR" ]; then
+            echo "ERROR: Android SDK directory not found at $SDK_DIR"
+            exit 1
+          fi
+          echo "ANDROID_HOME=$SDK_DIR" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_DIR" >> "$GITHUB_ENV"
+
+          SDKMANAGER=$(find "$SDK_DIR/cmdline-tools" -type f -name "sdkmanager" 2>/dev/null | sort -V | tail -n 1)
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER=$(find "$SDK_DIR" -type f -name "sdkmanager" 2>/dev/null | head -n 1)
+          fi
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager binary not found inside $SDK_DIR"
+            exit 1
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+
           mkdir -p ~/.bubblewrap
           cat <<EOF > ~/.bubblewrap/config.json
           {
             "jdkPath": "${JAVA_HOME}",
-            "androidSdkPath": "${ANDROID_HOME}"
+            "androidSdkPath": "${SDK_DIR}"
           }
           EOF
 
-          export PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/tools/bin:${PATH}"
-          (yes || true) | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+          (yes || true) | "$SDKMANAGER" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
+          "$SDKMANAGER" --sdk_root="$SDK_DIR" "platforms;android-35" "platforms;android-36" "build-tools;35.0.0" "build-tools;36.1.0" "platform-tools"
 
       - name: Prepare Signing Keystore (Zero Secrets Needed for Public APK)
         id: keystore
