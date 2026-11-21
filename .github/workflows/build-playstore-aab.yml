@@ -62,6 +62,10 @@ jobs:
             exit 1
           fi
           echo "Using sdkmanager: $SDKMANAGER"
+          # Bubblewrap CLI 1.27.0 checks for $ANDROID_HOME/bin or $ANDROID_HOME/tools
+          if [ ! -e "$SDK_DIR/bin" ] && [ ! -e "$SDK_DIR/tools" ]; then
+            ln -sfn "$(dirname "$SDKMANAGER")" "$SDK_DIR/bin"
+          fi
 
           mkdir -p ~/.bubblewrap
           cat <<EOF > ~/.bubblewrap/config.json
