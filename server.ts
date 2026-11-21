@@ -3,7 +3,7 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { app } from './src/serverApp';
 import { getSqliteDb, migrateLegacyJsonToDb } from './src/db/persistentStore';
-import { verifyGitHubConnection } from './src/services/githubSyncService';
+import { loadServerGitHubConfig, verifyGitHubConnection } from './src/services/githubSyncService';
 import { allSiteHubSyncEngine } from './src/services/allSiteHubSyncService';
 
 const PORT = 3000;
@@ -18,17 +18,22 @@ async function startServer() {
     console.error('[SAARTHI Datastore] Hydration initialization notice:', err);
   }
 
-  // Verify persistent GitHub PAT connection on startup and set periodic sync health check
+  // Verify persistent GitHub PAT connection on startup (non-blocking optional integration)
   setTimeout(async () => {
     try {
+      const cfg = loadServerGitHubConfig();
+      if (!cfg) {
+        console.log('[SAARTHI GitHub Engine] Standby: No server-side GitHub PAT configured.');
+        return;
+      }
       const ghCheck = await verifyGitHubConnection();
       if (ghCheck.success) {
-        console.log(`[SAARTHI GitHub Engine] ✅ Verified Active PAT for user: ${ghCheck.user}, repo access: ${ghCheck.repoAccess}`);
+        console.log(`[SAARTHI GitHub Engine] Verified Active PAT for user: ${ghCheck.user}, repo access: ${ghCheck.repoAccess}`);
       } else {
-        console.warn(`[SAARTHI GitHub Engine] ⚠️ Notice: ${ghCheck.message}`);
+        console.log('[SAARTHI GitHub Engine] Standby: Server-side GitHub auto-sync inactive (update PAT in Admin Command Center to enable automatic sync).');
       }
-    } catch (e: any) {
-      console.warn('[SAARTHI GitHub Engine] Startup check notice:', e?.message);
+    } catch {
+      console.log('[SAARTHI GitHub Engine] Standby: Startup verification skipped.');
     }
   }, 2000);
 
