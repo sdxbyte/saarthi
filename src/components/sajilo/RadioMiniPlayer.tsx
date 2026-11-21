@@ -17,7 +17,7 @@ export const RadioMiniPlayer: React.FC<RadioMiniPlayerProps> = ({ onOpenRadioTab
   return (
     <aside
       aria-label="Live Radio Mini Player"
-      className="fixed bottom-4 right-4 z-50 max-w-sm sm:max-w-md w-[calc(100vw-2rem)] bg-[#14161b]/95 backdrop-blur-md border border-[#00e599]/40 rounded-xl shadow-2xl p-3 text-[#edeef0] transition-all duration-300 animate-in fade-in slide-in-from-bottom-3"
+      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-50 max-w-sm sm:max-w-md w-[calc(100vw-2rem)] bg-[#14161b]/95 backdrop-blur-md border border-[#00e599]/40 rounded-xl shadow-2xl p-3 text-[#edeef0] transition-all duration-300 animate-in fade-in slide-in-from-bottom-3"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left: Station Info & Equalizer */}

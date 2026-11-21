@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, TrendingUp, FileText, ArrowRight, CornerDownLeft, Star, ChevronRight, Layers } from 'lucide-react';
+import { Search, X, TrendingUp, FileText, ArrowRight, CornerDownLeft, Star, ChevronRight, Layers, Globe, ExternalLink, Film } from 'lucide-react';
 import { searchServices, getCategoryById } from '../../services/serviceRegistry';
 import { MOCK_STOCKS } from '../../data/nepseData';
 import { MOCK_GOV_SERVICES } from '../../data/governmentData';
+import { CURATED_USEFUL_LINKS } from '../../data/sajiloLinksData';
+import { ALLSITEHUB_SITES } from '../../data/allSiteHubData';
+import { OSINT4ALL_TOOLS } from '../../data/osint4allData';
 import { ServiceDefinition } from '../../types/serviceRegistry';
 
 interface GlobalSearchModalProps {
@@ -71,6 +74,38 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
         (g) =>
           g.title.toLowerCase().includes(cleanQuery) ||
           g.titleNp.includes(cleanQuery)
+      )
+    : [];
+
+  const matchingLinks = cleanQuery
+    ? CURATED_USEFUL_LINKS.filter(
+        (l) =>
+          l.title.toLowerCase().includes(cleanQuery) ||
+          (l.titleNp && l.titleNp.toLowerCase().includes(cleanQuery)) ||
+          l.tags.some((t) => t.toLowerCase().includes(cleanQuery)) ||
+          l.descriptionEn.toLowerCase().includes(cleanQuery)
+      )
+    : [];
+
+  const matchingSiteHub = cleanQuery
+    ? ALLSITEHUB_SITES.filter(
+        (s) =>
+          s.name.toLowerCase().includes(cleanQuery) ||
+          s.domain.toLowerCase().includes(cleanQuery) ||
+          s.category.toLowerCase().includes(cleanQuery) ||
+          s.description.toLowerCase().includes(cleanQuery) ||
+          s.tags.some((t) => t.toLowerCase().includes(cleanQuery))
+      )
+    : [];
+
+  const matchingOsint = cleanQuery
+    ? OSINT4ALL_TOOLS.filter(
+        (t) =>
+          t.name.toLowerCase().includes(cleanQuery) ||
+          t.domain.toLowerCase().includes(cleanQuery) ||
+          t.categoryLabel.toLowerCase().includes(cleanQuery) ||
+          t.description.toLowerCase().includes(cleanQuery) ||
+          t.tags.some((tag) => tag.toLowerCase().includes(cleanQuery))
       )
     : [];
 
@@ -214,6 +249,108 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                       <div className="text-[11px] text-slate-400">{g.department}</div>
                     </div>
                     <CornerDownLeft className="w-4 h-4 text-slate-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Direct Curated Web & FMHY Resource Hits */}
+          {matchingLinks.length > 0 && (
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                <span>{currentLang === 'ne' ? 'उपयोगी लिङ्कहरू र खुला स्रोत हब' : 'Curated Web Links & FMHY'}</span>
+              </div>
+              <div className="space-y-1.5">
+                {matchingLinks.slice(0, 4).map((l) => (
+                  <div
+                    key={l.id}
+                    onClick={() => handleSearchSelect('useful-links', l.title)}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 hover:border-cyan-500/50 cursor-pointer flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <div className="font-semibold text-white text-xs sm:text-sm truncate">
+                          {currentLang === 'ne' ? l.titleNp || l.title : l.title}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {l.url} • {l.authorOrSource}
+                        </div>
+                      </div>
+                    </div>
+                    <CornerDownLeft className="w-4 h-4 text-slate-500 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Direct AllSiteHub Platform Hits */}
+          {matchingSiteHub.length > 0 && (
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Film className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{currentLang === 'ne' ? 'AllSiteHub स्ट्रिमिङ तथा मिडिया हब' : 'AllSiteHub Platforms'} ({matchingSiteHub.length})</span>
+              </div>
+              <div className="space-y-1.5">
+                {matchingSiteHub.slice(0, 4).map((s) => (
+                  <div
+                    key={s.id}
+                    onClick={() => handleSearchSelect('sitehub', s.name)}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 hover:border-emerald-500/50 cursor-pointer flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                        <Film className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <div className="font-semibold text-white text-xs sm:text-sm truncate">
+                          {s.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {s.domain} • {s.category} ({s.regions.join(', ')})
+                        </div>
+                      </div>
+                    </div>
+                    <CornerDownLeft className="w-4 h-4 text-slate-500 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Direct OSINT4ALL Hits */}
+          {matchingOsint.length > 0 && (
+            <div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-amber-400" />
+                <span>{currentLang === 'ne' ? 'OSINT4ALL अनुसन्धान औजार' : 'OSINT4ALL Tools'} ({matchingOsint.length})</span>
+              </div>
+              <div className="space-y-1.5">
+                {matchingOsint.slice(0, 4).map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => handleSearchSelect('osint4all', t.name)}
+                    className="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 hover:border-amber-500/50 cursor-pointer flex items-center justify-between transition-all"
+                  >
+                    <div className="flex items-center gap-2.5 overflow-hidden">
+                      <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <div className="font-semibold text-white text-xs sm:text-sm truncate">
+                          {t.name}
+                        </div>
+                        <div className="text-[11px] text-slate-400 truncate">
+                          {t.domain} • {t.categoryLabel}
+                        </div>
+                      </div>
+                    </div>
+                    <CornerDownLeft className="w-4 h-4 text-slate-500 shrink-0" />
                   </div>
                 ))}
               </div>

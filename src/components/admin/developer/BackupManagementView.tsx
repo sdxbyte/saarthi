@@ -761,7 +761,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
                 <a
                   href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=SAARTHI+Platform+Backup"
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="px-2.5 py-1 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition-all flex items-center gap-1 text-[10px]"
                 >
                   <span>1-Click Generate Token</span>

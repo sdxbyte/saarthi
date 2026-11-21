@@ -133,6 +133,12 @@ export const EmiCalculatorView: React.FC<EmiCalculatorViewProps> = ({ currentLan
                 Interest ({Math.round((emiResult.totalInterest / emiResult.totalPayment) * 100)}%)
               </span>
             </div>
+            <p className="text-[11px] text-slate-400 pt-2 border-t border-slate-800 leading-relaxed flex items-start gap-1.5">
+              <Info className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+              <span>
+                Informational estimate only — not financial or lending advice. SAARTHI does not originate loans; actual EMI and fees depend on your bank&apos;s sanctioned terms.
+              </span>
+            </p>
           </div>
         </div>
       </div>

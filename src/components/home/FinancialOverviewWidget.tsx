@@ -164,63 +164,42 @@ export const FinancialOverviewWidget: React.FC<FinancialOverviewWidgetProps> = (
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="pt-4 pb-6 flex items-center gap-2 overflow-x-auto no-scrollbar">
-        <button
-          onClick={() => setActiveTab('gold')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shrink-0 ${
-            activeTab === 'gold'
-              ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 shadow-md font-extrabold'
-              : isDark
-              ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          <Coins className="w-4 h-4" />
-          <span>{currentLang === 'ne' ? 'सुन/चाँदी मूल्य' : 'Gold & Silver Rates'}</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('forex')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shrink-0 ${
-            activeTab === 'forex'
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-md font-extrabold'
-              : isDark
-              ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>{currentLang === 'ne' ? 'विदेशी मुद्रा विनिमय (Forex)' : 'Forex Exchange Rates'}</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('banking')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shrink-0 ${
-            activeTab === 'banking'
-              ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md font-extrabold'
-              : isDark
-              ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          <Landmark className="w-4 h-4" />
-          <span>{currentLang === 'ne' ? 'बैंक ब्याजदर र आधार दर' : 'Banking Interest Rates'}</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('fuel')}
-          className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 shrink-0 ${
-            activeTab === 'fuel'
-              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-md font-extrabold'
-              : isDark
-              ? 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          <Flame className="w-4 h-4 text-orange-400" />
-          <span>{currentLang === 'ne' ? 'नेपाल आयल निगम इन्धन दर' : 'NOC Fuel Tariffs'}</span>
-        </button>
+      {/* Navigation Tabs with ai2.design Spring Glider */}
+      <div className="pt-4 pb-6">
+        <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md scrollbar-none">
+          {[
+            { id: 'gold', label: currentLang === 'ne' ? 'सुन/चाँदी मूल्य' : 'Gold & Silver Rates', icon: Coins, activeClass: 'text-amber-300 font-bold', highlight: 'bg-amber-500/20 border-amber-500/40' },
+            { id: 'forex', label: currentLang === 'ne' ? 'विदेशी मुद्रा विनिमय (Forex)' : 'Forex Exchange Rates', icon: DollarSign, activeClass: 'text-emerald-300 font-bold', highlight: 'bg-emerald-500/20 border-emerald-500/40' },
+            { id: 'banking', label: currentLang === 'ne' ? 'बैंक ब्याजदर र आधार दर' : 'Banking Interest Rates', icon: Landmark, activeClass: 'text-blue-300 font-bold', highlight: 'bg-blue-500/20 border-blue-500/40' },
+            { id: 'fuel', label: currentLang === 'ne' ? 'नेपाल आयल निगम इन्धन दर' : 'NOC Fuel Tariffs', icon: Flame, activeClass: 'text-rose-300 font-bold', highlight: 'bg-rose-500/20 border-rose-500/40' },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className="relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs whitespace-nowrap cursor-pointer transition-colors shrink-0"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="financialTabGlider"
+                    className={`absolute inset-0 border rounded-lg shadow-xs ${tab.highlight}`}
+                    transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
+                  />
+                )}
+                <span
+                  className={`relative z-10 flex items-center gap-2 transition-colors ${
+                    isActive ? tab.activeClass : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span>{tab.label}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* TAB CONTENT 1: GOLD & SILVER RATES */}

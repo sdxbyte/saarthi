@@ -1,6 +1,8 @@
 // SAARTHI Master Routing Engine (Rule 8: Proper Application Routing & Unified Service Grouping)
 export type AppTabRoute =
+  | 'home'
   | 'dashboard'
+  | 'explore'
   | 'modules'
   | 'services'
   | 'finance'
@@ -11,6 +13,8 @@ export type AppTabRoute =
   | 'account'
   | 'nepse'
   | 'forex'
+  | 'gold'
+  | 'fuel'
   | 'vault'
   | 'bluebook'
   | 'tax'
@@ -32,15 +36,31 @@ export type AppTabRoute =
   | 'devtrack'
   | 'public-apis'
   | 'account-deletion'
-  | 'sajilo';
+  | 'sajilo'
+  | 'links'
+  | 'sitehub'
+  | 'osint4all';
 
 export const ROUTE_PATH_MAP: Record<string, AppTabRoute> = {
-  '/': 'dashboard',
-  '/home': 'dashboard',
+  '/': 'home',
+  '/home': 'home',
+  '/dashboard': 'home',
+  '/explore': 'explore',
+  '/projects': 'explore',
+  '/index': 'explore',
   '/services': 'services',
   '/directory': 'services',
-  '/modules': 'modules',
+  '/modules': 'explore',
   '/sajilo': 'sajilo',
+  '/links': 'links',
+  '/resources': 'links',
+  '/fmhy': 'links',
+  '/sitehub': 'sitehub',
+  '/allsitehub': 'sitehub',
+  '/osint4all': 'osint4all',
+  '/osint': 'osint4all',
+  '/media': 'sitehub',
+  '/streaming': 'sitehub',
   '/daily': 'sajilo',
   '/bazar': 'sajilo',
   '/kalimati': 'sajilo',
@@ -55,15 +75,16 @@ export const ROUTE_PATH_MAP: Record<string, AppTabRoute> = {
   '/market': 'nepse',
   '/banking': 'forex',
   '/forex': 'forex',
-  '/gold': 'forex',
-  '/fuel': 'forex',
+  '/gold': 'gold',
+  '/silver': 'gold',
+  '/fuel': 'fuel',
   '/tax': 'tax',
   '/ird': 'ird',
   '/emi': 'emi',
   '/receipt': 'receipt',
 
-  // Documents Group
-  '/documents': 'documents',
+  // Documents & Transport Group
+  '/documents': 'vault',
   '/vault': 'vault',
   '/bluebook': 'bluebook',
   '/dotm': 'bluebook',
@@ -72,18 +93,22 @@ export const ROUTE_PATH_MAP: Record<string, AppTabRoute> = {
   '/yatayat': 'bluebook',
 
   // Civic Group
-  '/civic': 'civic',
-  '/government': 'civic',
+  '/civic': 'services',
+  '/government': 'services',
   '/loksewa': 'loksewa',
   '/jobs': 'loksewa',
   '/devtrack': 'devtrack',
+  '/laws': 'services',
 
   // News Group
-  '/news': 'news',
+  '/news': 'services',
 
   // Tools Group
   '/tools': 'tools',
+  '/utilities': 'tools',
   '/calendar': 'calendar',
+  '/patro': 'calendar',
+  '/converter': 'calendar',
   '/rashifal': 'rashifal',
   '/horoscope': 'rashifal',
   '/panchanga': 'rashifal',
@@ -109,18 +134,22 @@ export const ROUTE_PATH_MAP: Record<string, AppTabRoute> = {
 };
 
 export const TAB_PATH_MAP: Record<AppTabRoute, string> = {
+  home: '/',
   dashboard: '/',
-  modules: '/services',
+  explore: '/explore',
+  modules: '/explore',
   services: '/services',
   finance: '/finance',
-  documents: '/documents',
-  civic: '/civic',
-  news: '/news',
+  documents: '/vault',
+  civic: '/services',
+  news: '/services',
   tools: '/tools',
   account: '/account',
   nepse: '/nepse',
   forex: '/forex',
-  vault: '/documents',
+  gold: '/gold',
+  fuel: '/fuel',
+  vault: '/vault',
   bluebook: '/bluebook',
   tax: '/tax',
   ird: '/ird',
@@ -136,23 +165,48 @@ export const TAB_PATH_MAP: Record<AppTabRoute, string> = {
   contact: '/contact',
   terms: '/terms',
   privacy: '/privacy',
-  emergency: '/emergency',
+  emergency: '/services',
   rashifal: '/rashifal',
   devtrack: '/devtrack',
   'public-apis': '/public-apis',
   'account-deletion': '/account-deletion',
   sajilo: '/sajilo',
+  links: '/links',
+  sitehub: '/sitehub',
+  osint4all: '/osint4all',
 };
 
-export function getTabFromPath(pathname: string): AppTabRoute {
+const QUERY_TAB_ALIASES: Record<string, AppTabRoute> = {
+  'calendar-bs-ad': 'calendar',
+  stocks: 'nepse',
+  'cdsc-ipo-result': 'nepse',
+  dashboard: 'home',
+};
+
+export function getTabFromPath(pathname: string, search: string = ''): AppTabRoute {
+  if (search) {
+    const params = new URLSearchParams(search);
+    const tabParam = (params.get('tab') || '').trim().toLowerCase();
+    if (tabParam) {
+      if (QUERY_TAB_ALIASES[tabParam]) {
+        return QUERY_TAB_ALIASES[tabParam];
+      }
+      if (TAB_PATH_MAP[tabParam as AppTabRoute]) {
+        return tabParam as AppTabRoute;
+      }
+      if (ROUTE_PATH_MAP[`/${tabParam}`]) {
+        return ROUTE_PATH_MAP[`/${tabParam}`];
+      }
+    }
+  }
   const cleanPath = pathname.toLowerCase().replace(/\/$/, '') || '/';
   if (ROUTE_PATH_MAP[cleanPath]) {
     return ROUTE_PATH_MAP[cleanPath];
   }
   if (cleanPath.startsWith('/admin')) {
-    return 'dashboard';
+    return 'home';
   }
-  return 'dashboard';
+  return 'home';
 }
 
 export function syncUrlWithTab(tab: AppTabRoute) {

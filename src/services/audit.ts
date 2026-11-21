@@ -19,7 +19,9 @@ export interface SystemAuditEvent {
     | 'SYSTEM_INITIALIZATION'
     | 'USER_ACTION'
     | 'ADMIN_ACTION'
-    | 'SYSTEM_EVENT';
+    | 'SYSTEM_EVENT'
+    | 'FAILED_LOGIN'
+    | 'SUPPORT_REQUEST';
   sourceId?: string;
   actor: string; // 'SYSTEM_ENGINE' or User ID
   action: string;

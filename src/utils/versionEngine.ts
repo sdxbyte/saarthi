@@ -29,19 +29,42 @@ export interface ReleaseNoteItem {
 }
 
 export const CURRENT_VERSION_INFO: PlatformVersionInfo = {
-  version: 'v1.6.2',
-  buildNumber: 262,
-  releaseId: 'REL-20260819-262',
-  releaseDateAd: '2026-08-19',
-  releaseDateBs: '2083-05-04',
-  releaseTime: '13:30 NPT',
+  version: 'v1.7.0',
+  buildNumber: 270,
+  releaseId: 'REL-20260919-270',
+  releaseDateAd: '2026-09-19',
+  releaseDateBs: '2083-06-03',
+  releaseTime: '13:45 NPT',
   timezone: 'Asia/Kathmandu (GMT+5:45)',
   environment: 'Production',
-  commitHash: 'a7b3c9f',
-  footerText: 'SAARTHI v1.6.2 • Build #262 • Released 2026-08-19 • BS 2083-05-04',
+  commitHash: 'e9d1f4b',
+  footerText: 'SAARTHI v1.7.0 • Build #270 • Released 2026-09-19 • BS 2083-06-03',
 };
 
 export const RELEASE_HISTORY_CATALOG: ReleaseNoteItem[] = [
+  {
+    id: 'rel-170',
+    version: 'v1.7.0',
+    buildNumber: 270,
+    releaseDateAd: '2026-09-19',
+    releaseDateBs: '2083-06-03',
+    title: 'Curated Links & Web Hub Integration (Sajilo Repo, FMHY Mega Directory & Custom Bookmarks)',
+    whatsNew: [
+      'Added dedicated "Links & Web Hub" tab inside Sajilo Daily Essentials and direct routing (/links, /resources, /fmhy)',
+      'Spotlight integration for Adarsha Acharya’s Sajilo repository (github.com/adarshaacharya/sajilo) with direct GitHub and live links',
+      'Spotlight integration for FMHY (fmhy.net) FreeMediaHeckYeah open-source knowledge and resource mega-directory',
+      'Category-filtered collection across Developer Tools, Privacy, Nepali Open-Source, and Official Government Portals',
+      'Interactive Custom Bookmarks feature allowing citizens to save, search, and manage personal bookmarks locally'
+    ],
+    improvements: [
+      'Integrated quick navigation banner in Sajilo Today overview and primary navigation sidebar',
+      'Synchronized routing engine and breadcrumbs navigation with deep-linking support'
+    ],
+    bugFixes: [],
+    knownIssues: [],
+    isImportant: true,
+    author: 'SAARTHI Core Engineering',
+  },
   {
     id: 'rel-162',
     version: 'v1.6.2',

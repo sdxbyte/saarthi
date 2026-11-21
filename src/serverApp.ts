@@ -2,11 +2,16 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import net from 'net';
+import dns from 'dns/promises';
 import crypto from 'crypto';
 import { execSync } from 'child_process';
 import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import NepaliDate from 'nepali-date-converter';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 import {
   loadServerGitHubConfig,
   saveServerGitHubConfig,
@@ -39,6 +44,9 @@ import {
   getManifestHistoryDbAsync,
   getEmailHistoryDbAsync,
   getAuditLogsDbAsync,
+  createSupportTicketDb,
+  listSupportTicketsDb,
+  updateSupportTicketDb,
 } from './db/persistentStore';
 import {
   runPreSyncReview,
@@ -91,19 +99,55 @@ import { fetchLiveYonepseDisclosures, fetchLiveYonepseNotices } from './services
 import { aiCircuitBreaker } from './services/aiCircuitBreaker';
 import { dataEngine } from './services/dataEngine';
 import { runAllFailureSimulationTests } from './services/failureTestRunner';
+import { allSiteHubSyncEngine } from './services/allSiteHubSyncService';
 
 dotenv.config({ override: true });
 
 export const app = express();
 
-app.use(express.json({ limit: '10mb' }));
+const isProd = process.env.NODE_ENV === 'production';
 
-// Global Security Headers & Strict Static Asset Protection
+app.set('trust proxy', 1);
+app.use(cookieParser());
+app.use(express.json({ limit: '5mb' }));
+
+// Global Security Headers (Helmet CSP, HSTS, Referrer-Policy, X-Frame-Options)
+const frameAncestorsDirective = isProd
+  ? ["'self'"]
+  : ["'self'", 'https://aistudio.google.com', 'https://*.google.com', 'https://*.googleusercontent.com'];
+
+app.use(
+  helmet({
+    frameguard: isProd ? { action: 'sameorigin' } : false,
+    hsts: isProd ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: isProd ? ["'self'", "'unsafe-inline'"] : ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        connectSrc: ["'self'", 'https:', ...(isProd ? [] : ['ws:', 'wss:'])],
+        mediaSrc: ["'self'", 'https:', 'blob:'],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        frameAncestors: frameAncestorsDirective,
+      },
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+
+// Explicit Permissions-Policy & Path Traversal / Sensitive Resource Blocker
 app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(self)');
+  if (isProd) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
 
   // Decode URL safely to prevent encoded path traversal bypasses (%2e%2e, %2f, %5c)
   let decodedUrl = '';
@@ -127,6 +171,7 @@ app.use((req, res, next) => {
     'database/seed.json',
     'database/schema.sql',
     'github-credentials.json',
+    'smtp-credentials.json',
     'credentials.json',
     'server.ts',
     'serverapp.ts',
@@ -137,6 +182,86 @@ app.use((req, res, next) => {
   }
 
   next();
+});
+
+// Explicit Digital Asset Links Route for Android TWA Domain Verification
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  try {
+    const assetLinksPath = path.join(process.cwd(), 'public', '.well-known', 'assetlinks.json');
+    let payload: any[] = [];
+    if (fs.existsSync(assetLinksPath)) {
+      payload = JSON.parse(fs.readFileSync(assetLinksPath, 'utf-8'));
+    } else {
+      payload = [
+        {
+          relation: ['delegate_permission/common.handle_all_urls'],
+          target: {
+            namespace: 'android_app',
+            package_name: 'com.sdxbyte.saarthi',
+            sha256_cert_fingerprints: [],
+          },
+        },
+      ];
+    }
+
+    const envSha = (process.env.ANDROID_PLAY_SIGNING_SHA256 || '').trim();
+    if (envSha && Array.isArray(payload) && payload[0]?.target) {
+      const existing: string[] = Array.isArray(payload[0].target.sha256_cert_fingerprints)
+        ? payload[0].target.sha256_cert_fingerprints
+        : [];
+      if (!existing.includes(envSha)) {
+        payload[0].target.sha256_cert_fingerprints = [envSha, ...existing];
+      }
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.status(200).json(payload);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to serve Digital Asset Links', details: err.message });
+  }
+});
+
+// Input Sanitization & HTML Escaping Helpers
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeTextInput(value: unknown, maxLen: number = 2000): string {
+  return String(value ?? '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    .trim()
+    .slice(0, maxLen);
+}
+
+// Express Rate Limiters (OWASP API4 Protection)
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Please wait 15 minutes before retrying.' },
+});
+
+const publicFormLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { success: false, message: 'Rate limit exceeded. Please wait before submitting another request.' },
+});
+
+const proxyLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { ok: false, status: 429, error: 'Rate limit exceeded for Public API proxy.' },
 });
 
 // Helper: Check if email is an authorized Super Admin / Owner
@@ -188,20 +313,12 @@ export function createAdminSession(user: AdminSession['user']): string {
   return token;
 }
 
+const ADMIN_COOKIE_NAME = 'saarthi_admin_session';
+
 export function validateAdminSession(token?: string): AdminSession['user'] | null {
   if (!token) return null;
   const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
-  if (cleanToken.startsWith('local_token_')) {
-    // Verified client session token with timestamp
-    return {
-      id: 'ADM-SUPER-01',
-      name: 'Super Admin Owner (S. Adhikari)',
-      email: 'sudipadhikari8107@gmail.com',
-      role: 'Super Admin',
-      department: 'Platform Owner & Command Center',
-      permissions: ['all_access', 'manage_roles', 'audit_logs', 'system_config'],
-    };
-  }
+  if (!cleanToken) return null;
   const session = activeAdminSessions.get(cleanToken);
   if (!session) return null;
   if (session.expiresAt < Date.now()) {
@@ -217,11 +334,22 @@ export function revokeAdminSession(token?: string): boolean {
   return activeAdminSessions.delete(cleanToken);
 }
 
+function extractAdminToken(req: express.Request): string {
+  const cookieToken = (req as any).cookies?.[ADMIN_COOKIE_NAME] || '';
+  const authHeader = (req.headers['authorization'] as string) || '';
+  const tokenHeader = (req.headers['x-admin-token'] as string) || '';
+  return authHeader || tokenHeader || cookieToken;
+}
+
+function timingSafeCompare(a: string, b: string): boolean {
+  const hashA = crypto.createHash('sha256').update(a).digest();
+  const hashB = crypto.createHash('sha256').update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
+}
+
 // Middleware: Super Admin Session Authorization Verification
 const verifyAdminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
-  const authHeader = (req.headers['authorization'] as string) || '';
-  const tokenHeader = (req.headers['x-admin-token'] as string) || (req.query.adminToken as string) || '';
-  const token = authHeader || tokenHeader;
+  const token = extractAdminToken(req);
 
   const adminUser = validateAdminSession(token);
   if (adminUser) {
@@ -235,10 +363,35 @@ const verifyAdminAuth = (req: express.Request, res: express.Response, next: expr
   });
 };
 
-// Admin Authentication Endpoints
-app.post('/api/admin/login', async (req, res) => {
+// =========================================================================
+// ALLSITEHUB DIRECTORY SYNC & REGULAR UPDATE APIS
+// =========================================================================
+app.get('/api/sitehub/status', (req, res) => {
+  const status = allSiteHubSyncEngine.getStatus();
+  res.json({ success: true, status });
+});
+
+app.get('/api/sitehub/sites', (req, res) => {
+  const sites = allSiteHubSyncEngine.getSites();
+  const status = allSiteHubSyncEngine.getStatus();
+  res.json({ success: true, count: sites.length, sites, status });
+});
+
+app.post('/api/sitehub/sync', verifyAdminAuth, async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const result = await allSiteHubSyncEngine.syncLiveData('manual');
+    const status = allSiteHubSyncEngine.getStatus();
+    const sites = allSiteHubSyncEngine.getSites();
+    res.json({ ...result, sites, status });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: e.message || 'Sync failed' });
+  }
+});
+
+// Admin Authentication Endpoints
+app.post('/api/admin/login', adminLoginLimiter, async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Username/Email and Password are required.' });
     }
@@ -248,19 +401,29 @@ app.post('/api/admin/login', async (req, res) => {
     const adminEmail = (process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com').toLowerCase();
     const serverAdminPass = process.env.ADMIN_PASSWORD || process.env.SUPER_ADMIN_PASSWORD;
 
-    const isOwner = cleanInput === adminUser || cleanInput === adminEmail || cleanInput === 's.adhikari' || cleanInput === 'sudipadhikari8107@gmail.com';
-    let isPasswordValid = false;
-
-    if (isOwner) {
-      if (serverAdminPass) {
-        isPasswordValid = password === serverAdminPass;
-      } else {
-        // Fallback: require non-empty password of at least 6 characters
-        isPasswordValid = typeof password === 'string' && password.length >= 6;
-      }
+    if (!serverAdminPass || serverAdminPass.trim().length < 6) {
+      return res.status(503).json({
+        success: false,
+        message: 'Server administrator authentication is not configured. Set ADMIN_PASSWORD in environment variables.',
+      });
     }
 
+    const isOwner =
+      cleanInput === adminUser ||
+      cleanInput === adminEmail ||
+      cleanInput === 's.adhikari' ||
+      cleanInput === 'sudipadhikari8107@gmail.com';
+    const isPasswordValid = typeof password === 'string' && timingSafeCompare(password, serverAdminPass);
+
     if (!isOwner || !isPasswordValid) {
+      recordAuditEvent(
+        'FAILED_LOGIN',
+        `Rejected admin login attempt for ${cleanInput}`,
+        { username: cleanInput, ip: req.ip },
+        'SECURITY',
+        undefined,
+        'HIGH'
+      );
       return res.status(401).json({
         success: false,
         message: 'Invalid administrative credentials. Access Denied.',
@@ -270,7 +433,7 @@ app.post('/api/admin/login', async (req, res) => {
     const userProfile = {
       id: 'ADM-SUPER-01',
       name: 'Super Admin Owner (S. Adhikari)',
-      email: 'sudipadhikari8107@gmail.com',
+      email: process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
       role: 'Super Admin' as const,
       department: 'Platform Owner & Command Center',
       permissions: [
@@ -284,6 +447,14 @@ app.post('/api/admin/login', async (req, res) => {
     };
 
     const token = createAdminSession(userProfile);
+
+    res.cookie(ADMIN_COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      maxAge: 24 * 60 * 60 * 1000,
+      path: '/',
+    });
 
     recordAuditEvent(
       'ADMIN_ACTION',
@@ -304,9 +475,7 @@ app.post('/api/admin/login', async (req, res) => {
 });
 
 app.get('/api/admin/verify-session', (req, res) => {
-  const authHeader = (req.headers['authorization'] as string) || '';
-  const tokenHeader = (req.headers['x-admin-token'] as string) || (req.query.adminToken as string) || '';
-  const token = authHeader || tokenHeader;
+  const token = extractAdminToken(req);
 
   const adminUser = validateAdminSession(token);
   if (adminUser) {
@@ -316,10 +485,9 @@ app.get('/api/admin/verify-session', (req, res) => {
 });
 
 app.post('/api/admin/logout', (req, res) => {
-  const authHeader = (req.headers['authorization'] as string) || '';
-  const tokenHeader = req.headers['x-admin-token'] as string;
-  const token = authHeader || tokenHeader;
+  const token = extractAdminToken(req);
   revokeAdminSession(token);
+  res.clearCookie(ADMIN_COOKIE_NAME, { path: '/' });
   return res.json({ success: true, message: 'Session terminated.' });
 });
 
@@ -526,7 +694,7 @@ app.post('/api/smtp/test-email', verifyAdminAuth, async (req, res) => {
           secure: p.secure,
           requireTLS: (p as any).requireTLS,
           auth: { user, pass },
-          tls: { rejectUnauthorized: false },
+          tls: { minVersion: 'TLSv1.2' },
           connectionTimeout: 10000,
         });
 
@@ -819,7 +987,7 @@ app.post('/api/system/execute-update', verifyAdminAuth, async (req, res) => {
 });
 
 // Pre-Sync Security Review & Check API
-app.post('/api/release/pre-sync-review', (req, res) => {
+app.post('/api/release/pre-sync-review', verifyAdminAuth, (req, res) => {
   try {
     const reviewResult = runPreSyncReview();
     res.json(reviewResult);
@@ -985,7 +1153,7 @@ app.post('/api/github-backup', verifyAdminAuth, async (req, res) => {
 });
 
 // Dedicated Multi-Instance & Concurrency Verification Endpoint
-app.get('/api/test-concurrency', async (req, res) => {
+app.get('/api/test-concurrency', verifyAdminAuth, async (req, res) => {
   try {
     const {
       allocateNextUpdateNumberAtomic,
@@ -1181,6 +1349,134 @@ app.post('/api/receipt/scan', async (req, res) => {
   }
 });
 
+// Support Tickets & Issue Reports Endpoints (Play Store & User Support)
+app.post('/api/support/tickets', publicFormLimiter, async (req, res) => {
+  try {
+    const raw = req.body || {};
+    const fullName = sanitizeTextInput(raw.fullName, 120);
+    const email = sanitizeTextInput(raw.email, 160).toLowerCase();
+    const phone = sanitizeTextInput(raw.phone || 'N/A', 30);
+    const category = sanitizeTextInput(raw.category || 'General Inquiry', 64);
+    const priorityRaw = sanitizeTextInput(raw.priority || 'MEDIUM', 16).toUpperCase();
+    const priority = (['LOW', 'MEDIUM', 'HIGH'].includes(priorityRaw) ? priorityRaw : 'MEDIUM') as 'LOW' | 'MEDIUM' | 'HIGH';
+    const subject = sanitizeTextInput(raw.subject || `${category} Submission`, 200);
+    const message = sanitizeTextInput(raw.message, 4000);
+
+    if (!fullName || fullName.length < 2) {
+      return res.status(400).json({ success: false, error: 'Valid full name (min 2 chars) is required.' });
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, error: 'A valid email address is required.' });
+    }
+    if (!message || message.length < 5) {
+      return res.status(400).json({ success: false, error: 'Detailed message (min 5 chars) is required.' });
+    }
+
+    const dualDate = getServerDualDate();
+    const ticketId = `SRT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(2).toString('hex').toUpperCase()}`;
+    const createdTicket = createSupportTicketDb({
+      id: ticketId,
+      fullName,
+      email,
+      phone,
+      category,
+      priority,
+      subject,
+      message,
+      status: 'NEW',
+      adDateStr: dualDate.adDateStr,
+      bsDateStr: dualDate.bsDateStr,
+      createdAtIso: dualDate.timestampIso,
+      updatedAtIso: dualDate.timestampIso,
+    });
+
+    recordAuditEvent(
+      'SUPPORT_REQUEST',
+      `Support ticket submitted: ${ticketId} (${category})`,
+      { ticketId, category, priority, emailDomain: email.split('@')[1] },
+      category === 'ACCOUNT_DELETION' ? 'COMPLIANCE' : 'SUPPORT'
+    );
+
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
+    const fromName = process.env.EMAIL_FROM_NAME || 'SAARTHI Civic Services Portal';
+    const fromAddr = process.env.EMAIL_FROM_ADDRESS || 'no-reply@saarthi.dpdns.org';
+
+    const ticketHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 14px; padding: 24px; background-color: #0f172a; color: #f8fafc;">
+        <h2 style="color: #f59e0b; margin: 0 0 8px 0;">SAARTHI Support & Issue Ticket #${escapeHtml(ticketId)}</h2>
+        <p style="color: #94a3b8; font-size: 13px; margin: 0 0 16px 0;">Category: ${escapeHtml(category)} · Priority: ${escapeHtml(priority)}</p>
+        <table style="width: 100%; font-size: 13px; border-collapse: collapse; margin-bottom: 16px;">
+          <tr><td style="padding: 6px 0; color: #94a3b8;">Name:</td><td style="color: #fff;">${escapeHtml(fullName)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #94a3b8;">Email:</td><td style="color: #38bdf8;">${escapeHtml(email)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #94a3b8;">Phone:</td><td style="color: #fff;">${escapeHtml(phone)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #94a3b8;">Subject:</td><td style="color: #fff;">${escapeHtml(subject)}</td></tr>
+          <tr><td style="padding: 6px 0; color: #94a3b8;">Date (BS/AD):</td><td style="color: #34d399;">${escapeHtml(dualDate.bsDateStr)} / ${escapeHtml(dualDate.adDateStr)} (${escapeHtml(dualDate.timeStr)})</td></tr>
+        </table>
+        <div style="background: #1e293b; border-left: 4px solid #f59e0b; padding: 14px; border-radius: 8px; white-space: pre-wrap;">${escapeHtml(message)}</div>
+      </div>
+    `;
+
+    // Best-effort notification without blocking ticket confirmation
+    sendMailWithFallback({
+      from: `"${fromName}" <${fromAddr}>`,
+      to: adminEmail,
+      subject: `[SAARTHI ${priority}] ${category} Ticket #${ticketId}`,
+      text: `Ticket ${ticketId}\nFrom: ${fullName} <${email}>\nCategory: ${category}\nSubject: ${subject}\n\n${message}\n\n${dualDate.formattedFull}`,
+      html: ticketHtml,
+    }).catch((err) => console.warn('[Support Ticket Email]', err?.message));
+
+    return res.status(201).json({
+      success: true,
+      ticket: {
+        id: createdTicket.id,
+        status: createdTicket.status,
+        category: createdTicket.category,
+        adDateStr: createdTicket.adDateStr,
+        bsDateStr: createdTicket.bsDateStr,
+        createdAtIso: createdTicket.createdAtIso,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Failed to create support ticket', details: err.message });
+  }
+});
+
+app.get('/api/support/tickets', verifyAdminAuth, (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit as string, 10) || 100;
+    const tickets = listSupportTicketsDb(limit);
+    return res.json({ success: true, count: tickets.length, tickets });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Failed to list support tickets', details: err.message });
+  }
+});
+
+app.patch('/api/support/tickets/:id', verifyAdminAuth, (req, res) => {
+  try {
+    const id = sanitizeTextInput(req.params.id, 64);
+    const rawStatus = sanitizeTextInput(req.body?.status, 32).toUpperCase();
+    const allowedStatuses = ['NEW', 'REVIEWING', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+    const status = allowedStatuses.includes(rawStatus) ? (rawStatus as any) : undefined;
+    const adminReply = req.body?.adminReply !== undefined ? sanitizeTextInput(req.body.adminReply, 2000) : undefined;
+
+    const updated = updateSupportTicketDb(id, { status, adminReply });
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Support ticket not found.' });
+    }
+
+    recordAuditEvent(
+      'ADMIN_ACTION',
+      `Updated support ticket ${id} status to ${updated.status}`,
+      { ticketId: id, status: updated.status },
+      'ADMIN'
+    );
+
+    return res.json({ success: true, ticket: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: 'Failed to update support ticket', details: err.message });
+  }
+});
+
 // Rate limiting helper for email dispatch
 const emailDispatchRateMap = new Map<string, number[]>();
 const isRateLimited = (clientIp: string, maxRequests = 10, windowMs = 60000): boolean => {
@@ -1195,7 +1491,7 @@ const isRateLimited = (clientIp: string, maxRequests = 10, windowMs = 60000): bo
 };
 
 // API Route: Generic Automatic Notification Dispatcher with Dual Date B.S. / A.D. Support
-app.post('/api/notifications/dispatch', async (req, res) => {
+app.post('/api/notifications/dispatch', publicFormLimiter, async (req, res) => {
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.ip || '127.0.0.1';
   if (isRateLimited(clientIp, 15, 60000)) {
     return res.status(429).json({
@@ -1205,6 +1501,7 @@ app.post('/api/notifications/dispatch', async (req, res) => {
   }
 
   try {
+    const isAdmin = !!validateAdminSession(extractAdminToken(req));
     const {
       notificationId,
       eventType,
@@ -1213,186 +1510,65 @@ app.post('/api/notifications/dispatch', async (req, res) => {
       details = {},
       dualDate = {},
       triggeredBy = 'SAARTHI Core',
-    } = req.body;
+    } = req.body || {};
 
-    const targetEmail = recipient || process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
+    const defaultAdminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
+    const targetEmail = isAdmin && recipient ? sanitizeTextInput(recipient, 160) : defaultAdminEmail;
     const fromName = process.env.EMAIL_FROM_NAME || 'SAARTHI Citizen Services Portal';
-    const fromAddr = process.env.EMAIL_FROM_ADDRESS || 'no-reply@saarthi.np';
+    const fromAddr = process.env.EMAIL_FROM_ADDRESS || 'no-reply@saarthi.dpdns.org';
 
-    const bsDateStr = dualDate.bsDateStr || 'B.S. Date';
-    const adDateStr = dualDate.adDateStr || 'A.D. Date';
-    const timeStr = dualDate.timeStr || new Date().toLocaleTimeString();
+    const bsDateStr = escapeHtml(dualDate.bsDateStr || 'B.S. Date');
+    const adDateStr = escapeHtml(dualDate.adDateStr || 'A.D. Date');
+    const timeStr = escapeHtml(dualDate.timeStr || new Date().toLocaleTimeString());
+    const safeEventType = escapeHtml(sanitizeTextInput(eventType || 'GENERAL', 64));
+    const safeSubject = sanitizeTextInput(subject || `[SAARTHI ALERT] ${eventType || 'Notification'}`, 200);
+    const safeTriggeredBy = escapeHtml(sanitizeTextInput(triggeredBy, 100));
+    const safeNotificationId = escapeHtml(sanitizeTextInput(notificationId || `NOTIF-${Date.now()}`, 80));
 
     let emailHtml = '';
 
     if (eventType === 'SUPPORT_INQUIRY') {
       emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-          <div style="border-bottom: 2px solid #f59e0b; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <h2 style="color: #f59e0b; margin: 0; font-size: 22px; font-weight: bold;">SAARTHI Support Ticket Notification</h2>
-              <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">New Citizen Inquiry #${details.ticketId || 'SRT-NEW'}</p>
-            </div>
+        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc;">
+          <div style="border-bottom: 2px solid #f59e0b; padding-bottom: 16px; margin-bottom: 20px;">
+            <h2 style="color: #f59e0b; margin: 0; font-size: 22px; font-weight: bold;">SAARTHI Support Ticket Notification</h2>
+            <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">New Citizen Inquiry #${escapeHtml(details.ticketId || 'SRT-NEW')}</p>
           </div>
-          
           <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; width: 130px; font-weight: bold; border-bottom: 1px solid #1e293b;">User Name:</td>
-              <td style="padding: 10px 0; color: #ffffff; font-weight: bold; border-bottom: 1px solid #1e293b;">${details.userName || 'Anonymous Citizen'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Email Address:</td>
-              <td style="padding: 10px 0; color: #38bdf8; border-bottom: 1px solid #1e293b;">${details.userEmail || 'N/A'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Mobile Number:</td>
-              <td style="padding: 10px 0; color: #ffffff; border-bottom: 1px solid #1e293b;">${details.userPhone || 'N/A'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Category:</td>
-              <td style="padding: 10px 0; color: #f59e0b; font-weight: bold; border-bottom: 1px solid #1e293b;">${details.category || 'General Service'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold;">Submission Date:</td>
-              <td style="padding: 10px 0; color: #34d399; font-weight: bold;">
-                B.S. Date: ${bsDateStr}<br/>
-                A.D. Date: ${adDateStr}<br/>
-                Time: ${timeStr}
-              </td>
-            </tr>
+            <tr><td style="padding: 10px 0; color: #94a3b8;">User Name:</td><td style="color: #ffffff; font-weight: bold;">${escapeHtml(details.userName || 'Anonymous Citizen')}</td></tr>
+            <tr><td style="padding: 10px 0; color: #94a3b8;">Email Address:</td><td style="color: #38bdf8;">${escapeHtml(details.userEmail || 'N/A')}</td></tr>
+            <tr><td style="padding: 10px 0; color: #94a3b8;">Mobile Number:</td><td style="color: #ffffff;">${escapeHtml(details.userPhone || 'N/A')}</td></tr>
+            <tr><td style="padding: 10px 0; color: #94a3b8;">Category:</td><td style="color: #f59e0b; font-weight: bold;">${escapeHtml(details.category || 'General Service')}</td></tr>
+            <tr><td style="padding: 10px 0; color: #94a3b8;">Submission Date:</td><td style="color: #34d399; font-weight: bold;">B.S. Date: ${bsDateStr}<br/>A.D. Date: ${adDateStr}<br/>Time: ${timeStr}</td></tr>
           </table>
-
           <div style="background-color: #1e293b; border-left: 4px solid #f59e0b; padding: 18px; border-radius: 8px; margin-bottom: 20px;">
-            <h4 style="margin: 0 0 8px 0; color: #f59e0b; font-size: 13px; text-transform: uppercase; tracking-spacing: 1px;">Message Content</h4>
-            <p style="margin: 0; color: #e2e8f0; line-height: 1.6; font-size: 14px; white-space: pre-wrap;">${details.message || 'No message text provided.'}</p>
+            <h4 style="margin: 0 0 8px 0; color: #f59e0b; font-size: 13px; text-transform: uppercase;">Message Content</h4>
+            <p style="margin: 0; color: #e2e8f0; line-height: 1.6; font-size: 14px; white-space: pre-wrap;">${escapeHtml(details.message || 'No message text provided.')}</p>
           </div>
-
           <div style="font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 14px; text-align: center;">
-            Automatic Dispatch via SAARTHI Core • Triggered by ${triggeredBy} • ID: ${notificationId}
+            Automatic Dispatch via SAARTHI Core • Triggered by ${safeTriggeredBy} • ID: ${safeNotificationId}
           </div>
         </div>
       `;
-    } else if (eventType === 'DONATION_UPDATE' || eventType === 'ADMIN_SETTING_CHANGE') {
+    } else if (isAdmin && (eventType === 'DONATION_UPDATE' || eventType === 'ADMIN_SETTING_CHANGE')) {
       emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-          <div style="border-bottom: 2px solid #38bdf8; padding-bottom: 16px; margin-bottom: 20px;">
-            <h2 style="color: #38bdf8; margin: 0; font-size: 22px;">SAARTHI ${eventType === 'DONATION_UPDATE' ? 'Payment QR & Donation Info Updated' : 'Admin Settings Changed'}</h2>
-            <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">Audit & Compliance System Notification</p>
-          </div>
-
-          <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; width: 140px; font-weight: bold; border-bottom: 1px solid #1e293b;">What Changed:</td>
-              <td style="padding: 10px 0; color: #ffffff; font-weight: bold; border-bottom: 1px solid #1e293b;">${details.whatChanged || 'System details updated'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Who Changed It:</td>
-              <td style="padding: 10px 0; color: #f59e0b; border-bottom: 1px solid #1e293b;">${details.whoChangedIt || 'Admin User'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Previous Value:</td>
-              <td style="padding: 10px 0; color: #f87171; font-family: monospace; border-bottom: 1px solid #1e293b;">${details.previousValue || 'N/A'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">New Value:</td>
-              <td style="padding: 10px 0; color: #34d399; font-family: monospace; border-bottom: 1px solid #1e293b;">${details.newValue || 'Updated'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #94a3b8; font-weight: bold;">Timestamp:</td>
-              <td style="padding: 10px 0; color: #cbd5e1;">
-                B.S. Date: ${bsDateStr}<br/>
-                A.D. Date: ${adDateStr}<br/>
-                Time: ${timeStr}
-              </td>
-            </tr>
-          </table>
-
-          <div style="font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 14px; text-align: center;">
-            SAARTHI System Audit & Notification Engine • ${triggeredBy}
-          </div>
-        </div>
-      `;
-    } else if (eventType === 'GITHUB_PUSH' || eventType === 'FEATURE_UPDATED' || eventType === 'FEATURE_ADDED' || eventType === 'DEPLOYMENT_COMPLETED' || details.summary || details.added || details.modified) {
-      emailHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-          <div style="border-bottom: 2px solid #10b981; padding-bottom: 16px; margin-bottom: 20px;">
-            <h2 style="color: #10b981; margin: 0; font-size: 22px;">SAARTHI System Release & Update Summary</h2>
-            <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">Version: ${details.version || 'v1.4.7'} • Event: ${eventType}</p>
-          </div>
-
-          <div style="background-color: #1e293b; padding: 18px; border-radius: 10px; margin-bottom: 20px;">
-            <h3 style="color: #38bdf8; margin: 0 0 10px 0; font-size: 15px; border-bottom: 1px solid #334155; padding-bottom: 6px;">📋 Update Summary</h3>
-            <p style="color: #e2e8f0; font-size: 14px; margin: 0 0 14px 0; line-height: 1.5;">${details.messageSummary || details.summary || details.message || 'System update successfully deployed and synchronized.'}</p>
-            
-            ${details.added && Array.isArray(details.added) && details.added.length > 0 ? `
-              <div style="margin-bottom: 12px;">
-                <strong style="color: #34d399; font-size: 13px;">➕ Added Features:</strong>
-                <ul style="margin: 4px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 13px;">
-                  ${details.added.map((item: string) => `<li>${item}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-
-            ${details.modified && Array.isArray(details.modified) && details.modified.length > 0 ? `
-              <div style="margin-bottom: 12px;">
-                <strong style="color: #f59e0b; font-size: 13px;">✏️ Modified Items:</strong>
-                <ul style="margin: 4px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 13px;">
-                  ${details.modified.map((item: string) => `<li>${item}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-
-            ${details.removed && Array.isArray(details.removed) && details.removed.length > 0 ? `
-              <div style="margin-bottom: 12px;">
-                <strong style="color: #f87171; font-size: 13px;">❌ Removed / Reformed Items:</strong>
-                <ul style="margin: 4px 0 0 0; padding-left: 20px; color: #cbd5e1; font-size: 13px;">
-                  ${details.removed.map((item: string) => `<li>${item}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-
-            ${details.affectedFiles && Array.isArray(details.affectedFiles) && details.affectedFiles.length > 0 ? `
-              <div>
-                <strong style="color: #a855f7; font-size: 13px;">📁 Affected Modules / Files:</strong>
-                <p style="margin: 4px 0 0 0; color: #94a3b8; font-family: monospace; font-size: 12px;">${details.affectedFiles.join(', ')}</p>
-              </div>
-            ` : ''}
-          </div>
-
-          <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; color: #cbd5e1;">
-            <tr>
-              <td style="padding: 6px 0; color: #94a3b8; width: 140px; font-weight: bold;">AD Date:</td>
-              <td style="padding: 6px 0; color: #ffffff;">${adDateStr}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #94a3b8; font-weight: bold;">BS Date:</td>
-              <td style="padding: 6px 0; color: #f59e0b;">${bsDateStr}</td>
-            </tr>
-            <tr>
-              <td style="padding: 6px 0; color: #94a3b8; font-weight: bold;">Time:</td>
-              <td style="padding: 6px 0; color: #38bdf8;">${timeStr} (Asia/Kathmandu)</td>
-            </tr>
-          </table>
-
-          <div style="font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 14px; text-align: center;">
-            SAARTHI Release Engine • Triggered by ${triggeredBy} • Ref: ${notificationId}
-          </div>
+        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc;">
+          <h2 style="color: #38bdf8; margin: 0 0 12px 0;">SAARTHI ${eventType === 'DONATION_UPDATE' ? 'Payment QR & Donation Info Updated' : 'Admin Settings Changed'}</h2>
+          <p style="color: #cbd5e1; font-size: 14px;"><strong>What Changed:</strong> ${escapeHtml(details.whatChanged || 'System details updated')}</p>
+          <p style="color: #cbd5e1; font-size: 14px;"><strong>Who Changed It:</strong> ${escapeHtml(details.whoChangedIt || 'Admin User')}</p>
+          <p style="color: #94a3b8; font-size: 12px;">B.S. Date: ${bsDateStr} | A.D. Date: ${adDateStr} (${timeStr})</p>
         </div>
       `;
     } else {
       emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc;">
-          <div style="border-bottom: 2px solid #a855f7; padding-bottom: 16px; margin-bottom: 20px;">
-            <h2 style="color: #a855f7; margin: 0; font-size: 22px;">${subject}</h2>
-            <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">Event Type: ${eventType}</p>
-          </div>
-          <div style="background-color: #1e293b; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0 0 10px 0; color: #e2e8f0; font-size: 14px;">${details.message || details.whatChanged || 'Event notification'}</p>
+          <h2 style="color: #a855f7; margin: 0 0 8px 0;">${escapeHtml(safeSubject)}</h2>
+          <p style="color: #94a3b8; font-size: 13px;">Event Type: ${safeEventType}</p>
+          <div style="background-color: #1e293b; padding: 16px; border-radius: 8px; margin: 16px 0;">
+            <p style="margin: 0 0 10px 0; color: #e2e8f0; font-size: 14px;">${escapeHtml(details.message || details.summary || details.whatChanged || 'Event notification')}</p>
             <p style="margin: 0; color: #94a3b8; font-size: 12px;">B.S. Date: ${bsDateStr} | A.D. Date: ${adDateStr} (${timeStr})</p>
           </div>
-          <div style="font-size: 11px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 14px; text-align: center;">
-            SAARTHI Free Email Engine • Ref: ${notificationId}
-          </div>
+          <div style="font-size: 11px; color: #64748b; text-align: center;">Ref: ${safeNotificationId}</div>
         </div>
       `;
     }
@@ -1400,8 +1576,8 @@ app.post('/api/notifications/dispatch', async (req, res) => {
     const mailOptions = {
       from: `"${fromName}" <${fromAddr}>`,
       to: targetEmail,
-      subject: subject || `[SAARTHI ALERT] ${eventType}`,
-      text: `${subject}\n\n${details.message || details.whatChanged || ''}\nB.S. Date: ${bsDateStr}\nA.D. Date: ${adDateStr}\nTime: ${timeStr}`,
+      subject: safeSubject,
+      text: `${safeSubject}\n\n${sanitizeTextInput(details.message || details.whatChanged || '', 2000)}\nB.S. Date: ${dualDate.bsDateStr || ''}\nA.D. Date: ${dualDate.adDateStr || ''}\nTime: ${dualDate.timeStr || ''}`,
       html: emailHtml,
     };
 
@@ -1466,7 +1642,7 @@ const sendMailWithFallback = async (mailOptions: any) => {
           secure: p.secure,
           requireTLS: (p as any).requireTLS,
           auth: { user, pass },
-          tls: { rejectUnauthorized: false },
+          tls: { minVersion: 'TLSv1.2' },
           connectionTimeout: 10000,
           greetingTimeout: 10000,
           socketTimeout: 10000,
@@ -1539,9 +1715,10 @@ const sendMailWithFallback = async (mailOptions: any) => {
   };
 };
 
-// API Route: Send Email Notification
-app.post('/api/send-email', async (req, res) => {
+// API Route: Send Email Notification (Protected / Sanitized)
+app.post('/api/send-email', publicFormLimiter, async (req, res) => {
   try {
+    const isAdmin = !!validateAdminSession(extractAdminToken(req));
     const {
       to,
       subject,
@@ -1553,46 +1730,43 @@ app.post('/api/send-email', async (req, res) => {
       senderPhone,
       category,
       message,
-    } = req.body;
+    } = req.body || {};
 
-    const recipient = to || process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
+    const defaultAdminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
+    const recipient = isAdmin && to ? sanitizeTextInput(to, 160) : defaultAdminEmail;
     const fromName = process.env.EMAIL_FROM_NAME || 'SAARTHI Citizen Services Portal';
-    const fromAddr = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'ratobiralo4@gmail.com';
+    const fromAddr = process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@saarthi.dpdns.org';
 
-    const emailSubject = subject || `[SAARTHI ALERT] Citizen Enquiry ${enquiryId ? '#' + enquiryId : ''} Received`;
+    const safeEnquiryId = escapeHtml(sanitizeTextInput(enquiryId || 'SRT-LIVE', 64));
+    const safeSenderName = escapeHtml(sanitizeTextInput(senderName || 'Anonymous Citizen', 120));
+    const safeSenderEmail = escapeHtml(sanitizeTextInput(senderEmail || 'N/A', 160));
+    const safeSenderPhone = escapeHtml(sanitizeTextInput(senderPhone || 'N/A', 40));
+    const safeCategory = escapeHtml(sanitizeTextInput(category || 'General Service Inquiry', 64));
+    const safeMessage = escapeHtml(sanitizeTextInput(message || text || 'Notification received.', 4000));
+    const emailSubject = sanitizeTextInput(subject || `[SAARTHI ALERT] Citizen Enquiry ${enquiryId ? '#' + enquiryId : ''} Received`, 200);
 
+    // Raw HTML injection forbidden unless authenticated Super Admin explicitly sends raw html
     const emailHtml =
-      html ||
-      `
+      isAdmin && typeof html === 'string' && html.trim().length > 0
+        ? html
+        : `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; background-color: #0f172a; color: #f8fafc;">
         <div style="border-bottom: 2px solid #f59e0b; padding-bottom: 12px; margin-bottom: 20px;">
           <h2 style="color: #f59e0b; margin: 0; font-size: 20px;">SAARTHI Official Citizen Enquiry</h2>
-          <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px;">Ref Tracking ID: ${enquiryId || 'SRT-LIVE'}</p>
+          <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px;">Ref Tracking ID: ${safeEnquiryId}</p>
         </div>
         <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
-          <tr>
-            <td style="padding: 8px 0; color: #94a3b8; width: 120px; font-weight: bold;">Sender Name:</td>
-            <td style="padding: 8px 0; color: #ffffff; font-weight: bold;">${senderName || 'Anonymous Citizen'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #94a3b8; font-weight: bold;">Email:</td>
-            <td style="padding: 8px 0; color: #38bdf8;">${senderEmail || recipient}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #94a3b8; font-weight: bold;">Phone:</td>
-            <td style="padding: 8px 0; color: #ffffff;">${senderPhone || 'N/A'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #94a3b8; font-weight: bold;">Category:</td>
-            <td style="padding: 8px 0; color: #f59e0b;">${category || 'General Service Inquiry'}</td>
-          </tr>
+          <tr><td style="padding: 8px 0; color: #94a3b8;">Sender Name:</td><td style="color: #ffffff; font-weight: bold;">${safeSenderName}</td></tr>
+          <tr><td style="padding: 8px 0; color: #94a3b8;">Email:</td><td style="color: #38bdf8;">${safeSenderEmail}</td></tr>
+          <tr><td style="padding: 8px 0; color: #94a3b8;">Phone:</td><td style="color: #ffffff;">${safeSenderPhone}</td></tr>
+          <tr><td style="padding: 8px 0; color: #94a3b8;">Category:</td><td style="color: #f59e0b;">${safeCategory}</td></tr>
         </table>
         <div style="background-color: #1e293b; border-left: 4px solid #34d399; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
           <h4 style="margin: 0 0 8px 0; color: #34d399; font-size: 13px; text-transform: uppercase;">Message Content</h4>
-          <p style="margin: 0; color: #e2e8f0; line-height: 1.6; font-size: 14px;">${message || text || 'Test notification message.'}</p>
+          <p style="margin: 0; color: #e2e8f0; line-height: 1.6; font-size: 14px; white-space: pre-wrap;">${safeMessage}</p>
         </div>
         <div style="font-size: 11px; color: #64748b; border-top: 1px solid #334155; padding-top: 12px; text-align: center;">
-          Sent automatically via SAARTHI Integrated Nodemailer Email Engine • ${new Date().toISOString()}
+          Sent automatically via SAARTHI Integrated Email Engine • ${new Date().toISOString()}
         </div>
       </div>
     `;
@@ -1602,7 +1776,7 @@ app.post('/api/send-email', async (req, res) => {
       from: `"${fromName}" <${fromAddr}>`,
       to: recipient,
       subject: emailSubject,
-      text: `${text || message || 'New enquiry received.'}\n\n${dualDate.formattedFull}`,
+      text: `${sanitizeTextInput(text || message || 'New enquiry received.', 4000)}\n\n${dualDate.formattedFull}`,
       html: emailHtml,
     };
 
@@ -1667,7 +1841,7 @@ app.post('/api/email/config', verifyAdminAuth, (req, res) => {
     }
 
     const updated = saveSmtpConfig({
-      smtpUser: smtpUser || 'ratobiralo4@gmail.com',
+      smtpUser: smtpUser || '',
       smtpPass: smtpPass.replace(/\s+/g, ''),
       smtpHost: smtpHost || 'smtp.gmail.com',
       smtpPort: Number(smtpPort) || 587,
@@ -1685,11 +1859,11 @@ app.post('/api/email/config', verifyAdminAuth, (req, res) => {
   }
 });
 
-// API Route: Test SMTP Connection & Trigger Test Email
-app.post('/api/email/test-smtp', async (req, res) => {
+// API Route: Test SMTP Connection & Trigger Test Email (Admin Only)
+app.post('/api/email/test-smtp', verifyAdminAuth, async (req, res) => {
   try {
-    const { recipientEmail } = req.body;
-    const recipient = recipientEmail || process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
+    const { recipientEmail } = req.body || {};
+    const recipient = sanitizeTextInput(recipientEmail || process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com', 160);
 
     const testSubject = `[SAARTHI CONFIRMATION] SMTP & Email Notification System Verification`;
     const testHtml = `
@@ -1717,7 +1891,7 @@ app.post('/api/email/test-smtp', async (req, res) => {
     `;
 
     const mailOptions = {
-      from: `"${process.env.EMAIL_FROM_NAME || 'SAARTHI Portal'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'ratobiralo4@gmail.com'}>`,
+      from: `"${process.env.EMAIL_FROM_NAME || 'SAARTHI Portal'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@saarthi.dpdns.org'}>`,
       to: recipient,
       subject: testSubject,
       text: `SAARTHI System Confirmation Test Email dispatched to ${recipient}`,
@@ -2432,6 +2606,21 @@ app.get('/api/live/earthquake', async (req, res) => {
       const events = features.map((f: any) => {
         const timeObj = new Date(f.properties.time);
         const subDates = getServerDualDate(timeObj);
+        const eqLon = Number(f.geometry?.coordinates?.[0]);
+        const eqLat = Number(f.geometry?.coordinates?.[1]);
+        let distanceFromKathmanduKm: number | null = null;
+        if (Number.isFinite(eqLat) && Number.isFinite(eqLon)) {
+          const toRad = (deg: number) => (deg * Math.PI) / 180;
+          const R = 6371;
+          const ktmLat = 27.7172;
+          const ktmLon = 85.324;
+          const dLat = toRad(eqLat - ktmLat);
+          const dLon = toRad(eqLon - ktmLon);
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(ktmLat)) * Math.cos(toRad(eqLat)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          distanceFromKathmanduKm = Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
         return {
           id: f.id,
           magnitude: f.properties.mag,
@@ -2440,7 +2629,7 @@ app.get('/api/live/earthquake', async (req, res) => {
           timeIso: timeObj.toISOString(),
           adDate: subDates.adDateStr,
           bsDate: subDates.bsDateStr,
-          distanceFromKathmanduKm: Math.round(Math.random() * 200 + 30),
+          distanceFromKathmanduKm: distanceFromKathmanduKm ?? 0,
         };
       });
 
@@ -2976,50 +3165,33 @@ app.get('/api/live/gov-notices', async (req, res) => {
   });
 });
 
-// 12. Live Nepal & Global Civic News Feed
-app.get('/api/live/news', async (req, res) => {
-  const dates = getServerDualDate();
-  return res.json({
-    apiId: 'news-civic-feed',
-    dataSource: 'National Civic Press & Information Engine',
-    isLive: true,
-    isCached: false,
-    lastUpdatedAd: dates.adDateStr,
-    lastUpdatedBs: dates.bsDateStr,
-    timeStr: dates.timeStr,
-    timestampIso: dates.timestampIso,
-    data: [
-      { id: 'n-1', title: 'Nepal Rastra Bank Announces Updated Monetary Policy Guidelines for Digital Payments', summary: 'NRB has increased daily transaction limits for QR and mobile banking payments to accelerate cashless commerce across rural municipalities.', category: 'Economy', source: 'NRB Press Bulletin', publishedAtAd: dates.adDateStr, publishedAtBs: dates.bsDateStr },
-      { id: 'n-2', title: 'Government Expands Electronic Passport (e-Passport) Distribution to 12 Additional Districts', summary: 'Citizens in remote districts can now complete biometric enrollment and receive e-passports within 5 working days.', category: 'Government', source: 'Department of Passport', publishedAtAd: dates.adDateStr, publishedAtBs: dates.bsDateStr },
-      { id: 'n-3', title: 'NEPSE Crosses 2,180 Mark as Hydropower and Commercial Banking Stocks Rally', summary: 'Robust quarterly financial reports and liquidity improvements drove investor confidence high on the local stock exchange.', category: 'Economy', source: 'Financial Express Nepal', publishedAtAd: dates.adDateStr, publishedAtBs: dates.bsDateStr },
-      { id: 'n-4', title: 'Ministry of Health Dispatches Emergency Medical Supplies to High Altitude Districts', summary: 'New oxygen plants and tele-medicine modules deployed across Karnali Province health centers.', category: 'Health', source: 'Ministry of Health & Population', publishedAtAd: dates.adDateStr, publishedAtBs: dates.bsDateStr },
-    ],
-    error: null,
-  });
-});
-
-// 13. Admin API Failure Email Dispatch Alert Endpoint
-app.post('/api/live/notify-failure', async (req, res) => {
+// 12. Admin API Failure Email Dispatch Alert Endpoint
+app.post('/api/live/notify-failure', verifyAdminAuth, async (req, res) => {
   try {
-    const { apiId, apiName, failureCount, errorMessage } = req.body;
+    const { apiId, apiName, failureCount, errorMessage } = req.body || {};
     const dates = getServerDualDate();
     const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
 
+    const safeApiName = escapeHtml(sanitizeTextInput(apiName, 120));
+    const safeApiId = escapeHtml(sanitizeTextInput(apiId, 80));
+    const safeCount = Number(failureCount) || 1;
+    const safeError = escapeHtml(sanitizeTextInput(errorMessage || 'Connection timeout or invalid JSON', 500));
+
     const mailOptions = {
-      from: `"${process.env.EMAIL_FROM_NAME || 'SAARTHI System'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'ratobiralo4@gmail.com'}>`,
+      from: `"${process.env.EMAIL_FROM_NAME || 'SAARTHI System'}" <${process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER || 'no-reply@saarthi.dpdns.org'}>`,
       to: recipient,
-      subject: `🚨 [SAARTHI ALERT] Live API Service Disturbance: ${apiName} (${failureCount} consecutive failures)`,
-      text: `Alert: Live API ${apiName} (${apiId}) failed ${failureCount} times. Error: ${errorMessage}`,
+      subject: `🚨 [SAARTHI ALERT] Live API Service Disturbance: ${sanitizeTextInput(apiName, 80)} (${safeCount} consecutive failures)`,
+      text: `Alert: Live API ${apiName} (${apiId}) failed ${safeCount} times. Error: ${errorMessage}`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; border: 1px solid #cbd5e1; border-radius: 12px;">
           <h2 style="color: #dc2626; margin-top: 0;">🚨 SAARTHI Live Data Engine Alert</h2>
           <p>An official public API stream monitored by the SAARTHI Live Data Engine has encountered repeated connection failures.</p>
           <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 15px 0;">
-            <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">API Name:</td><td style="padding: 8px; border: 1px solid #e2e8f0;">${apiName} (${apiId})</td></tr>
-            <tr><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Consecutive Failures:</td><td style="padding: 8px; color: #dc2626; font-weight: bold; border: 1px solid #e2e8f0;">${failureCount}</td></tr>
-            <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Error Message:</td><td style="padding: 8px; border: 1px solid #e2e8f0;"><code>${errorMessage || 'Connection timeout or invalid JSON'}</code></td></tr>
-            <tr><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Timestamp (AD):</td><td style="padding: 8px; border: 1px solid #e2e8f0;">${dates.adDateStr} ${dates.timeStr}</td></tr>
-            <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Timestamp (BS):</td><td style="padding: 8px; border: 1px solid #e2e8f0;">${dates.bsDateStr}</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">API Name:</td><td style="padding: 8px; border: 1px solid #e2e8f0;">${safeApiName} (${safeApiId})</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Consecutive Failures:</td><td style="padding: 8px; color: #dc2626; font-weight: bold; border: 1px solid #e2e8f0;">${safeCount}</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Error Message:</td><td style="padding: 8px; border: 1px solid #e2e8f0;"><code>${safeError}</code></td></tr>
+            <tr><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Timestamp (AD):</td><td style="padding: 8px; border: 1px solid #e2e8f0;">${escapeHtml(dates.adDateStr)} ${escapeHtml(dates.timeStr)}</td></tr>
+            <tr style="background: #f8fafc;"><td style="padding: 8px; font-weight: bold; border: 1px solid #e2e8f0;">Timestamp (BS):</td><td style="padding: 8px; border: 1px solid #e2e8f0;">${escapeHtml(dates.bsDateStr)}</td></tr>
           </table>
           <p style="font-size: 13px; color: #64748b;">The engine has automatically fallen back to the cached reference snapshot to ensure uninterrupted service to citizens.</p>
         </div>
@@ -3059,40 +3231,102 @@ app.get('/api/live/sources/health', (req, res) => {
   });
 });
 
-// 14b. Public APIs Explorer & Universal CORS Proxy Engine (github.com/public-apis/public-apis Integration)
-app.post('/api/public-apis/proxy', async (req, res) => {
-  const { targetUrl, method = 'GET', headers = {}, body } = req.body;
+// SSRF IP Verification Helper (IPv4 + IPv6 + Mapped Ranges)
+function isPrivateOrReservedIp(ip: string): boolean {
+  const clean = ip.replace(/^\[|\]$/g, '').split('%')[0].toLowerCase();
+  const version = net.isIP(clean);
+  if (version === 4) {
+    const parts = clean.split('.').map(Number);
+    if (parts.length !== 4) return true;
+    const [a, b] = parts;
+    if (a === 0 || a === 10 || a === 127) return true;
+    if (a === 169 && b === 254) return true; // link-local / cloud metadata
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
+    if (a >= 224) return true; // multicast/reserved
+    return false;
+  }
+  if (version === 6) {
+    if (clean === '::' || clean === '::1') return true;
+    if (clean.startsWith('fe80:') || clean.startsWith('fc') || clean.startsWith('fd') || clean.startsWith('ff')) {
+      return true;
+    }
+    if (clean.startsWith('::ffff:')) {
+      const mappedV4 = clean.slice(7);
+      return isPrivateOrReservedIp(mappedV4);
+    }
+    return false;
+  }
+  return true;
+}
+
+// 14b. Public APIs Explorer & Universal CORS Proxy Engine (Hardened Against SSRF)
+app.post('/api/public-apis/proxy', proxyLimiter, async (req, res) => {
+  const { targetUrl, method = 'GET', headers = {}, body } = req.body || {};
 
   if (!targetUrl || typeof targetUrl !== 'string') {
     return res.status(400).json({ ok: false, status: 400, error: 'targetUrl is required' });
   }
 
-  // Strict SSRF and URL validation
+  let parsed: URL;
   try {
-    const parsed = new URL(targetUrl);
+    parsed = new URL(targetUrl);
     if (!['http:', 'https:'].includes(parsed.protocol)) {
       return res.status(400).json({ ok: false, status: 400, error: 'Invalid URL protocol. Must be HTTP or HTTPS.' });
     }
+    if (parsed.username || parsed.password) {
+      return res.status(400).json({ ok: false, status: 400, error: 'Credentials embedded in target URL are forbidden.' });
+    }
 
-    const host = parsed.hostname.toLowerCase();
-    const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '0.0.0.0';
-    const isCloudMeta = host === '169.254.169.254' || host === 'metadata.google.internal' || host.endsWith('.internal') || host.endsWith('.local');
-    const isPrivateIpv4 =
-      /^10\./.test(host) ||
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) ||
-      /^192\.168\./.test(host) ||
-      /^127\./.test(host) ||
-      /^169\.254\./.test(host);
+    const host = parsed.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    const isLocalHostName =
+      host === 'localhost' ||
+      host.endsWith('.localhost') ||
+      host === 'metadata.google.internal' ||
+      host.endsWith('.internal') ||
+      host.endsWith('.local');
 
-    if (isLocalhost || isCloudMeta || isPrivateIpv4) {
+    if (isLocalHostName || (net.isIP(host) && isPrivateOrReservedIp(host))) {
       return res.status(403).json({ ok: false, status: 403, error: 'Access Denied: Private and loopback destinations are forbidden.' });
     }
 
-    if (parsed.port && (parsed.port === '3000' || parsed.port === '22' || parsed.port === '5432' || parsed.port === '3306')) {
+    const blockedPorts = new Set(['22', '23', '25', '110', '143', '445', '3000', '3306', '5432', '6379', '27017']);
+    if (parsed.port && blockedPorts.has(parsed.port)) {
       return res.status(403).json({ ok: false, status: 403, error: 'Access Denied: Target port is not permitted.' });
     }
-  } catch (urlErr) {
+
+    // Resolve DNS and verify all A/AAAA addresses are public
+    if (!net.isIP(host)) {
+      try {
+        const resolved = await dns.lookup(host, { all: true });
+        if (!resolved.length || resolved.some((addr) => isPrivateOrReservedIp(addr.address))) {
+          return res.status(403).json({ ok: false, status: 403, error: 'Access Denied: Resolved destination IP is private or reserved.' });
+        }
+      } catch {
+        return res.status(400).json({ ok: false, status: 400, error: 'Target hostname could not be resolved.' });
+      }
+    }
+  } catch {
     return res.status(400).json({ ok: false, status: 400, error: 'Malformed target URL provided.' });
+  }
+
+  const allowedMethods = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD']);
+  const upperMethod = String(method).toUpperCase();
+  if (!allowedMethods.has(upperMethod)) {
+    return res.status(400).json({ ok: false, status: 400, error: 'Unsupported HTTP method.' });
+  }
+
+  // Strip sensitive hop/auth headers passed by client
+  const sanitizedHeaders: Record<string, string> = {};
+  const blockedHeaderKeys = new Set(['host', 'cookie', 'authorization', 'x-forwarded-for', 'x-admin-token', 'x-real-ip']);
+  if (headers && typeof headers === 'object') {
+    for (const [k, v] of Object.entries(headers)) {
+      const lowerK = k.toLowerCase();
+      if (!blockedHeaderKeys.has(lowerK) && typeof v === 'string') {
+        sanitizedHeaders[k] = v.slice(0, 1024);
+      }
+    }
   }
 
   try {
@@ -3100,42 +3334,47 @@ app.post('/api/public-apis/proxy', async (req, res) => {
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     const fetchOptions: RequestInit = {
-      method: method.toUpperCase(),
+      method: upperMethod,
+      redirect: 'error',
       headers: {
-        'User-Agent': 'SAARTHI-CivicTech-PublicApis/1.4.7',
+        'User-Agent': 'SAARTHI-CivicTech-PublicApis/1.9.1',
         'Accept': 'application/json, text/plain, */*',
-        ...headers,
+        ...sanitizedHeaders,
       },
       signal: controller.signal,
     };
 
-    if (body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+    if (body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(upperMethod)) {
       fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
-      if (!fetchOptions.headers) fetchOptions.headers = {};
-      (fetchOptions.headers as any)['Content-Type'] = 'application/json';
+      (fetchOptions.headers as Record<string, string>)['Content-Type'] = 'application/json';
     }
 
     const startTime = Date.now();
-    const response = await fetch(targetUrl, fetchOptions);
+    const response = await fetch(parsed.toString(), fetchOptions);
     clearTimeout(timeoutId);
     const durationMs = Date.now() - startTime;
-    const contentType = response.headers.get('content-type') || '';
 
-    let responseData: any;
-    if (contentType.includes('application/json')) {
-      responseData = await response.json();
-    } else {
-      const text = await response.text();
+    const rawText = await response.text();
+    const MAX_PROXY_BYTES = 1024 * 1024;
+    if (Buffer.byteLength(rawText, 'utf8') > MAX_PROXY_BYTES) {
+      return res.status(413).json({ ok: false, status: 413, error: 'Upstream response exceeded 1MB proxy limit.' });
+    }
+
+    let responseData: any = rawText;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json') || rawText.trim().startsWith('{') || rawText.trim().startsWith('[')) {
       try {
-        responseData = JSON.parse(text);
+        responseData = JSON.parse(rawText);
       } catch {
-        responseData = text;
+        responseData = rawText;
       }
     }
 
     const responseHeaders: Record<string, string> = {};
     response.headers.forEach((val, key) => {
-      responseHeaders[key] = val;
+      if (key.toLowerCase() !== 'set-cookie') {
+        responseHeaders[key] = val;
+      }
     });
 
     return res.json({
@@ -3150,13 +3389,13 @@ app.post('/api/public-apis/proxy', async (req, res) => {
     return res.status(502).json({
       ok: false,
       status: 502,
-      error: err.name === 'AbortError' ? 'Target URL request timed out' : 'Failed to proxy request to target URL',
+      error: err.name === 'AbortError' ? 'Target URL request timed out' : 'Failed to proxy request to target URL (redirects blocked for security).',
     });
   }
 });
 
-// 15. Authoritative Production Datastore Health & Status Endpoint
-app.get('/api/db/status', async (req, res) => {
+// 15. Authoritative Production Datastore Health & Status Endpoint (Admin Only)
+app.get('/api/db/status', verifyAdminAuth, async (req, res) => {
   const dates = getServerDualDate();
 
   let manifestsCount = 0;

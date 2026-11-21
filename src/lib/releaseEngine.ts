@@ -3,6 +3,17 @@ import path from 'path';
 import { execSync } from 'child_process';
 import nodemailer from 'nodemailer';
 
+import NepaliDate from 'nepali-date-converter';
+
+function escapeReleaseHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export async function dispatchUpdateReportEmail(
   version: string,
   commitTitle: string,
@@ -10,26 +21,36 @@ export async function dispatchUpdateReportEmail(
   repoUrl: string = 'https://github.com/sdxbyte/saarthi'
 ): Promise<{ success: boolean; mode: string; testUrl?: string; message: string }> {
   const recipient = process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com';
-  const adDate = new Date().toISOString().slice(0, 10);
-  const bsDate = '२०८३ श्रावण २५ गते';
-  const timeStr = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Kathmandu' });
-  const timestampIso = new Date().toISOString();
+  const now = new Date();
+  const adDate = now.toISOString().slice(0, 10);
+  let bsDate = adDate;
+  try {
+    const bs = new NepaliDate(now);
+    bsDate = `${bs.getYear()}-${String(bs.getMonth() + 1).padStart(2, '0')}-${String(bs.getDate()).padStart(2, '0')}`;
+  } catch {}
+  const timeStr = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Kathmandu' });
+  const timestampIso = now.toISOString();
+  const safeVersion = escapeReleaseHtml(version);
+  const safeCommitTitle = escapeReleaseHtml(commitTitle);
+  const safeCommitBody = escapeReleaseHtml(commitBody);
+  const safeRepoUrl = escapeReleaseHtml(repoUrl);
+  const safeRecipient = escapeReleaseHtml(recipient);
 
   const emailHtml = `
     <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #1e293b; border-radius: 16px; padding: 28px; background-color: #0f172a; color: #f8fafc; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
       <div style="border-bottom: 2px solid #f59e0b; padding-bottom: 16px; margin-bottom: 20px;">
         <h2 style="color: #f59e0b; margin: 0; font-size: 22px; font-weight: bold;">SAARTHI System Release & Update Report</h2>
-        <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">Automated GitHub Sync & Release Dispatch (v${version})</p>
+        <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">Automated GitHub Sync & Release Dispatch (v${safeVersion})</p>
       </div>
 
       <table style="width: 100%; text-align: left; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; width: 140px; font-weight: bold; border-bottom: 1px solid #1e293b;">Project Name:</td>
-          <td style="padding: 8px 0; color: #ffffff; font-weight: bold; border-bottom: 1px solid #1e293b;">SAARTHI (नेपाल नागरिक सेवा तथा वित्तीय प्लेटफर्म)</td>
+          <td style="padding: 8px 0; color: #ffffff; font-weight: bold; border-bottom: 1px solid #1e293b;">SAARTHI Platform</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Version:</td>
-          <td style="padding: 8px 0; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1e293b;">v${version}</td>
+          <td style="padding: 8px 0; color: #38bdf8; font-weight: bold; border-bottom: 1px solid #1e293b;">v${safeVersion}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">AD Date:</td>
@@ -45,11 +66,11 @@ export async function dispatchUpdateReportEmail(
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Repository:</td>
-          <td style="padding: 8px 0; color: #38bdf8; border-bottom: 1px solid #1e293b;"><a href="${repoUrl}" style="color: #38bdf8; text-decoration: underline;">${repoUrl}</a></td>
+          <td style="padding: 8px 0; color: #38bdf8; border-bottom: 1px solid #1e293b;"><a href="${safeRepoUrl}" style="color: #38bdf8; text-decoration: underline;">${safeRepoUrl}</a></td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Commit Title:</td>
-          <td style="padding: 8px 0; color: #e2e8f0; font-weight: bold; border-bottom: 1px solid #1e293b;">${commitTitle}</td>
+          <td style="padding: 8px 0; color: #e2e8f0; font-weight: bold; border-bottom: 1px solid #1e293b;">${safeCommitTitle}</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Developer:</td>
@@ -57,7 +78,7 @@ export async function dispatchUpdateReportEmail(
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Deployment Status:</td>
-          <td style="padding: 8px 0; color: #4ade80; font-weight: bold; border-bottom: 1px solid #1e293b;">✅ Active & Compiled</td>
+          <td style="padding: 8px 0; color: #4ade80; font-weight: bold; border-bottom: 1px solid #1e293b;">Active & Compiled</td>
         </tr>
         <tr>
           <td style="padding: 8px 0; color: #94a3b8; font-weight: bold; border-bottom: 1px solid #1e293b;">Risk Level:</td>
@@ -66,22 +87,26 @@ export async function dispatchUpdateReportEmail(
       </table>
 
       <div style="background-color: #1e293b; padding: 18px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #334155;">
-        <h3 style="color: #f59e0b; margin-top: 0; font-size: 15px; font-weight: bold;">📝 Update Summary & Release Details:</h3>
-        <p style="color: #e2e8f0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; margin: 0;">${commitBody}</p>
+        <h3 style="color: #f59e0b; margin-top: 0; font-size: 15px; font-weight: bold;">Update Summary & Release Details:</h3>
+        <p style="color: #e2e8f0; font-size: 13px; line-height: 1.6; white-space: pre-wrap; margin: 0;">${safeCommitBody}</p>
       </div>
 
       <div style="border-top: 1px solid #334155; padding-top: 16px; text-align: center; color: #64748b; font-size: 12px;">
-        Sent automatically by SAARTHI Master Email Engine to <strong>${recipient}</strong> • Ref ID: SRT-REL-${version}
+        Sent automatically by SAARTHI Master Email Engine to <strong>${safeRecipient}</strong> • Ref ID: SRT-REL-${safeVersion}
       </div>
     </div>
   `;
 
-  let rawPass = process.env.SMTP_PASS || 'ayavcduthzelrpns';
-  let pass = rawPass.replace(/\s+/g, '');
-  if (!pass || pass.length !== 16) {
-    pass = 'ayavcduthzelrpns';
+  const pass = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
+  const user = process.env.SMTP_USER || 'no-reply@saarthi.dpdns.org';
+
+  if (!pass) {
+    return {
+      success: false,
+      mode: 'skipped',
+      message: 'SMTP_PASS environment variable is not configured; release email dispatch skipped.',
+    };
   }
-  const user = process.env.SMTP_USER || 'ratobiralo4@gmail.com';
 
   try {
     const primaryTransporter = nodemailer.createTransport({
@@ -89,11 +114,11 @@ export async function dispatchUpdateReportEmail(
       port: parseInt(process.env.SMTP_PORT || '587', 10),
       secure: process.env.SMTP_SECURE === 'true',
       auth: { user, pass },
-      tls: { rejectUnauthorized: false },
+      tls: { minVersion: 'TLSv1.2' },
       connectionTimeout: 8000,
     });
 
-    const info = await primaryTransporter.sendMail({
+    await primaryTransporter.sendMail({
       from: `"SAARTHI Release Engine" <${user}>`,
       to: recipient,
       subject: `[SAARTHI RELEASE REPORT] v${version} - ${commitTitle}`,
@@ -718,12 +743,34 @@ export async function pushToGitHubViaAPI(
   branch: string,
   commitMessage: string
 ): Promise<string> {
+  if (!token || token.trim().length < 5) {
+    throw new Error('GitHub Authentication Failed: No Personal Access Token provided.');
+  }
+
+  const cleanToken = token.trim();
   const headers = {
-    Authorization: `Bearer ${token}`,
+    Authorization: `Bearer ${cleanToken}`,
     'User-Agent': 'SAARTHI-Platform-Backup',
     Accept: 'application/vnd.github.v3+json',
     'Content-Type': 'application/json',
   };
+
+  // 0. Pre-flight Authentication & Permission Verification
+  try {
+    const authCheck = await fetch('https://api.github.com/user', { headers });
+    if (!authCheck.ok) {
+      if (authCheck.status === 401) {
+        throw new Error('GitHub Authentication Failed (HTTP 401). Invalid or expired Personal Access Token. Please update your token in Developer Command Center.');
+      }
+      if (authCheck.status === 403) {
+        throw new Error('GitHub API Access Denied (HTTP 403). Token rate limit reached or insufficient repository permissions.');
+      }
+    }
+  } catch (err: any) {
+    if (err.message && err.message.includes('GitHub Authentication Failed')) {
+      throw err;
+    }
+  }
 
   // 1. Get current commit SHA of the branch (if branch exists)
   let baseTreeSha: string | undefined;
@@ -826,6 +873,9 @@ export async function pushToGitHubViaAPI(
 
   if (!createTreeRes.ok) {
     const errText = await createTreeRes.text();
+    if (createTreeRes.status === 401) {
+      throw new Error('GitHub Authentication Failed (HTTP 401). Invalid or expired Personal Access Token.');
+    }
     throw new Error(`Failed to create GitHub tree: ${errText}`);
   }
 
@@ -992,13 +1042,28 @@ export async function executeGitPushWithFallback(
         gitPushNote: gitPushResultMsg,
       };
     } catch (apiErr: any) {
-      console.error('Both Git CLI and GitHub REST API pushes failed:', apiErr);
       const errDetail = apiErr.message || 'Unknown error during GitHub push.';
+      const isAuthError =
+        errDetail.includes('401') ||
+        errDetail.includes('Bad credentials') ||
+        errDetail.includes('Invalid or expired') ||
+        errDetail.includes('Authentication Failed');
+
+      const formattedMsg = isAuthError
+        ? '⚠️ Notice: GitHub Authentication Failed (HTTP 401). Invalid or expired Personal Access Token. Please update your token in Developer Command Center.'
+        : `❌ GitHub Push Error: ${errDetail}`;
+
+      console.warn('[SAARTHI GitHub Engine]', formattedMsg);
       return {
         success: false,
-        message: `❌ GitHub Push Error: ${errDetail}`,
-        gitPushNote: `❌ GitHub Push Error: ${errDetail}`,
+        message: formattedMsg,
+        gitPushNote: formattedMsg,
       };
+    } finally {
+      // Ensure git remote URL is cleaned and does not retain embedded tokens
+      try {
+        execSync(`git remote set-url origin https://github.com/${githubUser}/${repoName}.git`, { stdio: 'pipe' });
+      } catch {}
     }
   }
 }

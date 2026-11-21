@@ -61,6 +61,23 @@ export interface DbAuditEvent {
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }
 
+export interface DbSupportTicket {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  category: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  subject: string;
+  message: string;
+  status: 'NEW' | 'REVIEWING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  adDateStr: string;
+  bsDateStr: string;
+  createdAtIso: string;
+  updatedAtIso: string;
+  adminReply?: string;
+}
+
 const DB_DIR = path.join(process.cwd(), 'database');
 if (!fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
@@ -167,6 +184,23 @@ function initSqliteSchema(db: DatabaseSync): void {
       acquired_at TEXT NOT NULL,
       expires_at TEXT NOT NULL,
       status TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS support_tickets (
+      id TEXT PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL DEFAULT 'N/A',
+      category TEXT NOT NULL,
+      priority TEXT NOT NULL DEFAULT 'MEDIUM',
+      subject TEXT NOT NULL,
+      message TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'NEW',
+      ad_date_str TEXT NOT NULL,
+      bs_date_str TEXT NOT NULL,
+      created_at_iso TEXT NOT NULL,
+      updated_at_iso TEXT NOT NULL,
+      admin_reply TEXT
     );
   `);
 }
@@ -651,5 +685,93 @@ export function migrateLegacyJsonToDb() {
   const db = getSqliteDb();
   hydrateStateFromGitHubJsonFiles(db);
   return { manifestsMigrated: 1, emailsMigrated: 1, auditLogsMigrated: 1 };
+}
+
+// ==========================================
+// 6. SUPPORT TICKETS & ISSUE REPORT PERSISTENCE
+// ==========================================
+
+export function createSupportTicketDb(ticket: DbSupportTicket): DbSupportTicket {
+  const db = getSqliteDb();
+  db.prepare(`
+    INSERT INTO support_tickets (
+      id, full_name, email, phone, category, priority, subject, message,
+      status, ad_date_str, bs_date_str, created_at_iso, updated_at_iso, admin_reply
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    ticket.id,
+    ticket.fullName,
+    ticket.email,
+    ticket.phone || 'N/A',
+    ticket.category,
+    ticket.priority || 'MEDIUM',
+    ticket.subject,
+    ticket.message,
+    ticket.status || 'NEW',
+    ticket.adDateStr,
+    ticket.bsDateStr,
+    ticket.createdAtIso,
+    ticket.updatedAtIso,
+    ticket.adminReply || null
+  );
+  return ticket;
+}
+
+export function listSupportTicketsDb(limit: number = 100): DbSupportTicket[] {
+  const db = getSqliteDb();
+  const safeLimit = Math.max(1, Math.min(500, limit));
+  const rows = db.prepare('SELECT * FROM support_tickets ORDER BY created_at_iso DESC LIMIT ?').all(safeLimit) as any[];
+  return rows.map((r) => ({
+    id: r.id,
+    fullName: r.full_name,
+    email: r.email,
+    phone: r.phone,
+    category: r.category,
+    priority: r.priority,
+    subject: r.subject,
+    message: r.message,
+    status: r.status,
+    adDateStr: r.ad_date_str,
+    bsDateStr: r.bs_date_str,
+    createdAtIso: r.created_at_iso,
+    updatedAtIso: r.updated_at_iso,
+    adminReply: r.admin_reply || undefined,
+  }));
+}
+
+export function updateSupportTicketDb(
+  id: string,
+  updates: { status?: DbSupportTicket['status']; adminReply?: string }
+): DbSupportTicket | null {
+  const db = getSqliteDb();
+  const existing = db.prepare('SELECT * FROM support_tickets WHERE id = ?').get(id) as any;
+  if (!existing) return null;
+
+  const nextStatus = updates.status || existing.status;
+  const nextReply = updates.adminReply !== undefined ? updates.adminReply : existing.admin_reply;
+  const nowIso = new Date().toISOString();
+
+  db.prepare(`
+    UPDATE support_tickets
+    SET status = ?, admin_reply = ?, updated_at_iso = ?
+    WHERE id = ?
+  `).run(nextStatus, nextReply || null, nowIso, id);
+
+  return {
+    id: existing.id,
+    fullName: existing.full_name,
+    email: existing.email,
+    phone: existing.phone,
+    category: existing.category,
+    priority: existing.priority,
+    subject: existing.subject,
+    message: existing.message,
+    status: nextStatus,
+    adDateStr: existing.ad_date_str,
+    bsDateStr: existing.bs_date_str,
+    createdAtIso: existing.created_at_iso,
+    updatedAtIso: nowIso,
+    adminReply: nextReply || undefined,
+  };
 }
 

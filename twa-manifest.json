@@ -3,6 +3,7 @@
   "host": "saarthi.dpdns.org",
   "name": "SAARTHI",
   "launcherName": "SAARTHI",
+  "display": "standalone",
   "themeColor": "#0F172A",
   "themeColorDark": "#090D16",
   "navigationColor": "#0F172A",
@@ -12,43 +13,43 @@
   "backgroundColor": "#090D16",
   "enableNotifications": true,
   "startUrl": "/",
-  "iconUrl": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png",
-  "maskableIconUrl": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png",
+  "iconUrl": "https://saarthi.dpdns.org/pwa-512x512.png",
+  "maskableIconUrl": "https://saarthi.dpdns.org/pwa-maskable-512x512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
     "path": "./android.keystore",
     "alias": "saarthi-key"
   },
-  "appVersionName": "1.7.0",
-  "appVersionCode": 10700,
+  "appVersionName": "1.9.1",
+  "appVersionCode": 10901,
   "shortcuts": [
     {
       "name": "Nepali Calendar",
       "short_name": "Calendar",
-      "url": "/?tab=calendar-bs-ad",
-      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+      "url": "/?tab=calendar",
+      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
     },
     {
       "name": "NRB Forex Rates",
       "short_name": "Forex",
       "url": "/?tab=forex",
-      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
     },
     {
-      "name": "NEPSE Market Live",
+      "name": "NEPSE Market",
       "short_name": "NEPSE",
-      "url": "/?tab=stocks",
-      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+      "url": "/?tab=nepse",
+      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
     },
     {
-      "name": "CDSC IPO Result",
-      "short_name": "IPO",
-      "url": "/?tab=cdsc-ipo-result",
-      "icon": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/saarthi_logo.png"
+      "name": "Report an Issue",
+      "short_name": "Support",
+      "url": "/?tab=contact",
+      "icon": "https://saarthi.dpdns.org/pwa-192x192.png"
     }
   ],
   "generatorApp": "bubblewrap-cli",
-  "webManifestUrl": "https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/manifest.json",
+  "webManifestUrl": "https://saarthi.dpdns.org/manifest.json",
   "fallbackType": "customtabs",
   "features": {
     "playBilling": {
@@ -60,5 +61,7 @@
   },
   "enableSiteSettingsShortcut": true,
   "isChromeOSOnly": false,
-  "isAndroidAutoEnabled": false
+  "isAndroidAutoEnabled": false,
+  "minSdkVersion": 21,
+  "orientation": "default"
 }

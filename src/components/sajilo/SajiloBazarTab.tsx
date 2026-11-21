@@ -13,8 +13,13 @@ import {
   Minus,
   Sparkles,
   ExternalLink,
+  Send,
+  Globe,
+  Building2,
+  Wallet,
 } from 'lucide-react';
 import { KalimatiProduceItem } from '../../types/sajiloTypes';
+import { REMITTANCE_CORRIDORS_DATABASE } from '../../data/sajiloRemittanceData';
 
 interface SajiloBazarTabProps {
   currentLang: 'en' | 'ne';
@@ -22,7 +27,8 @@ interface SajiloBazarTabProps {
 }
 
 export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, devanagariNumerals }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'kalimati' | 'metals' | 'fuel' | 'nepse'>('kalimati');
+  const [activeSubTab, setActiveSubTab] = useState<'kalimati' | 'metals' | 'fuel' | 'nepse' | 'remittance'>('kalimati');
+  const [selectedCorridorId, setSelectedCorridorId] = useState<string>('corridor-usd');
   const [kalimatiData, setKalimatiData] = useState<KalimatiProduceItem[]>([]);
   const [isLoadingKalimati, setIsLoadingKalimati] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,6 +122,18 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
             <TrendingUp className="w-3.5 h-3.5" />
             <span>{currentLang === 'ne' ? 'नेप्से तथा सेयर बजार' : 'NEPSE & IPO'}</span>
           </button>
+
+          <button
+            onClick={() => setActiveSubTab('remittance')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+              activeSubTab === 'remittance'
+                ? 'bg-[#00e599] text-[#0a0b0d] shadow'
+                : 'text-[#8b909b] hover:text-[#edeef0]'
+            }`}
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>{currentLang === 'ne' ? 'रेमिट्यान्स दर तुलना' : 'Remittance'}</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-2 text-[11px] font-mono text-[#8b909b]">
@@ -159,7 +177,7 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
               <a
                 href="https://kalimatimarket.gov.np"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="px-3 py-1.5 rounded-lg bg-[#1f232b] hover:bg-[#262a31] border border-[#262a31] text-xs font-mono text-[#8b909b] hover:text-[#00e599] flex items-center gap-1.5 transition-colors"
               >
                 <span>kalimatimarket.gov.np</span>
@@ -466,6 +484,136 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 5. Remittance Corridor & Provider Comparison */}
+      {activeSubTab === 'remittance' && (
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-[#00e599]" />
+                <h3 className="font-bold text-sm text-[#edeef0]">
+                  {currentLang === 'ne' ? 'विदेशबाट नेपाल पैसा पठाउने रेमिट्यान्स दर तुलना' : 'Nepal Inward Remittance Exchange Rate Comparison'}
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  NRB Benchmark
+                </span>
+              </div>
+              <p className="text-xs text-[#8b909b] mt-0.5">
+                {currentLang === 'ne'
+                  ? 'नेपाल राष्ट्र बैंकको आधिकारिक सन्दर्भ दर तथा प्रमुख रेमिट्यान्स कम्पनीहरूको प्रत्यक्ष विनिमय दर।'
+                  : 'Official NRB reference rates compared against top money transfer operators (MTOs) and wallets.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Corridor Selection Pills */}
+          <div className="flex flex-wrap items-center gap-2 p-2 rounded-xl bg-[#14161b] border border-[#262a31]">
+            {REMITTANCE_CORRIDORS_DATABASE.map((corridor) => (
+              <button
+                key={corridor.id}
+                onClick={() => setSelectedCorridorId(corridor.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  selectedCorridorId === corridor.id
+                    ? 'bg-[#00e599] text-black shadow-md'
+                    : 'bg-[#0d0e12] text-[#8b909b] hover:text-[#edeef0] border border-[#262a31]'
+                }`}
+              >
+                <span>{corridor.flagEmoji}</span>
+                <span>{corridor.corridor}</span>
+                <span className="text-[10px] opacity-75">({corridor.currencySymbol})</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Active Corridor Card & Table */}
+          {(() => {
+            const activeCorridor =
+              REMITTANCE_CORRIDORS_DATABASE.find((c) => c.id === selectedCorridorId) ||
+              REMITTANCE_CORRIDORS_DATABASE[0];
+
+            return (
+              <div className="p-5 rounded-2xl bg-[#14161b] border border-[#262a31] shadow-xl space-y-5">
+                {/* Official NRB Benchmark Box */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#0d0e12] border border-[#262a31]">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{activeCorridor.flagEmoji}</span>
+                    <div>
+                      <h4 className="font-bold text-sm sm:text-base text-[#edeef0]">
+                        १ {activeCorridor.currencyName} ({activeCorridor.corridor})
+                      </h4>
+                      <p className="text-[11px] text-[#8b909b]">
+                        अन्तिम अपडेट: {activeCorridor.lastUpdated}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 text-xs font-mono">
+                    <div className="p-2.5 rounded-lg bg-[#14161b] border border-[#262a31] text-center">
+                      <span className="text-[#8b909b] block text-[10px]">NRB Buy (खरिद)</span>
+                      <span className="font-bold text-[#edeef0]">NPR {activeCorridor.officialNrbBuy}</span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-[#14161b] border border-[#262a31] text-center">
+                      <span className="text-[#8b909b] block text-[10px]">NRB Sell (बिक्री)</span>
+                      <span className="font-bold text-[#edeef0]">NPR {activeCorridor.officialNrbSell}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Providers Comparison Table */}
+                <div className="overflow-x-auto rounded-xl border border-[#262a31]">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-[#1a1d24] text-[#8b909b] font-semibold border-b border-[#262a31]">
+                      <tr>
+                        <th className="p-3">रेमिट कम्पनी (Provider)</th>
+                        <th className="p-3">भुक्तानी माध्यम (Channel)</th>
+                        <th className="p-3 text-right">विनिमय दर (Rate NPR)</th>
+                        <th className="p-3 text-center">शुल्क (Fee)</th>
+                        <th className="p-3">भुक्तानी गति (Delivery)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#262a31] text-[#edeef0]">
+                      {activeCorridor.providers.map((p, idx) => (
+                        <tr key={idx} className="hover:bg-[#181a20]">
+                          <td className="p-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[#edeef0]">{p.nameNp}</span>
+                              {p.isBestRate && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#00e599]/15 text-[#00e599] border border-[#00e599]/30">
+                                  BEST RATE
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-[#8b909b]">{p.name}</span>
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-[#0d0e12] border border-[#262a31] text-[#8b909b]">
+                              {p.channel}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right font-mono font-bold text-sm text-[#00e599]">
+                            {activeCorridor.currencySymbol}१ = रु {p.rate}
+                          </td>
+                          <td className="p-3 text-center font-mono">
+                            {p.feeNpr === 0 ? (
+                              <span className="text-[#00e599] font-bold">FREE (रु ०)</span>
+                            ) : (
+                              <span className="text-[#8b909b]">रु {p.feeNpr}</span>
+                            )}
+                          </td>
+                          <td className="p-3 text-[#8b909b]">
+                            {currentLang === 'ne' ? p.deliverySpeedNp : p.deliverySpeed}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

@@ -335,7 +335,7 @@ export async function dispatchUpdateEmail(
           secure: p.secure,
           requireTLS: (p as any).requireTLS,
           auth: { user, pass },
-          tls: { rejectUnauthorized: false },
+          tls: { minVersion: 'TLSv1.2' },
           connectionTimeout: 10000,
         });
 

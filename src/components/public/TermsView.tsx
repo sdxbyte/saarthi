@@ -7,86 +7,98 @@ interface TermsViewProps {
   onNavigateTab: (tab: string) => void;
 }
 
-export const TermsView: React.FC<TermsViewProps> = ({ currentLang, theme, onNavigateTab }) => {
+export const TermsView: React.FC<TermsViewProps> = ({ theme, onNavigateTab }) => {
   const isDark = theme === 'dark';
+  const bodyText = isDark ? 'text-slate-300' : 'text-slate-700';
+  const sectionBorder = isDark ? 'border-slate-800' : 'border-slate-200';
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 py-6 px-4 font-sans text-slate-100">
+    <div className={`max-w-4xl mx-auto space-y-8 py-6 px-4 font-sans ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Header */}
-      <div className={`p-8 rounded-3xl border shadow-xl ${
-        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-900'
-      }`}>
+      <div
+        className={`p-8 rounded-3xl border shadow-xl ${
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-900'
+        }`}
+      >
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500">
             <Scale className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs font-mono font-bold uppercase text-amber-400">Legal Governance</span>
-            <h1 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Terms & Conditions</h1>
+            <span className="text-xs font-mono font-bold uppercase text-amber-500">Legal Governance</span>
+            <h1 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Terms &amp; Conditions</h1>
           </div>
         </div>
-        <p className={`text-xs sm:text-sm leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-          Effective Date: January 1, 2026. Please read these Terms and Conditions carefully before accessing or using the Saarthi Civic Gateway platform.
+        <p className={`text-xs sm:text-sm leading-relaxed ${bodyText}`}>
+          Effective Date: August 2026. Please read these Terms and Conditions carefully before using SAARTHI (<code className="font-mono">saarthi.dpdns.org</code> or the Android TWA package <code className="font-mono">com.sdxbyte.saarthi</code>).
         </p>
       </div>
 
       {/* Content Sections */}
-      <div className={`p-8 rounded-3xl border shadow-xl space-y-6 ${
-        isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-900'
-      }`}>
+      <div
+        className={`p-8 rounded-3xl border shadow-xl space-y-6 ${
+          isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-900'
+        }`}
+      >
         <section className="space-y-2">
-          <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" />
-            <span>1. Platform Purpose & Non-Governmental Disclaimer</span>
+            <span>1. Independent Platform &amp; Non-Governmental Disclaimer</span>
           </h2>
-          <p className="text-xs leading-relaxed text-slate-300">
-            Saarthi is an independent digital civic gateway designed to aggregate public information, tax tools, and civic service directories. Saarthi is not owned by or directly affiliated with any government ministry or municipality. It serves purely as a transparent civic access portal for public convenience.
+          <p className={`text-xs leading-relaxed ${bodyText}`}>
+            SAARTHI is a private, independent technology platform aggregating public utilities, financial calculators, open-source intelligence links, and issue-report workflows. SAARTHI is NOT affiliated with, endorsed by, or an official service of the Government of Nepal, NRB, NEPSE, IRD, or DoTM.
           </p>
         </section>
 
-        <section className="space-y-2 border-t border-slate-800 pt-4">
-          <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4" />
-            <span>2. Acceptable Use Policy</span>
+        <section className={`space-y-2 border-t pt-4 ${sectionBorder}`}>
+          <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            <span>2. Not Financial, Tax, Investment, or Legal Advice</span>
           </h2>
-          <p className="text-xs leading-relaxed text-slate-300">
-            Users agree to use the platform solely for lawful civic purposes. Users are strictly prohibited from:
+          <p className={`text-xs leading-relaxed ${bodyText}`}>
+            All income tax estimates, loan EMI schedules, foreign exchange viewers, bullion tariffs, and NEPSE market snapshots in SAARTHI are provided strictly for informational and educational reference. SAARTHI does NOT provide licensed financial, investment, tax, or legal advice, and does not facilitate financial transactions, lending, or securities trading. Always verify official filings and rates directly with licensed institutions or government authorities.
           </p>
-          <ul className="list-disc list-inside text-xs text-slate-300 space-y-1 pl-2">
-            <li>Submitting false, fraudulent, or malicious grievance complaints.</li>
-            <li>Attempting to probe, scan, or breach system authentication gateways.</li>
-            <li>Scraping platform data using unauthorized automated bots or DDoS tools.</li>
-            <li>Impersonating government officials or public authorities.</li>
+        </section>
+
+        <section className={`space-y-2 border-t pt-4 ${sectionBorder}`}>
+          <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4" />
+            <span>3. Acceptable Use Policy &amp; Eligibility (18+)</span>
+          </h2>
+          <p className={`text-xs leading-relaxed ${bodyText}`}>
+            SAARTHI is intended for users aged 18 years and older. You agree to use external utilities, public APIs, and OSINT research directories strictly for lawful, defensive, and educational verification purposes. You must NOT:
+          </p>
+          <ul className={`list-disc list-inside text-xs space-y-1 pl-2 ${bodyText}`}>
+            <li>Submit spam, abusive content, or falsified issue reports.</li>
+            <li>Probe, bypass authentication, or automate bulk scraping against platform endpoints.</li>
+            <li>Use external OSINT or developer utilities for harassment, doxxing, or unauthorized access.</li>
           </ul>
         </section>
 
-        <section className="space-y-2 border-t border-slate-800 pt-4">
-          <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
+        <section className={`space-y-2 border-t pt-4 ${sectionBorder}`}>
+          <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2">
             <Lock className="w-4 h-4" />
-            <span>3. Account Responsibilities & Privacy</span>
+            <span>4. Accounts, Issue Reports &amp; Data Deletion</span>
           </h2>
-          <p className="text-xs leading-relaxed text-slate-300">
-            Users creating personal accounts for complaint tracking or document vaults are responsible for maintaining confidentiality of their account credentials. Saarthi enforces strict data protection, password encryption, and zero-plaintext storage policies.
+          <p className={`text-xs leading-relaxed ${bodyText}`}>
+            Local citizen profiles and vault entries remain under your control on your device. Issue reports submitted to <code className="font-mono">/api/support/tickets</code> are rate-limited to prevent abuse. You may purge local data and request ticket deletion anytime at{' '}
+            <button
+              onClick={() => onNavigateTab('account-deletion')}
+              className="text-amber-500 font-bold underline hover:text-amber-400"
+            >
+              https://saarthi.dpdns.org/account-deletion
+            </button>
+            .
           </p>
         </section>
 
-        <section className="space-y-2 border-t border-slate-800 pt-4">
-          <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" />
-            <span>4. Limitation of Liability</span>
-          </h2>
-          <p className="text-xs leading-relaxed text-slate-300">
-            While Saarthi strives to maintain 100% accuracy in financial calculators, NEPSE updates, and tax slabs, all figures are provided for informational and planning purposes. Official tax clearance and legal filings should be verified with respective government departments (IRD, DOTM, etc.).
-          </p>
-        </section>
-
-        <section className="space-y-2 border-t border-slate-800 pt-4">
-          <h2 className="text-lg font-bold text-amber-400 flex items-center gap-2">
+        <section className={`space-y-2 border-t pt-4 ${sectionBorder}`}>
+          <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            <span>5. Service Updates & Modifications</span>
+            <span>5. Limitation of Liability &amp; Contact</span>
           </h2>
-          <p className="text-xs leading-relaxed text-slate-300">
-            Saarthi reserves the right to update, modify, or enhance features, API integrations, and security rules without prior notice to preserve system integrity and public reliability.
+          <p className={`text-xs leading-relaxed ${bodyText}`}>
+            SAARTHI is provided &quot;as is&quot; without warranties of uninterrupted availability. For questions or legal notices, use the Contact &amp; Issue Portal or write to <code className="font-mono">sudipadhikari8107@gmail.com</code>.
           </p>
         </section>
       </div>
@@ -102,7 +114,7 @@ export const TermsView: React.FC<TermsViewProps> = ({ currentLang, theme, onNavi
 
         <button
           onClick={() => onNavigateTab('privacy')}
-          className="text-amber-400 hover:underline font-bold text-xs"
+          className="text-amber-500 hover:underline font-bold text-xs"
         >
           View Privacy Policy →
         </button>

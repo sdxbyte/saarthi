@@ -267,7 +267,7 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
           <a
             href="https://github.com/Shubhamnpk/yonepse"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-700"
           >
             <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
@@ -277,7 +277,7 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
           <a
             href="https://iporesult.cdsc.com.np"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-xl bg-red-600/20 text-red-300 hover:bg-red-600/30 border border-red-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5 text-red-400" />
@@ -287,7 +287,7 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
           <a
             href="https://cdsc.com.np"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
@@ -307,6 +307,10 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
           <span>Last Sync: {nepseStream.lastUpdatedAd || nepseStream.timeStr || 'Just now'}</span>
           <span>Status: <strong className="text-emerald-400">ONLINE</strong></span>
         </div>
+      </div>
+
+      <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-200 text-[11px] leading-relaxed">
+        <strong>Market Disclaimer:</strong> NEPSE index, scrip prices, fundamentals, and IPO information are displayed strictly for informational reference and do not constitute investment or financial advice. Verify orders with a licensed SEBON broker or official CDSC portal.
       </div>
 
       {nepseStream.error && (
@@ -876,7 +880,7 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
                         <a
                           href={ipo.sourceUrl}
                           target="_blank"
-                          rel="noreferrer"
+                          rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:underline font-bold mt-1"
                         >
                           <ExternalLink className="w-2.5 h-2.5" />
@@ -902,7 +906,7 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
               <a
                 href="https://iporesult.cdsc.com.np/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="text-xs text-red-400 hover:underline flex items-center gap-1 font-bold"
               >
                 <span>iporesult.cdsc.com.np</span>
@@ -1180,7 +1184,7 @@ export const NepseMarketView: React.FC<NepseMarketViewProps> = ({ currentLang })
                       <a
                         href={checkResult.officialPortalUrl}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-bold hover:underline"
                       >
                         <span>Open CDSC Portal</span>

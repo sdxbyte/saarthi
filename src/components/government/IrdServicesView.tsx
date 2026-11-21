@@ -194,7 +194,7 @@ export const IrdServicesView: React.FC<IrdServicesViewProps> = ({ currentLang, t
           <a
             href="https://taxportal.ird.gov.np/"
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md transition-colors shrink-0"
           >
             <ExternalLink className="w-3.5 h-3.5" />
@@ -534,7 +534,7 @@ export const IrdServicesView: React.FC<IrdServicesViewProps> = ({ currentLang, t
               <a
                 href={portal.url}
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs text-center shadow-sm transition-colors flex items-center justify-center gap-1.5"
               >
                 <span>{currentLang === 'ne' ? 'पोर्टल खोल्नुहोस्' : 'Access Portal'}</span>
@@ -651,7 +651,7 @@ export const IrdServicesView: React.FC<IrdServicesViewProps> = ({ currentLang, t
               <a
                 href="https://ird.gov.np/"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
                 title="Download Form"
               >

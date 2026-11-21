@@ -329,7 +329,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
               <a
                 href="https://github.com/public-apis/public-apis"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className={`px-4 py-2.5 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 ${
                   isDark
                     ? 'bg-slate-900/90 border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
@@ -730,7 +730,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                           <a
                             href={u.web_pages[0]}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             className="text-rose-400 hover:underline text-[10px] flex items-center gap-0.5"
                           >
                             Portal <ExternalLink className="w-2.5 h-2.5" />
@@ -794,7 +794,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                     href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrText || 'https://saarthi.gov.np')}`}
                     download="saarthi_qr.png"
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     className="text-teal-400 font-bold hover:underline flex items-center gap-1"
                   >
                     <Download className="w-3 h-3" /> Save Image
@@ -998,7 +998,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                       <a
                         href={api.link}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                         className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-bold transition"
                       >
                         Docs <ExternalLink className="w-3 h-3" />

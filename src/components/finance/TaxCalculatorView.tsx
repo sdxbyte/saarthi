@@ -240,8 +240,8 @@ export const TaxCalculatorView: React.FC<TaxCalculatorViewProps> = ({ currentLan
               <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
               <span>
                 {currentLang === 'ne'
-                  ? 'नोट: महिला करदाताको हकमा कुल आयकरमा १०% थप छुट प्राप्त हुन्छ।'
-                  : 'Note: Female tax payers receive an additional 10% rebate on total calculated income tax.'}
+                  ? 'नोट: महिला करदाताको हकमा कुल आयकरमा १०% थप छुट प्राप्त हुन्छ। यो गणना शैक्षिक तथा जानकारी प्रयोजनको लागि मात्र हो — आधिकारिक कर परामर्श वा IRD दाखिलाको विकल्प होइन।'
+                  : 'Note: Female tax payers receive an additional 10% rebate on total calculated income tax. Figures are informational estimates only and do not constitute tax, financial, or legal advice; verify official filings with IRD.'}
               </span>
             </div>
           </div>

@@ -27,6 +27,7 @@ interface AuthLoginModalProps {
   onLogin: (profile: UserProfile) => void;
   onLogout: () => void;
   onUpdateProfile?: (profile: UserProfile) => void;
+  onOpenAccountDeletion?: () => void;
   currentLang: 'en' | 'ne';
   theme: 'dark' | 'light';
   vaultDocCount?: number;
@@ -39,6 +40,7 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
   onLogin,
   onLogout,
   onUpdateProfile,
+  onOpenAccountDeletion,
   currentLang,
   theme,
   vaultDocCount = 0,
@@ -324,15 +326,27 @@ export const AuthLoginModal: React.FC<AuthLoginModalProps> = ({
                 </p>
               </div>
 
-              {/* Logout Button */}
-              <button
-                type="button"
-                onClick={handleLogoutCitizen}
-                className="w-full py-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/80 text-rose-300 font-bold text-xs transition-all flex items-center justify-center gap-2"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out of Citizen Account</span>
-              </button>
+              {/* Account Actions: Sign Out & Account Deletion */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleLogoutCitizen}
+                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold text-xs transition-all flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+                {onOpenAccountDeletion && (
+                  <button
+                    type="button"
+                    onClick={onOpenAccountDeletion}
+                    className="w-full py-2.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800/80 text-rose-300 font-bold text-xs transition-all flex items-center justify-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>Delete Account &amp; Data</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             /* PUBLIC LOG IN & REGISTRATION VIEW */

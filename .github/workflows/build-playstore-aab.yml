@@ -1,4 +1,4 @@
-name: Build Android Play Store App Bundle (AAB & APK)
+name: Build Android APK & Play Store AAB
 
 on:
   push:
@@ -15,35 +15,38 @@ permissions:
 
 jobs:
   build-android:
-    name: 📱 Build Play Store AAB & Mobile APK
+    name: Build Public APK (Zero Secrets Required)
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: ⚙️ Set up Java JDK 17
+      - name: Set up Java JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: ⚙️ Set up Android SDK
+      - name: Set up Android SDK (API 35)
         uses: android-actions/setup-android@v3
 
-      - name: ⚙️ Setup Node.js 20
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
 
-      - name: 📦 Install Project Dependencies
+      - name: Install Project Dependencies
         run: npm ci || npm install
 
-      - name: 🛠️ Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
+      - name: Run Unit & Security Tests
+        run: npm test
 
-      - name: ⚙️ Pre-configure Bubblewrap Environment
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli@1.27.0
+
+      - name: Configure Bubblewrap & Android API 35 SDK
         run: |
           mkdir -p ~/.bubblewrap
           cat <<EOF > ~/.bubblewrap/config.json
@@ -52,87 +55,139 @@ jobs:
             "androidSdkPath": "${ANDROID_HOME}"
           }
           EOF
-          
-          export PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/tools/bin:${PATH}"
-          
-          # Accept Android licenses and install platform tools
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
 
-      - name: 🔑 Setup Android Build Workspace & Keystore
+          export PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/tools/bin:${PATH}"
+          (yes || true) | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: Prepare Signing Keystore (Zero Secrets Needed for Public APK)
+        id: keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           mkdir -p android-build
           cp twa-manifest.json android-build/twa-manifest.json
-          
-          cd android-build
-          keytool -genkey -v -keystore ./android.keystore \
-            -alias saarthi-key \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "SaarthiRelease2026@" \
-            -keypass "SaarthiRelease2026@" \
-            -dname "CN=SAARTHI, OU=Engineering, O=Sdxbyte, L=Kathmandu, ST=Bagmati, C=NP"
-          
-          echo "=== SHA-256 Fingerprint ==="
-          keytool -list -v -keystore ./android.keystore -alias saarthi-key -storepass "SaarthiRelease2026@" | grep "SHA256:" || true
 
-      - name: 🏗️ Initialize & Build Bubblewrap Android Package
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
+            echo "playstore_mode=true" >> "$GITHUB_OUTPUT"
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android-build/android.keystore
+            ALIAS_VALUE="$KEY_ALIAS"
+            STORE_PASS="$KEYSTORE_PASSWORD"
+            KEY_PASS="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+            echo "Using persistent upload keystore (Play Store .aab + Public .apk enabled)."
+          else
+            echo "playstore_mode=false" >> "$GITHUB_OUTPUT"
+            ALIAS_VALUE="saarthi-github-apk"
+            STORE_PASS="SaarthiApkKey${GITHUB_RUN_ID}"
+            KEY_PASS="$STORE_PASS"
+            keytool -genkeypair -noprompt \
+              -keystore android-build/android.keystore \
+              -alias "$ALIAS_VALUE" \
+              -keyalg RSA -keysize 2048 -validity 3650 \
+              -storepass "$STORE_PASS" \
+              -keypass "$KEY_PASS" \
+              -dname "CN=SAARTHI, OU=Public Release, O=sdxbyte, L=Kathmandu, C=NP"
+            echo "Building public GitHub APK with ephemeral release key (no repository secrets required)."
+          fi
+
+          # Ensure icons resolve cleanly even if production domain has not yet synced newest PWA icons
+          USE_LOCAL_ICONS="false"
+          if ! curl -sfI --max-time 8 "https://saarthi.dpdns.org/pwa-512x512.png" >/dev/null 2>&1; then
+            USE_LOCAL_ICONS="true"
+          fi
+
+          ALIAS_VALUE="$ALIAS_VALUE" USE_LOCAL_ICONS="$USE_LOCAL_ICONS" node -e "
+            const fs = require('fs');
+            const p = 'android-build/twa-manifest.json';
+            const m = JSON.parse(fs.readFileSync(p, 'utf8'));
+            m.signingKey = { path: './android.keystore', alias: process.env.ALIAS_VALUE };
+            if (process.env.USE_LOCAL_ICONS === 'true') {
+              m.iconUrl = 'http://127.0.0.1:8787/pwa-512x512.png';
+              m.maskableIconUrl = 'http://127.0.0.1:8787/pwa-maskable-512x512.png';
+              if (Array.isArray(m.shortcuts)) {
+                m.shortcuts = m.shortcuts.map((s) => ({ ...s, icon: 'http://127.0.0.1:8787/pwa-192x192.png' }));
+              }
+            }
+            fs.writeFileSync(p, JSON.stringify(m, null, 2));
+          "
+
+          echo "BUBBLEWRAP_KEYSTORE_PASSWORD=$STORE_PASS" >> "$GITHUB_ENV"
+          echo "BUBBLEWRAP_KEY_PASSWORD=$KEY_PASS" >> "$GITHUB_ENV"
+
+      - name: Generate Gradle Project & Build Signed Android APK
         run: |
+          python3 -m http.server 8787 --directory public >/dev/null 2>&1 &
+          ICON_SERVER_PID=$!
+          trap "kill $ICON_SERVER_PID 2>/dev/null || true" EXIT
+
           cd android-build
-          export BUBBLEWRAP_KEYSTORE_PASSWORD="SaarthiRelease2026@"
-          export BUBBLEWRAP_KEY_PASSWORD="SaarthiRelease2026@"
-          
-          # Regenerate Android project from twa-manifest.json
           bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json
-          
-          # Grant executable permissions to Gradle wrapper
           if [ -f gradlew ]; then
             chmod +x gradlew
           fi
-          
-          # Build signed production Play Store AAB and APK
           bubblewrap build --skipPwaValidation
 
-      - name: 📦 Archive Play Store AAB & APK Artifacts
+          APK_SRC=""
+          if [ -f "app-release-signed.apk" ]; then
+            APK_SRC="app-release-signed.apk"
+          elif [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+            APK_SRC="app/build/outputs/apk/release/app-release.apk"
+          fi
+
+          if [ -z "$APK_SRC" ]; then
+            echo "ERROR: Built APK not found."
+            ls -la
+            exit 1
+          fi
+
+          cp "$APK_SRC" "saarthi-v1.9.1.apk"
+          cp "$APK_SRC" "saarthi-latest.apk"
+
+          if [ "${{ steps.keystore.outputs.playstore_mode }}" != "true" ]; then
+            rm -f *.aab app/build/outputs/bundle/release/*.aab
+          fi
+
+      - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: saarthi-playstore-artifacts
+          name: saarthi-android-release
           path: |
+            android-build/saarthi-v1.9.1.apk
+            android-build/saarthi-latest.apk
             android-build/*.aab
-            android-build/*.apk
             android-build/app/build/outputs/bundle/release/*.aab
-            android-build/app/build/outputs/apk/release/*.apk
           retention-days: 90
-          if-no-files-found: warn
+          if-no-files-found: error
 
-      - name: 🚀 Create GitHub Release with Direct Mobile Downloads
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      - name: Publish Public APK to GitHub Releases
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.6.2-playstore
-          name: 'SAARTHI v1.6.2 — Google Play Store Release Package'
+          tag_name: v1.9.1-android
+          name: 'SAARTHI v1.9.1 — Android APK Download'
+          make_latest: true
           fail_on_unmatched_files: false
           body: |
-            ## SAARTHI Android Play Store Release Package (v1.6.2)
-            
-            This release contains the signed **Google Play Store App Bundle (.aab)** and **Direct Mobile Installable APK (.apk)** compiled via automated cloud pipeline.
-            
-            ### Included Files:
-            - **`app-release-bundle.aab`**: Ready to upload directly to Google Play Console.
-            - **`app-release-signed.apk`**: Direct installable app for Android mobile devices.
-            - **`assetlinks.json`**: Verified domain association file.
-            
-            ### Compliance Information:
-            - **Package Name**: `com.sdxbyte.saarthi`
-            - **Version Name**: `1.6.2`
-            - **Version Code**: `10602`
-            - **Privacy Policy**: https://saarthi.dpdns.org/?tab=privacy
-            - **Account Deletion**: https://saarthi.dpdns.org/?tab=account-deletion
+            ## SAARTHI Android App (v1.9.1)
+
+            Tap **`saarthi-latest.apk`** (or **`saarthi-v1.9.1.apk`**) below on your Android phone to download and install SAARTHI directly.
+
+            - **Direct Download Link**: https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk
+            - **Package ID**: `com.sdxbyte.saarthi`
+            - **Version**: `1.9.1` (`10901`)
+            - **Note**: If upgrading from an older CI-built APK without a shared signing key, uninstall the previous APK first before installing the new one.
+
+            ### Compliance Links
+            - **Privacy Policy**: https://saarthi.dpdns.org/privacy
+            - **Terms of Service**: https://saarthi.dpdns.org/terms
+            - **Account Deletion**: https://saarthi.dpdns.org/account-deletion
           files: |
+            android-build/saarthi-latest.apk
+            android-build/saarthi-v1.9.1.apk
             android-build/*.aab
-            android-build/*.apk
             android-build/app/build/outputs/bundle/release/*.aab
-            android-build/app/build/outputs/apk/release/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

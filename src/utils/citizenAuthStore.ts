@@ -253,16 +253,10 @@ export function authenticateCitizen(
   }
 
   const expectedHash = hashPassword(passwordInput, cleanEmail);
-  const isMatch = account.passwordHash === expectedHash || account.passwordHash === passwordInput; // handle upgrade if old plaintext
+  const isMatch = account.passwordHash === expectedHash;
 
   if (!isMatch) {
     return { success: false, message: 'Invalid email address or password. Access denied.' };
-  }
-
-  // Automatic hash upgrade if legacy plaintext account
-  if (account.passwordHash === passwordInput) {
-    account.passwordHash = expectedHash;
-    saveCitizenAccounts(accounts);
   }
 
   const profile: UserProfile = {
@@ -310,5 +304,28 @@ export function saveUserDocuments(userEmail: string, docs: VaultDocument[]) {
     localStorage.setItem(key, JSON.stringify(docs));
   } catch (e) {
     console.error('Error saving user documents:', e);
+  }
+}
+
+/**
+ * Permanently delete local citizen account, stored vault documents, and active session
+ */
+export function deleteCitizenAccount(userEmail: string): boolean {
+  const cleanEmail = userEmail.trim().toLowerCase();
+  if (!cleanEmail) return false;
+  try {
+    const accounts = getRegisteredCitizens();
+    const filtered = accounts.filter((acc) => acc.email.toLowerCase() !== cleanEmail);
+    saveCitizenAccounts(filtered);
+    localStorage.removeItem(USER_DOCS_PREFIX + cleanEmail);
+    const active = getActiveCitizenSession();
+    if (active && active.email.toLowerCase() === cleanEmail) {
+      logoutCitizen();
+      localStorage.removeItem('saarthi_user_profile');
+    }
+    return filtered.length !== accounts.length;
+  } catch (e) {
+    console.error('Error deleting citizen account:', e);
+    return false;
   }
 }

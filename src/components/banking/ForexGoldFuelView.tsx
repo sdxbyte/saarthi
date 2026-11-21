@@ -41,6 +41,7 @@ import { fetchNocFuelData, NocFuelTariff, NocRegionalTariffs } from '../../servi
 
 interface ForexGoldFuelViewProps {
   currentLang: 'en' | 'ne';
+  initialSubTab?: 'forex' | 'gold' | 'fuel';
 }
 
 // 7-day Historical Price Trend Data for Gold & Silver
@@ -94,8 +95,14 @@ const NOC_OFFICIAL_STATUS_UPDATES = [
   },
 ];
 
-export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLang }) => {
-  const [activeTab, setActiveTab] = useState<'forex' | 'gold' | 'fuel'>('forex');
+export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLang, initialSubTab = 'forex' }) => {
+  const [activeTab, setActiveTab] = useState<'forex' | 'gold' | 'fuel'>(initialSubTab);
+
+  React.useEffect(() => {
+    if (initialSubTab) {
+      setActiveTab(initialSubTab);
+    }
+  }, [initialSubTab]);
 
   // Live Data Hooks with Mock/Live State Management
   const forexStream = useLiveData<ForexRate[]>('forex-nrb');
@@ -366,6 +373,10 @@ export const ForexGoldFuelView: React.FC<ForexGoldFuelViewProps> = ({ currentLan
           </span>
           <span className="text-slate-500">AD: 2026-08-16 | BS: २०८३-०४-३२</span>
         </div>
+      </div>
+
+      <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-200 text-[11px] leading-relaxed">
+        <strong>Reference Notice:</strong> Exchange rates, jewellery estimates, and petroleum tariffs are provided strictly for informational comparison and do not constitute financial, trading, or commercial advice. Confirm final settlement rates directly with licensed banks or dealers.
       </div>
 
       {/* ========================================================================= */}

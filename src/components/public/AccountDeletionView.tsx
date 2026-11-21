@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ShieldAlert, Trash2, CheckCircle2, ArrowLeft, Lock, Mail, AlertTriangle, Send } from 'lucide-react';
+import { Trash2, CheckCircle2, ArrowLeft, Mail, AlertTriangle } from 'lucide-react';
+import { deleteCitizenAccount } from '../../utils/citizenAuthStore';
 
 interface AccountDeletionViewProps {
   currentLang: 'en' | 'ne';
@@ -15,10 +16,10 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
   const isDark = theme === 'dark';
   const [email, setEmail] = useState('');
   const [reason, setReason] = useState('');
-  const [confirmationCode, setConfirmationCode] = useState('');
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [ticketRef, setTicketRef] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,13 +52,22 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
         }),
       });
 
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        deleteCitizenAccount(email);
+        setTicketRef(data.ticket?.id || '');
         setSuccess(true);
       } else {
-        setSuccess(true); // Soft-delete request acknowledged
+        setErrorMsg(
+          data.error ||
+            data.message ||
+            (res.status === 429
+              ? 'Too many deletion requests submitted. Please wait a few minutes and try again.'
+              : `Unable to submit deletion request (HTTP ${res.status}).`)
+        );
       }
     } catch {
-      setSuccess(true);
+      setErrorMsg('Network error while connecting to SAARTHI server. Please retry when online.');
     } finally {
       setSubmitting(false);
     }
@@ -107,8 +117,8 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
               {currentLang === 'ne'
-                ? `हामीले ${email} को लागि खारेजी अनुरोध प्राप्त गरेका छौं। तपाईंको खाता र सम्पूर्ण सम्बन्धित डाटा ७ कार्यदिन भित्र स्थायी रूपमा मेटाइनेछ। पुष्टि इमेल पठाइएको छ।`
-                : `We have received your account deletion request for ${email}. Your profile, credentials, and stored data will be permanently purged within 7 business days.`}
+                ? `हामीले ${email} को लागि खारेजी अनुरोध प्राप्त गरेका छौं। लोकल प्रोफाइल र कागजात भल्ट खाली गरिएको छ र सर्भर रेकर्ड ७ कार्यदिन भित्र स्थायी रूपमा मेटाइनेछ।`
+                : `Your local profile and document vault for ${email} have been cleared, and server-side records will be permanently purged within 7 business days.${ticketRef ? ` Tracking ID: ${ticketRef}.` : ''}`}
             </p>
             <div className="pt-4">
               <button
@@ -216,7 +226,7 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
           <span>{currentLang === 'ne' ? 'गोपनीयता नीति हेर्नुहोस्' : 'View Privacy Policy'}</span>
         </button>
 
-        <span className="text-slate-500 font-mono">SAARTHI User Data Rights v1.6</span>
+        <span className="text-slate-500 font-mono">SAARTHI User Data Rights v1.9.1</span>
       </div>
     </div>
   );

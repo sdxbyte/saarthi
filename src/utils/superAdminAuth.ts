@@ -156,8 +156,22 @@ export async function adminFetch(input: RequestInfo | URL, init?: RequestInit): 
   }
   return fetch(input, {
     ...init,
+    credentials: 'include',
     headers,
   });
+}
+
+export async function logoutAdminAsync(): Promise<void> {
+  try {
+    await fetch('/api/admin/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch {
+    // Best-effort server session revocation
+  } finally {
+    setAdminSessionToken(null);
+  }
 }
 
 export function getSuperAdminCreds(): SuperAdminCreds {
@@ -252,10 +266,18 @@ export async function authenticateAdminAsync(
 }> {
   const cleanInput = usernameOrEmail.trim();
 
-  // Primary: Attempt server-side login to retrieve signed session token
+  if (!cleanInput || !passwordAttempt) {
+    return {
+      authenticated: false,
+      isSuperAdmin: false,
+      errorMessage: 'Username/email and password are required.',
+    };
+  }
+
   try {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         username: cleanInput,
@@ -263,135 +285,48 @@ export async function authenticateAdminAsync(
       }),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && data.token && data.userProfile) {
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.success && data.userProfile) {
+      if (data.token) {
         setAdminSessionToken(data.token);
-        return {
-          authenticated: true,
-          isSuperAdmin: data.userProfile.role === 'Super Admin',
-          token: data.token,
-          userProfile: data.userProfile,
-        };
       }
+      return {
+        authenticated: true,
+        isSuperAdmin: data.userProfile.role === 'Super Admin',
+        token: data.token,
+        userProfile: data.userProfile,
+      };
     }
-  } catch (err) {
-    console.warn('Server admin login request failed, checking local credentials fallback...', err);
-  }
 
-  // Fallback: Verify against client delegated / local admin state (for offline/demo)
-  const syncRes = verifyAdminAuthentication(cleanInput, passwordAttempt);
-  return syncRes;
+    return {
+      authenticated: false,
+      isSuperAdmin: false,
+      errorMessage: data.message || data.error || `Authentication failed (HTTP ${res.status}).`,
+    };
+  } catch {
+    return {
+      authenticated: false,
+      isSuperAdmin: false,
+      errorMessage: 'Unable to reach SAARTHI authentication server. Admin access requires live server verification.',
+    };
+  }
 }
 
-export function verifyAdminAuthentication(
-  usernameOrEmail: string,
-  passwordAttempt: string
-): {
+export function verifyAdminAuthentication(): {
   authenticated: boolean;
   isSuperAdmin: boolean;
-  token?: string;
-  userProfile?: {
-    id: string;
-    name: string;
-    email: string;
-    role: 'Super Admin' | 'Admin' | 'Moderator' | 'Support';
-    department: string;
-    permissions: string[];
-  };
-  errorMessage?: string;
+  errorMessage: string;
 } {
-  const cleanInput = usernameOrEmail.trim().toLowerCase();
-  const superCreds = getSuperAdminCreds();
-
-  const isSuperAdminMatch =
-    cleanInput === superCreds.username.toLowerCase() ||
-    cleanInput === superCreds.email.toLowerCase() ||
-    cleanInput === 's.adhikari' ||
-    cleanInput === 'sudipadhikari8107@gmail.com';
-
-  if (isSuperAdminMatch) {
-    const attemptHash = hashAdminPassword(passwordAttempt);
-    const isValid =
-      (superCreds.passwordHashOrPlain && (superCreds.passwordHashOrPlain === attemptHash || superCreds.passwordHashOrPlain === passwordAttempt)) ||
-      (!superCreds.passwordHashOrPlain && passwordAttempt.length >= 6);
-
-    if (isValid) {
-      const token = `local_token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      setAdminSessionToken(token);
-      return {
-        authenticated: true,
-        isSuperAdmin: true,
-        token,
-        userProfile: {
-          id: 'ADM-SUPER-01',
-          name: 'Super Admin Owner (S. Adhikari)',
-          email: 'sudipadhikari8107@gmail.com',
-          role: 'Super Admin',
-          department: 'Platform Owner & Command Center',
-          permissions: [
-            'all_access',
-            'manage_roles',
-            'audit_logs',
-            'system_config',
-            'approve_documents',
-            'developer_command_center',
-          ],
-        },
-      };
-    } else {
-      return {
-        authenticated: false,
-        isSuperAdmin: true,
-        errorMessage: 'Invalid credentials. Please verify your password.',
-      };
-    }
-  }
-
-  // Check delegated accounts authorized explicitly by Super Admin
-  const delegated = getDelegatedAdmins();
-  const matchedDelegated = delegated.find(
-    (d) => d.usernameOrEmail.toLowerCase() === cleanInput && d.status === 'Active'
-  );
-
-  if (matchedDelegated) {
-    const attemptHash = hashAdminPassword(passwordAttempt);
-    if (matchedDelegated.passwordHashOrPlain === attemptHash || matchedDelegated.passwordHashOrPlain === passwordAttempt) {
-      const token = `local_token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      setAdminSessionToken(token);
-      return {
-        authenticated: true,
-        isSuperAdmin: false,
-        token,
-        userProfile: {
-          id: matchedDelegated.id,
-          name: matchedDelegated.name,
-          email: matchedDelegated.usernameOrEmail,
-          role: matchedDelegated.role,
-          department: matchedDelegated.department,
-          permissions: ['approve_documents', 'manage_services', 'view_reports', 'complaint_resolution'],
-        },
-      };
-    } else {
-      return {
-        authenticated: false,
-        isSuperAdmin: false,
-        errorMessage: 'Invalid password for delegated admin account.',
-      };
-    }
-  }
-
   return {
     authenticated: false,
     isSuperAdmin: false,
-    errorMessage: 'Access Denied: Account not authorized. Unrecognized administrative login attempt.',
+    errorMessage: 'Synchronous client-side admin authentication is disabled. Use server-verified authenticateAdminAsync.',
   };
 }
 
-export function verifySuperAdminLogin(usernameOrEmail: string, passwordAttempt: string) {
-  const res = verifyAdminAuthentication(usernameOrEmail, passwordAttempt);
+export function verifySuperAdminLogin() {
   return {
-    isValid: res.authenticated && res.isSuperAdmin,
-    isSuperAdminIdentifier: res.isSuperAdmin,
+    isValid: false,
+    isSuperAdminIdentifier: false,
   };
 }

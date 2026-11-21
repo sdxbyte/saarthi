@@ -30,7 +30,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -45,21 +45,52 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formData.name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || 'N/A',
+          category: formData.subject,
+          subject: `${formData.subject}: ${formData.name.trim()}`,
+          message: formData.message.trim(),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErrorMessage(
+          data.error ||
+            data.message ||
+            (res.status === 429
+              ? 'Too many issue reports sent recently. Please wait a few minutes before submitting again.'
+              : `Unable to submit issue report (HTTP ${res.status}). Please verify your input.`)
+        );
+        return;
+      }
+
+      const ticketId = data.ticket?.id;
       const created = addContactEnquiry({
+        id: ticketId,
         fullName: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         category: formData.subject,
         message: formData.message.trim(),
+        skipNetworkEmail: true,
       });
-      setIsSubmitting(false);
       setSubmittedEnquiry(created);
-    }, 600);
+    } catch {
+      setErrorMessage('Network error while submitting your report. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 py-6 px-4 font-sans text-slate-100">
+    <div className={`max-w-6xl mx-auto space-y-10 py-6 px-4 font-sans ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Header Banner */}
       <div className={`p-8 sm:p-10 rounded-3xl border shadow-2xl relative overflow-hidden ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-900 shadow-xl'
@@ -103,7 +134,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
               <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/30 max-w-sm mx-auto space-y-1 font-mono">
                 <span className="text-[10px] text-slate-400 uppercase block font-bold">Your Unique Enquiry Tracking ID</span>
                 <span className="text-2xl font-black text-amber-400 block tracking-wider">{submittedEnquiry.id}</span>
-                <span className="text-[10px] text-emerald-400 block">Notification Email Dispatched to Administration</span>
+                <span className="text-[10px] text-emerald-400 block">Stored in SAARTHI Support Queue &amp; Audit Log</span>
               </div>
 
               <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">

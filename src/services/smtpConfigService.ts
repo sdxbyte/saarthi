@@ -57,14 +57,15 @@ export function loadSmtpConfig(): SmtpConfig {
 
   // Precedence 3: Environment variable fallback (No hardcoded credentials)
   const envPassFallback = (process.env.SMTP_PASS || '').replace(/\s+/g, '');
+  const envUserFallback = (process.env.SMTP_USER || '').trim();
   return {
     smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
     smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
-    smtpUser: process.env.SMTP_USER || 'ratobiralo4@gmail.com',
+    smtpUser: envUserFallback,
     smtpPass: envPassFallback,
     smtpSecure: process.env.SMTP_SECURE === 'true',
-    fromAddress: process.env.EMAIL_FROM_ADDRESS || 'ratobiralo4@gmail.com',
-    fromName: process.env.EMAIL_FROM_NAME || 'SAARTHI Citizen Portal',
+    fromAddress: process.env.EMAIL_FROM_ADDRESS || envUserFallback,
+    fromName: process.env.EMAIL_FROM_NAME || 'SAARTHI Platform',
     adminEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
   };
 }

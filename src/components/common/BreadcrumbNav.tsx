@@ -1,6 +1,6 @@
 import React from 'react';
-import { Home, ChevronRight, Folder, ArrowLeft, Layers } from 'lucide-react';
-import { SERVICE_DEFINITIONS, PRIMARY_CATEGORIES, getCategoryById } from '../../services/serviceRegistry';
+import { Home, ChevronRight, Folder, ArrowLeft } from 'lucide-react';
+import { getServiceById, getCategoryById } from '../../services/serviceRegistry';
 
 interface BreadcrumbNavProps {
   activeTab: string;
@@ -29,6 +29,12 @@ const TAB_SERVICE_MAP: Record<string, string> = {
   'public-apis': 'public-apis-hub',
   apis: 'public-apis-hub',
   sajilo: 'sajilo-essentials',
+  links: 'useful-links',
+  resources: 'useful-links',
+  fmhy: 'useful-links',
+  sitehub: 'allsitehub',
+  allsitehub: 'allsitehub',
+  streaming: 'allsitehub',
 };
 
 export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
@@ -53,8 +59,8 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
   }
 
   const serviceId = TAB_SERVICE_MAP[activeTab];
-  const service = serviceId ? SERVICE_DEFINITIONS[serviceId] : null;
-  const category = service ? getCategoryById(service.primaryCategory) : null;
+  const service = serviceId ? getServiceById(serviceId) : null;
+  const category = service ? getCategoryById(service.parentCategory) : null;
 
   return (
     <nav className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs">
@@ -83,7 +89,7 @@ export const BreadcrumbNav: React.FC<BreadcrumbNavProps> = ({
         )}
 
         <span className="font-semibold text-[var(--color-text)] truncate">
-          {service ? (currentLang === 'ne' ? service.nameNp : service.name) : activeTab}
+          {service ? (currentLang === 'ne' ? service.titleNp : service.title) : activeTab}
         </span>
       </div>
 

@@ -144,7 +144,7 @@ export const SajiloNewsTab: React.FC<SajiloNewsTabProps> = ({ currentLang, devan
             <a
               href={article.sourceUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="px-3 py-1.5 rounded-lg bg-[#1f232b] hover:bg-[#262a31] border border-[#262a31] text-xs font-mono text-[#edeef0] hover:text-[#00e599] flex items-center gap-1.5 transition-colors shrink-0 self-start sm:self-center"
             >
               <span>{currentLang === 'ne' ? 'मूल समाचार पढ्नुहोस्' : 'Read Original'}</span>

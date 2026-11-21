@@ -56,20 +56,21 @@ KEY FEATURES:
 DISCLAIMER & SOURCE ATTRIBUTION:
 SAARTHI is an independent, privately developed digital application. It is NOT an official government portal and does NOT represent any government ministry. All financial, calendar, and public data are sourced directly from verified public authorities including Nepal Rastra Bank (NRB), Nepal Stock Exchange (NEPSE), CDSC, Federation of Nepal Gold & Silver Dealers' Association (FENEGOSIDA), and Nepal Oil Corporation (NOC).
 
-Privacy Policy: https://saarthi.dpdns.org/?tab=privacy
-Account Deletion: https://saarthi.dpdns.org/?tab=account-deletion
-Support: support@saarthi.dpdns.org`;
+Privacy Policy: https://saarthi.dpdns.org/privacy
+Terms of Service: https://saarthi.dpdns.org/terms
+Account Deletion: https://saarthi.dpdns.org/account-deletion
+Support: sudipadhikari8107@gmail.com`;
 
   const bubblewrapBuildCommands = `# 1. Install official Google Bubblewrap CLI
 npm install -g @bubblewrap/cli
 
 # 2. Initialize Android Project from SAARTHI Web App Manifest
-bubblewrap init --manifest=https://raw.githubusercontent.com/sdxbyte/saarthi/main/public/manifest.json
+bubblewrap init --manifest=https://saarthi.dpdns.org/manifest.json
 
 # 3. Build Google Play Store Android App Bundle (.aab)
 bubblewrap build
 
-# Output: app-release-signed.aab (Ready for Google Play Console upload)`;
+# Output: app-release-bundle.aab (Upload to Google Play Console)`;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 py-6 px-4 font-sans text-slate-100">
@@ -89,7 +90,7 @@ bubblewrap build
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase tracking-wider">
-                  Google Play Readiness v1.6
+                  Google Play Readiness v1.9.1
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-mono text-[10px] font-bold uppercase">
                   Package: com.sdxbyte.saarthi
@@ -213,7 +214,7 @@ bubblewrap build
               <a
                 href="https://github.com/sdxbyte/saarthi/actions"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all flex items-center justify-between group"
               >
                 <div>
@@ -224,17 +225,29 @@ bubblewrap build
               </a>
 
               <a
-                href="https://github.com/sdxbyte/saarthi/releases"
+                href="https://github.com/sdxbyte/saarthi/releases/latest"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-emerald-500/50 transition-all flex items-center justify-between group"
               >
                 <div>
-                  <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase block">Download Ready AAB & APK</span>
-                  <strong className="text-xs text-white group-hover:text-indigo-300 transition-colors">GitHub Releases Downloads →</strong>
+                  <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase block">Public Repo Direct APK &amp; AAB</span>
+                  <strong className="text-xs text-white group-hover:text-indigo-300 transition-colors">Download saarthi-latest.apk →</strong>
                 </div>
                 <Download className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 transition-colors" />
               </a>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+              <span className="text-slate-400">
+                Direct Public APK URL: <code className="text-emerald-300 font-mono break-all">https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk</code>
+              </span>
+              <button
+                onClick={() => copyToClipboard('https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk', 'apk-url')}
+                className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold flex items-center gap-1 shrink-0"
+              >
+                <Copy className="w-3 h-3" />
+                <span>{copiedKey === 'apk-url' ? 'Copied!' : 'Copy APK Link'}</span>
+              </button>
             </div>
           </div>
 
@@ -252,7 +265,7 @@ bubblewrap build
                 </span>
                 <div>
                   <strong className="text-white block font-bold mb-0.5">Open Google Play Console on Mobile Chrome</strong>
-                  Visit <a href="https://play.google.com/console" target="_blank" rel="noreferrer" className="text-indigo-400 underline font-semibold">play.google.com/console</a> on your phone. Tap Chrome's three-dot menu (⋮) and enable <strong>"Desktop site"</strong> for the full dashboard.
+                  Visit <a href="https://play.google.com/console" target="_blank" rel="noopener noreferrer" className="text-indigo-400 underline font-semibold">play.google.com/console</a> on your phone. Tap Chrome's three-dot menu (⋮) and enable <strong>"Desktop site"</strong> for the full dashboard.
                 </div>
               </div>
 
@@ -262,7 +275,7 @@ bubblewrap build
                 </span>
                 <div>
                   <strong className="text-white block font-bold mb-0.5">Create New App</strong>
-                  Tap <strong>Create app</strong>. Enter App Name: <code className="text-amber-300">SAARTHI: Nepali Calendar & Hub</code>, Language: <code className="text-amber-300">Nepali</code> or <code className="text-amber-300">English</code>, App / Free.
+                  Tap <strong>Create app</strong>. Enter App Name: <code className="text-amber-300">SAARTHI: Nepali Calendar &amp; Hub</code>, Language: <code className="text-amber-300">English</code>, App / Free.
                 </div>
               </div>
 
@@ -271,11 +284,11 @@ bubblewrap build
                   3
                 </span>
                 <div>
-                  <strong className="text-white block font-bold mb-0.5">Paste Store Listing Copy & Compliance URLs</strong>
+                  <strong className="text-white block font-bold mb-0.5">Paste Store Listing Copy &amp; Compliance URLs</strong>
                   Use <strong>Tab 2 (Store Listing Copy)</strong> to copy with one tap and paste into the Play Console.
                   <ul className="mt-1.5 space-y-1 text-[11px] text-slate-400 list-disc list-inside">
-                    <li>Privacy Policy URL: <code className="text-indigo-300">https://saarthi.dpdns.org/?tab=privacy</code></li>
-                    <li>Account Deletion URL: <code className="text-indigo-300">https://saarthi.dpdns.org/?tab=account-deletion</code></li>
+                    <li>Privacy Policy URL: <code className="text-indigo-300">https://saarthi.dpdns.org/privacy</code></li>
+                    <li>Account Deletion URL: <code className="text-indigo-300">https://saarthi.dpdns.org/account-deletion</code></li>
                   </ul>
                 </div>
               </div>
@@ -285,8 +298,8 @@ bubblewrap build
                   4
                 </span>
                 <div>
-                  <strong className="text-white block font-bold mb-0.5">Download .aab from GitHub and Upload to Release</strong>
-                  Go to <a href="https://github.com/sdxbyte/saarthi/releases" target="_blank" rel="noreferrer" className="text-emerald-400 underline font-semibold">GitHub Releases</a> on your phone, download <code className="text-emerald-300">app-release-bundle.aab</code>, and upload it under <strong>Release &gt; Production &gt; Create new release</strong> in Play Console.
+                  <strong className="text-white block font-bold mb-0.5">Download .aab from GitHub and Upload to Closed Testing</strong>
+                  Go to <a href="https://github.com/sdxbyte/saarthi/releases" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline font-semibold">GitHub Releases</a> on your phone, download <code className="text-emerald-300">app-release-bundle.aab</code>, and upload it under <strong>Testing &gt; Closed testing</strong> (12+ testers for 14 days on new personal accounts) before applying for Production.
                 </div>
               </div>
             </div>
@@ -437,8 +450,8 @@ bubblewrap build
                   3
                 </span>
                 <div>
-                  <strong className="text-white block">Fill App Content & Policies Form</strong>
-                  Paste Privacy Policy URL, Account Deletion URL, complete Content Rating questionnaire (all ratings: Everyone / 3+), and fill Data Safety form using Tab 4.
+                  <strong className="text-white block">Fill App Content &amp; Policies Form</strong>
+                  Paste Privacy Policy URL (<code className="text-indigo-300">https://saarthi.dpdns.org/privacy</code>), Account Deletion URL (<code className="text-indigo-300">https://saarthi.dpdns.org/account-deletion</code>), set Target Audience to <strong>18+</strong>, declare Informational-only Financial Features, and fill Data Safety using Tab 4.
                 </div>
               </div>
 

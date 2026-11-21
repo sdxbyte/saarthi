@@ -56,16 +56,18 @@ export function saveContactEnquiries(enquiries: ContactEnquiry[]): void {
 }
 
 export function addContactEnquiry(data: {
+  id?: string;
   fullName: string;
   email: string;
   phone: string;
   category: string;
   message: string;
+  skipNetworkEmail?: boolean;
 }): ContactEnquiry {
   const enquiries = getContactEnquiries();
   const randomNum = Math.floor(10000 + Math.random() * 90000);
   const newEnquiry: ContactEnquiry = {
-    id: `SRT-${randomNum}`,
+    id: data.id || `SRT-${randomNum}`,
     fullName: data.fullName,
     email: data.email,
     phone: data.phone || 'N/A',
@@ -80,17 +82,19 @@ export function addContactEnquiry(data: {
   const updated = [newEnquiry, ...enquiries];
   saveContactEnquiries(updated);
 
-  // Trigger automatic email dispatch to admin via Notification Engine
-  triggerAutomaticNotification('SUPPORT_INQUIRY', {
-    ticketId: newEnquiry.id,
-    userName: newEnquiry.fullName,
-    userEmail: newEnquiry.email,
-    userPhone: newEnquiry.phone,
-    category: newEnquiry.category,
-    message: newEnquiry.message,
-  }, 'Contact SAARTHI Public Form');
+  if (!data.skipNetworkEmail) {
+    // Trigger automatic email dispatch to admin via Notification Engine
+    triggerAutomaticNotification('SUPPORT_INQUIRY', {
+      ticketId: newEnquiry.id,
+      userName: newEnquiry.fullName,
+      userEmail: newEnquiry.email,
+      userPhone: newEnquiry.phone,
+      category: newEnquiry.category,
+      message: newEnquiry.message,
+    }, 'Contact SAARTHI Public Form');
 
-  dispatchEmailNotification(newEnquiry);
+    dispatchEmailNotification(newEnquiry);
+  }
 
   return newEnquiry;
 }

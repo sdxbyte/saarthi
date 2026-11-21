@@ -4,6 +4,7 @@ import { createServer as createViteServer } from 'vite';
 import { app } from './src/serverApp';
 import { getSqliteDb, migrateLegacyJsonToDb } from './src/db/persistentStore';
 import { verifyGitHubConnection } from './src/services/githubSyncService';
+import { allSiteHubSyncEngine } from './src/services/allSiteHubSyncService';
 
 const PORT = 3000;
 
@@ -40,6 +41,9 @@ async function startServer() {
       }
     } catch {}
   }, 15 * 60 * 1000);
+
+  // Initialize automated periodic check & update for AllSiteHub Directory
+  allSiteHubSyncEngine.startPeriodicScheduler();
 
   // Vite Middleware for Dev / Static Files for Prod
   if (process.env.NODE_ENV !== 'production') {
