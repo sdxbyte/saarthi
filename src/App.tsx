@@ -10,6 +10,7 @@ import { AuthLoginModal } from './components/auth/AuthLoginModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { OfflineIndicator } from './components/common/OfflineIndicator';
+import { AppUpdateChecker } from './components/common/AppUpdateChecker';
 import { UserProfile, AdminUser } from './types';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
@@ -870,6 +871,9 @@ export function App() {
 
         {/* Offline Connectivity Indicator */}
         <OfflineIndicator />
+
+        {/* Native APK Update Notification */}
+        <AppUpdateChecker />
 
         {/* Sajilo Tray Popover */}
         <SajiloTrayPopover

@@ -239,4 +239,29 @@ describe('SAARTHI Security Controls & Core API Flows (OWASP + Play Store)', () =
       expect(res.body.recipient).toBe('sudipadhikari8107@gmail.com');
     });
   });
+
+  describe('5. Standalone Android APK CORS & Server Sync', () => {
+    it('allows Capacitor Android origins cleanly via CORS and rejects arbitrary unknown origins', async () => {
+      const capPreflight = await request(app)
+        .options('/api/health')
+        .set('Origin', 'https://localhost');
+      expect(capPreflight.status).toBe(204);
+      expect(capPreflight.headers['access-control-allow-origin']).toBe('https://localhost');
+      expect(capPreflight.headers['access-control-allow-credentials']).toBe('true');
+
+      const unknownOrigin = await request(app)
+        .get('/api/health')
+        .set('Origin', 'https://untrusted-site.example');
+      expect(unknownOrigin.status).toBe(200);
+      expect(unknownOrigin.headers['access-control-allow-origin']).toBeUndefined();
+    });
+
+    it('exposes /api/app/sync-info with website URL and direct APK release download link', async () => {
+      const res = await request(app).get('/api/app/sync-info');
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('ok');
+      expect(res.body.websiteUrl).toBe('https://saarthi.dpdns.org');
+      expect(res.body.apkDownloadUrl).toBe('https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk');
+    });
+  });
 });

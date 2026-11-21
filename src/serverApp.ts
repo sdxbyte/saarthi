@@ -111,6 +111,34 @@ app.set('trust proxy', 1);
 app.use(cookieParser());
 app.use(express.json({ limit: '5mb' }));
 
+// CORS for standalone Capacitor Android APK (https://localhost, capacitor://localhost) & live web origins
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin;
+  const isAllowedOrigin =
+    typeof origin === 'string' &&
+    (origin === 'https://saarthi.dpdns.org' ||
+      origin === 'https://www.saarthi.dpdns.org' ||
+      origin === 'https://localhost' ||
+      origin === 'http://localhost' ||
+      origin === 'capacitor://localhost' ||
+      origin.startsWith('http://localhost:') ||
+      origin.startsWith('http://127.0.0.1:') ||
+      origin.endsWith('.run.app'));
+
+  if (isAllowedOrigin && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Saarthi-Client');
+  }
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Global Security Headers (Helmet CSP, HSTS, Referrer-Policy, X-Frame-Options)
 const frameAncestorsDirective = isProd
   ? ["'self'"]
@@ -494,6 +522,18 @@ app.post('/api/admin/logout', (req, res) => {
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'SAARTHI Tech Backend', timestamp: new Date().toISOString() });
+});
+
+// App & APK Synchronization Info
+app.get('/api/app/sync-info', (req, res) => {
+  res.json({
+    status: 'ok',
+    version: getCurrentPackageVersion(),
+    serverTimeIso: new Date().toISOString(),
+    websiteUrl: 'https://saarthi.dpdns.org',
+    apkDownloadUrl: 'https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk',
+    releasesApiUrl: 'https://api.github.com/repos/sdxbyte/saarthi/releases/latest',
+  });
 });
 
 // GET GitHub Saved Credentials Status (Masked)

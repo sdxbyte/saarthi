@@ -1,11 +1,27 @@
+import fs from 'fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const pkgVersion = (() => {
+  try {
+    const raw = fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8');
+    return JSON.parse(raw).version || '1.9.1';
+  } catch {
+    return '1.9.1';
+  }
+})();
+
 export default defineConfig(() => {
   return {
+    define: {
+      __SAARTHI_APP_VERSION__: JSON.stringify(pkgVersion),
+      __SAARTHI_BUILD_NUMBER__: JSON.stringify(process.env.VITE_APP_BUILD_NUMBER || '0'),
+      __SAARTHI_BUILD_SHA__: JSON.stringify(process.env.VITE_APP_COMMIT_SHA || ''),
+      __SAARTHI_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
     plugins: [
       react(),
       tailwindcss(),

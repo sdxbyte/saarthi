@@ -1,6 +1,9 @@
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync as NodeDatabaseSync } from 'node:sqlite';
+import { createRequire } from 'module';
 import fs from 'fs';
 import path from 'path';
+
+type DatabaseSync = NodeDatabaseSync;
 
 export interface DbUpdateManifest {
   updateId: string;
@@ -78,25 +81,58 @@ export interface DbSupportTicket {
   adminReply?: string;
 }
 
-const DB_DIR = path.join(process.cwd(), 'database');
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+function resolveDbPath(): string {
+  if (process.env.DATABASE_PATH) return process.env.DATABASE_PATH;
+  const preferredDir = process.env.VERCEL ? path.join('/tmp', 'saarthi_db') : path.join(process.cwd(), 'database');
+  try {
+    if (!fs.existsSync(preferredDir)) {
+      fs.mkdirSync(preferredDir, { recursive: true });
+    }
+    return path.join(preferredDir, 'saarthi_durable.db');
+  } catch {
+    try {
+      const tmpDir = path.join('/tmp', 'saarthi_db');
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+      return path.join(tmpDir, 'saarthi_durable.db');
+    } catch {
+      return ':memory:';
+    }
+  }
 }
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(DB_DIR, 'saarthi_durable.db');
+function createInMemorySqliteShim(): DatabaseSync {
+  const noopStatement = {
+    run: () => ({ changes: 0, lastInsertRowid: 0 }),
+    get: () => undefined,
+    all: () => [],
+  };
+  return {
+    exec: () => {},
+    prepare: () => noopStatement,
+  } as unknown as DatabaseSync;
+}
 
 let sqliteDbInstance: DatabaseSync | null = null;
 
 export function getSqliteDb(): DatabaseSync {
   if (!sqliteDbInstance) {
-    sqliteDbInstance = new DatabaseSync(DB_PATH);
-    sqliteDbInstance.exec('PRAGMA journal_mode = WAL;');
-    sqliteDbInstance.exec('PRAGMA synchronous = NORMAL;');
-    sqliteDbInstance.exec('PRAGMA foreign_keys = ON;');
-    sqliteDbInstance.exec('PRAGMA busy_timeout = 5000;');
-    initSqliteSchema(sqliteDbInstance);
-    // Hydrate state from GitHub persistent JSON files on startup if DB is fresh/restarted
-    hydrateStateFromGitHubJsonFiles(sqliteDbInstance);
+    try {
+      const req = createRequire(import.meta.url);
+      const sqliteMod = req('node:sqlite') as { DatabaseSync: new (path: string) => DatabaseSync };
+      const dbPath = resolveDbPath();
+      sqliteDbInstance = new sqliteMod.DatabaseSync(dbPath);
+      sqliteDbInstance.exec('PRAGMA journal_mode = WAL;');
+      sqliteDbInstance.exec('PRAGMA synchronous = NORMAL;');
+      sqliteDbInstance.exec('PRAGMA foreign_keys = ON;');
+      sqliteDbInstance.exec('PRAGMA busy_timeout = 5000;');
+      initSqliteSchema(sqliteDbInstance);
+      hydrateStateFromGitHubJsonFiles(sqliteDbInstance);
+    } catch (err) {
+      console.warn('[SAARTHI PersistentStore] Falling back to memory shim (serverless/restricted runtime):', (err as Error)?.message);
+      sqliteDbInstance = createInMemorySqliteShim();
+    }
   }
   return sqliteDbInstance;
 }

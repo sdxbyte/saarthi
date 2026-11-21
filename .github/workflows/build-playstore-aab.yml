@@ -1,4 +1,4 @@
-name: Build Android APK & Play Store AAB
+name: Build Standalone Android APK & Play Store AAB
 
 on:
   push:
@@ -15,18 +15,18 @@ permissions:
 
 jobs:
   build-android:
-    name: Build Public APK (Zero Secrets Required)
+    name: Build Standalone Server-Synced Android APK
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Java JDK 17
+      - name: Set up Java JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
@@ -40,10 +40,15 @@ jobs:
       - name: Run Unit & Security Tests
         run: npm test
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli@1.27.0
+      - name: Build Bundled Standalone App (Server-Synced to saarthi.dpdns.org)
+        env:
+          VITE_IS_NATIVE_APK: 'true'
+          VITE_API_BASE_URL: 'https://saarthi.dpdns.org'
+          VITE_APP_BUILD_NUMBER: ${{ github.run_number }}
+          VITE_APP_COMMIT_SHA: ${{ github.sha }}
+        run: npx vite build
 
-      - name: Configure Bubblewrap & Android SDK (API 35 & Build Tools 36.1.0)
+      - name: Configure Android SDK (API 35)
         run: |
           SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           if [ ! -d "$SDK_DIR" ]; then
@@ -61,22 +66,72 @@ jobs:
             echo "ERROR: sdkmanager binary not found inside $SDK_DIR"
             exit 1
           fi
-          echo "Using sdkmanager: $SDKMANAGER"
-          # Bubblewrap CLI 1.27.0 checks for $ANDROID_HOME/bin or $ANDROID_HOME/tools
-          if [ ! -e "$SDK_DIR/bin" ] && [ ! -e "$SDK_DIR/tools" ]; then
-            ln -sfn "$(dirname "$SDKMANAGER")" "$SDK_DIR/bin"
-          fi
-
-          mkdir -p ~/.bubblewrap
-          cat <<EOF > ~/.bubblewrap/config.json
-          {
-            "jdkPath": "${JAVA_HOME}",
-            "androidSdkPath": "${SDK_DIR}"
-          }
-          EOF
 
           (yes || true) | "$SDKMANAGER" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
-          "$SDKMANAGER" --sdk_root="$SDK_DIR" "platforms;android-35" "platforms;android-36" "build-tools;35.0.0" "build-tools;36.1.0" "platform-tools"
+          "$SDKMANAGER" --sdk_root="$SDK_DIR" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      - name: Generate Native Capacitor Android Project & Apply SAARTHI Assets
+        env:
+          RUN_NUM: ${{ github.run_number }}
+        run: |
+          rm -rf android
+          npx cap add android
+          npx cap sync android
+
+          # Stamp incrementing versionCode & SAARTHI app launcher icons
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const { PNG } = require('pngjs');
+
+            // 1. Increment versionCode on every GitHub push
+            const gradlePath = 'android/app/build.gradle';
+            let gradle = fs.readFileSync(gradlePath, 'utf8');
+            const vCode = 10901 + parseInt(process.env.RUN_NUM || '1', 10);
+            gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode ' + vCode);
+            gradle = gradle.replace(/versionName\s+\"[^\"]+\"/, 'versionName \"1.9.1\"');
+            fs.writeFileSync(gradlePath, gradle, 'utf8');
+            console.log('Stamped Android versionCode=' + vCode + ', versionName=1.9.1');
+
+            // 2. Render crisp SAARTHI launcher PNGs into android mipmap-* directories
+            const srcBuf = fs.readFileSync('public/pwa-512x512.png');
+            const srcPng = PNG.sync.read(srcBuf);
+
+            function resizePng(targetSize) {
+              const dst = new PNG({ width: targetSize, height: targetSize });
+              for (let y = 0; y < targetSize; y++) {
+                const sy = Math.min(srcPng.height - 1, Math.floor((y * srcPng.height) / targetSize));
+                for (let x = 0; x < targetSize; x++) {
+                  const sx = Math.min(srcPng.width - 1, Math.floor((x * srcPng.width) / targetSize));
+                  const sIdx = (sy * srcPng.width + sx) << 2;
+                  const dIdx = (y * targetSize + x) << 2;
+                  dst.data[dIdx] = srcPng.data[sIdx];
+                  dst.data[dIdx + 1] = srcPng.data[sIdx + 1];
+                  dst.data[dIdx + 2] = srcPng.data[sIdx + 2];
+                  dst.data[dIdx + 3] = srcPng.data[sIdx + 3];
+                }
+              }
+              return PNG.sync.write(dst);
+            }
+
+            const sizes = {
+              'mipmap-mdpi': 48,
+              'mipmap-hdpi': 72,
+              'mipmap-xhdpi': 96,
+              'mipmap-xxhdpi': 144,
+              'mipmap-xxxhdpi': 192,
+            };
+
+            for (const [folder, px] of Object.entries(sizes)) {
+              const dir = path.join('android/app/src/main/res', folder);
+              if (fs.existsSync(dir)) {
+                const buf = resizePng(px);
+                fs.writeFileSync(path.join(dir, 'ic_launcher.png'), buf);
+                fs.writeFileSync(path.join(dir, 'ic_launcher_round.png'), buf);
+                fs.writeFileSync(path.join(dir, 'ic_launcher_foreground.png'), resizePng(Math.round(px * 1.5)));
+              }
+            }
+          "
 
       - name: Prepare Signing Keystore (Zero Secrets Needed for Public APK)
         id: keystore
@@ -86,86 +141,63 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          mkdir -p android-build
-          cp twa-manifest.json android-build/twa-manifest.json
+          mkdir -p android-release
 
           if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
             echo "playstore_mode=true" >> "$GITHUB_OUTPUT"
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android-build/android.keystore
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android-release/android.keystore
             ALIAS_VALUE="$KEY_ALIAS"
             STORE_PASS="$KEYSTORE_PASSWORD"
             KEY_PASS="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
-            echo "Using persistent upload keystore (Play Store .aab + Public .apk enabled)."
+            echo "Using persistent keystore (Play Store .aab + Public .apk enabled)."
           else
             echo "playstore_mode=false" >> "$GITHUB_OUTPUT"
             ALIAS_VALUE="saarthi-github-apk"
             STORE_PASS="SaarthiApkKey${GITHUB_RUN_ID}"
             KEY_PASS="$STORE_PASS"
             keytool -genkeypair -noprompt \
-              -keystore android-build/android.keystore \
+              -keystore android-release/android.keystore \
               -alias "$ALIAS_VALUE" \
               -keyalg RSA -keysize 2048 -validity 3650 \
               -storepass "$STORE_PASS" \
               -keypass "$KEY_PASS" \
               -dname "CN=SAARTHI, OU=Public Release, O=sdxbyte, L=Kathmandu, C=NP"
-            echo "Building public GitHub APK with ephemeral release key (no repository secrets required)."
+            echo "Building standalone public GitHub APK with ephemeral release key (zero secrets required)."
           fi
 
-          # Ensure icons resolve cleanly even if production domain has not yet synced newest PWA icons
-          USE_LOCAL_ICONS="false"
-          if ! curl -sfI --max-time 8 "https://saarthi.dpdns.org/pwa-512x512.png" >/dev/null 2>&1; then
-            USE_LOCAL_ICONS="true"
-          fi
+          echo "SIGNING_ALIAS=$ALIAS_VALUE" >> "$GITHUB_ENV"
+          echo "SIGNING_STORE_PASS=$STORE_PASS" >> "$GITHUB_ENV"
+          echo "SIGNING_KEY_PASS=$KEY_PASS" >> "$GITHUB_ENV"
 
-          ALIAS_VALUE="$ALIAS_VALUE" USE_LOCAL_ICONS="$USE_LOCAL_ICONS" node -e "
-            const fs = require('fs');
-            const p = 'android-build/twa-manifest.json';
-            const m = JSON.parse(fs.readFileSync(p, 'utf8'));
-            m.signingKey = { path: './android.keystore', alias: process.env.ALIAS_VALUE };
-            if (process.env.USE_LOCAL_ICONS === 'true') {
-              m.iconUrl = 'http://127.0.0.1:8787/pwa-512x512.png';
-              m.maskableIconUrl = 'http://127.0.0.1:8787/pwa-maskable-512x512.png';
-              if (Array.isArray(m.shortcuts)) {
-                m.shortcuts = m.shortcuts.map((s) => ({ ...s, chosenIconUrl: 'http://127.0.0.1:8787/pwa-192x192.png' }));
-              }
-            }
-            fs.writeFileSync(p, JSON.stringify(m, null, 2));
-          "
-
-          echo "BUBBLEWRAP_KEYSTORE_PASSWORD=$STORE_PASS" >> "$GITHUB_ENV"
-          echo "BUBBLEWRAP_KEY_PASSWORD=$KEY_PASS" >> "$GITHUB_ENV"
-
-      - name: Generate Gradle Project & Build Signed Android APK
+      - name: Compile & Sign Standalone Android APK
         run: |
-          python3 -m http.server 8787 --directory public >/dev/null 2>&1 &
-          ICON_SERVER_PID=$!
-          trap "kill $ICON_SERVER_PID 2>/dev/null || true" EXIT
+          KEYSTORE_FILE="$(pwd)/android-release/android.keystore"
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file="$KEYSTORE_FILE" \
+            -Pandroid.injected.signing.store.password="$SIGNING_STORE_PASS" \
+            -Pandroid.injected.signing.key.alias="$SIGNING_ALIAS" \
+            -Pandroid.injected.signing.key.password="$SIGNING_KEY_PASS"
 
-          cd android-build
-          bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-          fi
-          bubblewrap build --skipPwaValidation
-
-          APK_SRC=""
-          if [ -f "app-release-signed.apk" ]; then
-            APK_SRC="app-release-signed.apk"
-          elif [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-            APK_SRC="app/build/outputs/apk/release/app-release.apk"
-          fi
-
+          APK_SRC=$(find app/build/outputs/apk/release -type f -name "*.apk" | head -n 1)
           if [ -z "$APK_SRC" ]; then
-            echo "ERROR: Built APK not found."
-            ls -la
+            echo "ERROR: Standalone release APK not produced."
             exit 1
           fi
+          cp "$APK_SRC" ../android-release/saarthi-v1.9.1.apk
+          cp "$APK_SRC" ../android-release/saarthi-latest.apk
 
-          cp "$APK_SRC" "saarthi-v1.9.1.apk"
-          cp "$APK_SRC" "saarthi-latest.apk"
-
-          if [ "${{ steps.keystore.outputs.playstore_mode }}" != "true" ]; then
-            rm -f *.aab app/build/outputs/bundle/release/*.aab
+          if [ "${{ steps.keystore.outputs.playstore_mode }}" = "true" ]; then
+            ./gradlew bundleRelease \
+              -Pandroid.injected.signing.store.file="$KEYSTORE_FILE" \
+              -Pandroid.injected.signing.store.password="$SIGNING_STORE_PASS" \
+              -Pandroid.injected.signing.key.alias="$SIGNING_ALIAS" \
+              -Pandroid.injected.signing.key.password="$SIGNING_KEY_PASS"
+            AAB_SRC=$(find app/build/outputs/bundle/release -type f -name "*.aab" | head -n 1)
+            if [ -n "$AAB_SRC" ]; then
+              cp "$AAB_SRC" ../android-release/saarthi-v1.9.1.aab
+            fi
           fi
 
       - name: Archive Build Artifacts
@@ -173,39 +205,38 @@ jobs:
         with:
           name: saarthi-android-release
           path: |
-            android-build/saarthi-v1.9.1.apk
-            android-build/saarthi-latest.apk
-            android-build/*.aab
-            android-build/app/build/outputs/bundle/release/*.aab
+            android-release/saarthi-v1.9.1.apk
+            android-release/saarthi-latest.apk
+            android-release/*.aab
           retention-days: 90
           if-no-files-found: error
 
-      - name: Publish Public APK to GitHub Releases
+      - name: Publish Standalone APK to GitHub Releases
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.9.1-android
-          name: 'SAARTHI v1.9.1 — Android APK Download'
+          name: 'SAARTHI v1.9.1 — Standalone Android APK'
           make_latest: true
           fail_on_unmatched_files: false
           body: |
-            ## SAARTHI Android App (v1.9.1)
+            ## SAARTHI Standalone Android App (v1.9.1)
 
-            Tap **`saarthi-latest.apk`** (or **`saarthi-v1.9.1.apk`**) below on your Android phone to download and install SAARTHI directly.
+            Self-contained native Android APK with the full SAARTHI UI bundled offline and live API/data synced directly to `https://saarthi.dpdns.org`.
 
-            - **Direct Download Link**: https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk
+            - **Direct Download**: https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk
             - **Package ID**: `com.sdxbyte.saarthi`
-            - **Version**: `1.9.1` (`10901`)
-            - **Note**: If upgrading from an older CI-built APK without a shared signing key, uninstall the previous APK first before installing the new one.
+            - **CI Build #${{ github.run_number }}**
+            - **Commit**: `${{ github.sha }}`
+            - **Version**: `1.9.1`
 
             ### Compliance Links
             - **Privacy Policy**: https://saarthi.dpdns.org/privacy
             - **Terms of Service**: https://saarthi.dpdns.org/terms
             - **Account Deletion**: https://saarthi.dpdns.org/account-deletion
           files: |
-            android-build/saarthi-latest.apk
-            android-build/saarthi-v1.9.1.apk
-            android-build/*.aab
-            android-build/app/build/outputs/bundle/release/*.aab
+            android-release/saarthi-latest.apk
+            android-release/saarthi-v1.9.1.apk
+            android-release/*.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
