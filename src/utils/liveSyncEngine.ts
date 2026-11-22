@@ -111,7 +111,7 @@ function parseGitHubReleasePayload(release: any): RemoteReleaseInfo | null {
   if (!release || typeof release !== 'object') return null;
   const bodyText = typeof release.body === 'string' ? release.body : '';
   const buildMatch = bodyText.match(/CI Build\s*#(\d+)/i);
-  const commitMatch = bodyText.match(/Commit:\s*`?([0-9a-f]{7,40})`?/i);
+  const commitMatch = bodyText.match(/Commit\**:\s*`?([0-9a-f]{7,40})`?/i);
   const apkAsset = Array.isArray(release.assets)
     ? release.assets.find(
         (a: any) =>

@@ -7,6 +7,8 @@ on:
       - master
     paths-ignore:
       - '**.md'
+  schedule:
+    - cron: '15 0 * * *'
   workflow_dispatch:
 
 permissions:

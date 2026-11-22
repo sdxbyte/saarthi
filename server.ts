@@ -37,7 +37,7 @@ async function startServer() {
     }
   }, 2000);
 
-  // Periodic continuous GitHub connectivity and sync pulse every 15 minutes
+  // Periodic continuous GitHub connectivity pulse every 15 minutes
   setInterval(async () => {
     try {
       const pulse = await verifyGitHubConnection();
@@ -46,6 +46,39 @@ async function startServer() {
       }
     } catch {}
   }, 15 * 60 * 1000);
+
+  // Daily GitHub Repository & APK Sync Scheduler (runs every 24 hours)
+  const runDailyGitHubSync = async () => {
+    try {
+      const cfg = loadServerGitHubConfig();
+      if (!cfg?.githubToken) return;
+      const check = await verifyGitHubConnection();
+      if (!check.success) return;
+
+      // Trigger daily APK & deployment workflow synchronization via GitHub Actions API
+      const owner = cfg.githubUser || 'sdxbyte';
+      const repo = cfg.repoName || 'saarthi';
+      const branch = cfg.branch || 'main';
+      await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/actions/workflows/build-playstore-aab.yml/dispatches`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cfg.githubToken}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+            'User-Agent': 'SAARTHI-Daily-Scheduler',
+          },
+          body: JSON.stringify({ ref: branch }),
+        }
+      ).catch(() => {});
+
+      console.log(`[SAARTHI Daily Sync] 🗓️ Daily GitHub & APK workflow sync pulse completed (${owner}/${repo}@${branch}).`);
+    } catch {
+      // Keep daily scheduler resilient across transient network drops
+    }
+  };
+  setInterval(runDailyGitHubSync, 24 * 60 * 60 * 1000);
 
   // Initialize automated periodic check & update for AllSiteHub Directory
   allSiteHubSyncEngine.startPeriodicScheduler();
