@@ -50,12 +50,35 @@ export function installUniversalApiFetch(): void {
   if (typeof window === 'undefined' || fetchPatched) return;
   fetchPatched = true;
 
-  const nativeFetch = window.fetch.bind(window);
   const runningInApk = isNativeAndroidShell();
+  const base = getApiBaseUrl();
 
-  window.fetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  // In standard web browsers without a separate API origin, native relative /api/* fetch needs no wrapper.
+  if (!runningInApk && !base) {
+    return;
+  }
+
+  const nativeFetch = window.fetch.bind(window);
+
+  const wrappedFetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     if (typeof input === 'string' && input.startsWith('/api/')) {
       const targetUrl = resolveApiUrl(input);
+      const nextInit: RequestInit = { ...init };
+      if (runningInApk) {
+        const headers = new Headers(nextInit.headers || {});
+        if (!headers.has('X-Saarthi-Client')) {
+          headers.set('X-Saarthi-Client', 'android-apk');
+        }
+        nextInit.headers = headers;
+        if (!nextInit.credentials) {
+          nextInit.credentials = 'include';
+        }
+      }
+      return nativeFetch(targetUrl, nextInit);
+    }
+
+    if (input instanceof URL && input.origin === window.location.origin && input.pathname.startsWith('/api/')) {
+      const targetUrl = resolveApiUrl(`${input.pathname}${input.search}`);
       const nextInit: RequestInit = { ...init };
       if (runningInApk) {
         const headers = new Headers(nextInit.headers || {});
@@ -101,4 +124,20 @@ export function installUniversalApiFetch(): void {
 
     return nativeFetch(input, init);
   };
+
+  try {
+    const desc = Object.getOwnPropertyDescriptor(window, 'fetch');
+    if (!desc || desc.writable) {
+      window.fetch = wrappedFetch;
+    } else if (desc.configurable) {
+      Object.defineProperty(window, 'fetch', {
+        value: wrappedFetch,
+        writable: true,
+        enumerable: desc.enumerable ?? true,
+        configurable: true,
+      });
+    }
+  } catch {
+    // Never crash app startup if the host WebView/browser marks window.fetch non-configurable readonly
+  }
 }

@@ -524,15 +524,97 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', service: 'SAARTHI Tech Backend', timestamp: new Date().toISOString() });
 });
 
+let cachedApkReleaseMeta: { fetchedAt: number; data: any | null } = {
+  fetchedAt: 0,
+  data: null,
+};
+
+async function getCachedLatestApkRelease() {
+  if (process.env.VITEST) return null;
+  const now = Date.now();
+  if (cachedApkReleaseMeta.data && now - cachedApkReleaseMeta.fetchedAt < 45_000) {
+    return cachedApkReleaseMeta.data;
+  }
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    const headers: Record<string, string> = {
+      Accept: 'application/vnd.github.v3+json',
+      'User-Agent': 'SAARTHI-Server-Sync',
+    };
+    const ghCfg = loadServerGitHubConfig();
+    if (ghCfg?.githubToken) {
+      headers.Authorization = `Bearer ${ghCfg.githubToken}`;
+    }
+
+    const ghRes = await fetch('https://api.github.com/repos/sdxbyte/saarthi/releases/latest', {
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (ghRes.ok) {
+      const release: any = await ghRes.json();
+      const bodyText = typeof release.body === 'string' ? release.body : '';
+      const buildMatch = bodyText.match(/CI Build\s*#(\d+)/i);
+      const commitMatch = bodyText.match(/Commit:\s*`?([0-9a-f]{7,40})`?/i);
+      const apkAsset = Array.isArray(release.assets)
+        ? release.assets.find(
+            (a: any) =>
+              a?.name === 'saarthi-latest.apk' ||
+              (typeof a?.name === 'string' && a.name.endsWith('.apk'))
+          )
+        : null;
+
+      cachedApkReleaseMeta = {
+        fetchedAt: now,
+        data: {
+          buildNumber: buildMatch ? Number.parseInt(buildMatch[1], 10) : null,
+          commitSha: commitMatch ? commitMatch[1].slice(0, 7) : '',
+          tagName: release.tag_name || 'latest',
+          releaseName: release.name || 'SAARTHI Latest APK',
+          publishedAt: release.published_at || '',
+          apkDownloadUrl:
+            apkAsset?.browser_download_url ||
+            'https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk',
+          apkSizeBytes: typeof apkAsset?.size === 'number' ? apkAsset.size : null,
+          releaseNotes: bodyText.slice(0, 500),
+        },
+      };
+    }
+  } catch {
+    // Keep prior cache if GitHub API is slow or unreachable
+  }
+
+  return cachedApkReleaseMeta.data;
+}
+
 // App & APK Synchronization Info
-app.get('/api/app/sync-info', (req, res) => {
+app.get('/api/app/sync-info', async (req, res) => {
+  const now = new Date();
+  const latestRelease = await getCachedLatestApkRelease();
+  const version = getCurrentPackageVersion();
+  const updateCounter = getCurrentUpdateCounter();
+  const revisionParts = [
+    getCurrentVersion() || version,
+    String(updateCounter),
+    latestRelease?.buildNumber ? `b${latestRelease.buildNumber}` : '',
+    latestRelease?.commitSha || '',
+  ].filter(Boolean);
+
+  res.setHeader('Cache-Control', 'no-store');
   res.json({
     status: 'ok',
-    version: getCurrentPackageVersion(),
-    serverTimeIso: new Date().toISOString(),
+    version,
+    serverTimeIso: now.toISOString(),
+    adDate: now.toISOString().split('T')[0],
+    bsDate: formatBsDate(now),
+    dataRevision: revisionParts.join('-'),
     websiteUrl: 'https://saarthi.dpdns.org',
     apkDownloadUrl: 'https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk',
     releasesApiUrl: 'https://api.github.com/repos/sdxbyte/saarthi/releases/latest',
+    latestRelease,
   });
 });
 

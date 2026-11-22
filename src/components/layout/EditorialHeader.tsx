@@ -3,6 +3,8 @@ import { Search, User, Menu, X } from 'lucide-react';
 import { UserProfile } from '../../types';
 import { useGlobalTime } from '../../context/GlobalTimeContext';
 import { PWAInstallButton } from '../common/PWAInstallButton';
+import { isNativeAndroidShell } from '../../utils/apiClient';
+import { openAppSyncModal } from '../common/AppUpdateChecker';
 
 interface EditorialHeaderProps {
   currentLang: 'en' | 'ne';
@@ -183,6 +185,18 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
                 </button>
               );
             })}
+            {isNativeAndroidShell() && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openAppSyncModal();
+                }}
+                className="flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer text-left text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/20 mt-1"
+              >
+                <span>App Updates &amp; Server Sync</span>
+              </button>
+            )}
           </nav>
         </div>
       )}

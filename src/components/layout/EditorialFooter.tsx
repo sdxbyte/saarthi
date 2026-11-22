@@ -1,5 +1,7 @@
 import React from 'react';
 import { useGlobalTime } from '../../context/GlobalTimeContext';
+import { isNativeAndroidShell } from '../../utils/apiClient';
+import { openAppSyncModal } from '../common/AppUpdateChecker';
 
 interface EditorialFooterProps {
   currentLang: 'en' | 'ne';
@@ -115,14 +117,13 @@ export const EditorialFooter: React.FC<EditorialFooterProps> = ({
                 </button>
               </li>
               <li>
-                <a
-                  href="https://github.com/sdxbyte/saarthi/releases/latest"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-emerald-400 transition-colors cursor-pointer"
+                <button
+                  type="button"
+                  onClick={() => openAppSyncModal()}
+                  className="hover:text-emerald-400 transition-colors cursor-pointer text-left"
                 >
-                  Download Android APK
-                </a>
+                  {isNativeAndroidShell() ? 'App Updates & Sync' : 'Download Android APK'}
+                </button>
               </li>
               <li>
                 <button

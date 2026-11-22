@@ -133,6 +133,8 @@ jobs:
             }
           "
 
+          node scripts/inject-android-updater.mjs
+
       - name: Prepare Signing Keystore (Zero Secrets Needed for Public APK)
         id: keystore
         env:
