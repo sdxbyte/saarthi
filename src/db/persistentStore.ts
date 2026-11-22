@@ -1,5 +1,4 @@
 import type { DatabaseSync as NodeDatabaseSync } from 'node:sqlite';
-import { createRequire } from 'module';
 import fs from 'fs';
 import path from 'path';
 
@@ -119,8 +118,11 @@ let sqliteDbInstance: DatabaseSync | null = null;
 export function getSqliteDb(): DatabaseSync {
   if (!sqliteDbInstance) {
     try {
-      const req = createRequire(import.meta.url);
-      const sqliteMod = req('node:sqlite') as { DatabaseSync: new (path: string) => DatabaseSync };
+      const getBuiltin = (process as any).getBuiltinModule as ((id: string) => any) | undefined;
+      const sqliteMod = getBuiltin ? (getBuiltin('node:sqlite') as { DatabaseSync: new (path: string) => DatabaseSync } | undefined) : undefined;
+      if (!sqliteMod || !sqliteMod.DatabaseSync) {
+        throw new Error('node:sqlite built-in module unavailable in this runtime');
+      }
       const dbPath = resolveDbPath();
       sqliteDbInstance = new sqliteMod.DatabaseSync(dbPath);
       sqliteDbInstance.exec('PRAGMA journal_mode = WAL;');

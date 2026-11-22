@@ -1,4 +1,4 @@
-import * as schema from './schema.ts';
+import * as schema from './schema';
 
 // GitHub-Centric Zero-Cost Persistence Authority Architecture
 // External paid/trial databases (Cloud SQL, Postgres, Firestore, etc.) are strictly disabled.

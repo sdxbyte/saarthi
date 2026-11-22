@@ -1,5 +1,5 @@
-import { getPostgresPool } from './index.ts';
-import { DbUpdateManifest, DbEmailRecord, DbAuditEvent } from './persistentStore.ts';
+import { getPostgresPool } from './index';
+import { DbUpdateManifest, DbEmailRecord, DbAuditEvent } from './persistentStore';
 import fs from 'fs';
 import path from 'path';
 
