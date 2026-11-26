@@ -200,7 +200,6 @@ jobs:
             echo "ERROR: Standalone release APK not produced."
             exit 1
           fi
-          cp "$APK_SRC" "../android-release/saarthi-v${PKG_VER}.apk"
           cp "$APK_SRC" ../android-release/saarthi-latest.apk
 
           if [ "${{ steps.keystore.outputs.playstore_mode }}" = "true" ]; then
@@ -220,38 +219,69 @@ jobs:
         with:
           name: saarthi-android-release
           path: |
-            android-release/saarthi-v*.apk
             android-release/saarthi-latest.apk
             android-release/*.aab
           retention-days: 90
           if-no-files-found: error
 
-      - name: Publish Standalone APK to GitHub Releases
+      - name: Remove Older GitHub Releases to Keep Only One APK Release
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          node -e '
+            (async () => {
+              const token = process.env.GH_TOKEN;
+              const repo = process.env.REPO;
+              const headers = {
+                Authorization: "Bearer " + token,
+                "User-Agent": "SAARTHI-Release-Cleaner",
+                Accept: "application/vnd.github+json"
+              };
+
+              const relRes = await fetch("https://api.github.com/repos/" + repo + "/releases?per_page=100", { headers });
+              const releases = await relRes.json();
+              if (Array.isArray(releases)) {
+                for (const rel of releases) {
+                  await fetch("https://api.github.com/repos/" + repo + "/releases/" + rel.id, { method: "DELETE", headers });
+                  console.log("Deleted prior release:", rel.tag_name || rel.id);
+                }
+              }
+
+              const tagRes = await fetch("https://api.github.com/repos/" + repo + "/git/matching-refs/tags/", { headers });
+              const tags = await tagRes.json();
+              if (Array.isArray(tags)) {
+                for (const ref of tags) {
+                  const refName = String(ref.ref || "");
+                  if (refName.endsWith("-android")) {
+                    await fetch("https://api.github.com/repos/" + repo + "/git/" + refName, { method: "DELETE", headers });
+                    console.log("Deleted prior tag ref:", refName);
+                  }
+                }
+              }
+            })().catch((err) => { console.error(err); process.exit(1); });
+          '
+
+      - name: Publish Single Latest APK to GitHub Releases
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.meta.outputs.version }}-android
-          name: 'SAARTHI v${{ steps.meta.outputs.version }} — Standalone Android APK'
+          name: 'SAARTHI v${{ steps.meta.outputs.version }} — Android APK'
           make_latest: true
           fail_on_unmatched_files: false
           body: |
             ## SAARTHI Standalone Android App (v${{ steps.meta.outputs.version }})
 
-            Self-contained native Android APK with the full SAARTHI UI bundled offline and live API/data synced directly to `https://saarthi.dpdns.org`.
+            Self-contained native Android APK synced live with `https://saarthi.dpdns.org`.
 
-            - **Direct Download**: https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk
+            - **Direct APK Download**: https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk
             - **Package ID**: `com.sdxbyte.saarthi`
             - **CI Build #${{ github.run_number }}**
             - **Commit**: `${{ github.sha }}`
             - **Version**: `${{ steps.meta.outputs.version }}`
-
-            ### Compliance Links
-            - **Privacy Policy**: https://saarthi.dpdns.org/privacy
-            - **Terms of Service**: https://saarthi.dpdns.org/terms
-            - **Account Deletion**: https://saarthi.dpdns.org/account-deletion
           files: |
             android-release/saarthi-latest.apk
-            android-release/saarthi-v${{ steps.meta.outputs.version }}.apk
-            android-release/*.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
