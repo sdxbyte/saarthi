@@ -128,10 +128,24 @@ export async function checkRedirectAuthResult() {
 }
 
 export async function signInWithGoogleAccount() {
+  const inNativeApk =
+    typeof window !== 'undefined' &&
+    ((window as any)?.Capacitor?.isNativePlatform?.() ||
+      import.meta.env.VITE_IS_NATIVE_APK === 'true' ||
+      window.location?.protocol === 'capacitor:' ||
+      (window.location?.protocol === 'https:' && window.location?.hostname === 'localhost'));
+
   try {
     return await signInWithPopup(auth, googleProvider);
   } catch (err: any) {
     const code = err?.code || '';
+    if (inNativeApk) {
+      const wrapped: any = new Error(
+        'Google popup sign-in is blocked inside the Android WebView. Use Cloud Email & Password below with your same email to sync seamlessly with the website.'
+      );
+      wrapped.code = 'auth/webview-google-blocked';
+      throw wrapped;
+    }
     if (
       code === 'auth/popup-blocked' ||
       code === 'auth/operation-not-supported-in-this-environment'

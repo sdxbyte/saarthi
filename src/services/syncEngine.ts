@@ -1031,6 +1031,17 @@ export async function migrateLegacyLocalDataToCloud(
 
 export const syncEngine = new SaarthiSyncEngine();
 
+export interface SyncedRootProfile {
+  email: string;
+  displayName: string;
+  phone?: string;
+  nagarikId?: string;
+  photoUrl?: string;
+  preferredTheme: 'light' | 'dark' | 'system';
+  preferredLang: 'en' | 'ne';
+  devanagariNumerals: boolean;
+}
+
 export async function ensureUserRootDocument(
   uid: string,
   profile: {
@@ -1042,15 +1053,16 @@ export async function ensureUserRootDocument(
     preferredTheme: 'light' | 'dark' | 'system';
     preferredLang: 'en' | 'ne';
     devanagariNumerals: boolean;
-  }
-): Promise<void> {
-  if (!isFirebaseConfigured() || !auth.currentUser || auth.currentUser.uid !== uid) return;
+  },
+  explicitWrite = false
+): Promise<SyncedRootProfile | null> {
+  if (!isFirebaseConfigured() || !auth.currentUser || auth.currentUser.uid !== uid) return null;
   const path = `users/${uid}`;
   try {
     const ref = fsDoc(db, 'users', uid);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
-      await setDoc(ref, {
+      const initialDoc = {
         ownerId: uid,
         email: clampStr(profile.email, 254, 'citizen@saarthi.dpdns.org'),
         displayName: clampStr(profile.displayName, 120, 'SAARTHI Citizen'),
@@ -1064,27 +1076,125 @@ export async function ensureUserRootDocument(
         version: 1,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-      });
-    } else {
-      const existingData = snap.data() || {};
-      await setDoc(
-        ref,
-        {
-          displayName: clampStr(profile.displayName, 120, existingData.displayName || 'SAARTHI Citizen'),
-          ...(profile.phone !== undefined ? { phone: clampStr(profile.phone, 32) } : {}),
-          ...(profile.nagarikId !== undefined ? { nagarikId: clampStr(profile.nagarikId, 64) } : {}),
-          preferredTheme: profile.preferredTheme,
-          preferredLang: profile.preferredLang,
-          devanagariNumerals: Boolean(profile.devanagariNumerals),
-          version: Number(existingData.version || 1) + 1,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
+      };
+      await setDoc(ref, initialDoc);
+      return {
+        email: initialDoc.email,
+        displayName: initialDoc.displayName,
+        phone: profile.phone,
+        nagarikId: profile.nagarikId,
+        photoUrl: profile.photoUrl,
+        preferredTheme: profile.preferredTheme,
+        preferredLang: profile.preferredLang,
+        devanagariNumerals: Boolean(profile.devanagariNumerals),
+      };
     }
+
+    const existingData = snap.data() || {};
+    const remoteDisplayName =
+      typeof existingData.displayName === 'string' &&
+      existingData.displayName.trim() &&
+      existingData.displayName.trim() !== 'SAARTHI Citizen'
+        ? existingData.displayName.trim()
+        : '';
+    if (!explicitWrite) {
+      return {
+        email: existingData.email || profile.email,
+        displayName: remoteDisplayName || profile.displayName,
+        phone: existingData.phone,
+        nagarikId: existingData.nagarikId,
+        photoUrl: existingData.photoUrl || profile.photoUrl,
+        preferredTheme: existingData.preferredTheme || profile.preferredTheme,
+        preferredLang: existingData.preferredLang || profile.preferredLang,
+        devanagariNumerals:
+          typeof existingData.devanagariNumerals === 'boolean'
+            ? existingData.devanagariNumerals
+            : profile.devanagariNumerals,
+      };
+    }
+
+    const updatedFields = {
+      displayName: clampStr(profile.displayName, 120, existingData.displayName || 'SAARTHI Citizen'),
+      ...(profile.phone !== undefined ? { phone: clampStr(profile.phone, 32) } : {}),
+      ...(profile.nagarikId !== undefined ? { nagarikId: clampStr(profile.nagarikId, 64) } : {}),
+      ...(profile.photoUrl ? { photoUrl: clampStr(profile.photoUrl, 512) } : {}),
+      preferredTheme: profile.preferredTheme,
+      preferredLang: profile.preferredLang,
+      devanagariNumerals: Boolean(profile.devanagariNumerals),
+      version: Number(existingData.version || 1) + 1,
+      updatedAt: serverTimestamp(),
+    };
+    await setDoc(ref, updatedFields, { merge: true });
+    return {
+      email: existingData.email || profile.email,
+      displayName: updatedFields.displayName,
+      phone: profile.phone ?? existingData.phone,
+      nagarikId: profile.nagarikId ?? existingData.nagarikId,
+      photoUrl: profile.photoUrl ?? existingData.photoUrl,
+      preferredTheme: updatedFields.preferredTheme,
+      preferredLang: updatedFields.preferredLang,
+      devanagariNumerals: updatedFields.devanagariNumerals,
+    };
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, path);
   }
+}
+
+export function subscribeToUserProfile(
+  uid: string,
+  onProfileChanged: (profile: Partial<SyncedRootProfile>) => void
+): () => void {
+  if (!isFirebaseConfigured() || !auth.currentUser || auth.currentUser.uid !== uid) {
+    return () => {};
+  }
+  const path = `users/${uid}`;
+  return onSnapshot(
+    fsDoc(db, 'users', uid),
+    (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() || {};
+        const cleanDisplayName =
+          typeof data.displayName === 'string' &&
+          data.displayName.trim() &&
+          data.displayName.trim() !== 'SAARTHI Citizen'
+            ? data.displayName.trim()
+            : undefined;
+        onProfileChanged({
+          email: data.email,
+          displayName: cleanDisplayName,
+          phone: data.phone,
+          nagarikId: data.nagarikId,
+          photoUrl: data.photoUrl,
+          preferredTheme: data.preferredTheme,
+          preferredLang: data.preferredLang,
+          devanagariNumerals: data.devanagariNumerals,
+        });
+      }
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  );
+}
+
+export function subscribeToUserDevices(
+  uid: string,
+  onDevicesChanged: (devices: Record<string, any>[]) => void
+): () => void {
+  if (!isFirebaseConfigured() || !auth.currentUser || auth.currentUser.uid !== uid) {
+    return () => {};
+  }
+  const path = `users/${uid}/devices`;
+  const q = query(fsCollection(db, 'users', uid, 'devices'), where('ownerId', '==', uid));
+  return onSnapshot(
+    q,
+    (snap) => {
+      onDevicesChanged(snap.docs.map((d) => ({ ...d.data(), id: d.id })));
+    },
+    (error) => {
+      handleFirestoreError(error, OperationType.LIST, path);
+    }
+  );
 }
 
 export async function registerCurrentDeviceSession(

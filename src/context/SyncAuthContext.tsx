@@ -37,6 +37,8 @@ import {
   migrateLegacyLocalDataToCloud,
   registerCurrentDeviceSession,
   subscribeToCurrentDeviceRevocation,
+  subscribeToUserDevices,
+  subscribeToUserProfile,
   syncEngine,
 } from '../services/syncEngine';
 import { UserProfile, VaultDocument } from '../types';
@@ -248,6 +250,8 @@ export const SyncAuthProvider: React.FC<{
 
     let detachListeners: (() => void) | null = null;
     let detachDeviceListener: (() => void) | null = null;
+    let detachProfileListener: (() => void) | null = null;
+    let detachDevicesListListener: (() => void) | null = null;
 
     const unsubAuth = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
@@ -260,6 +264,14 @@ export const SyncAuthProvider: React.FC<{
       if (detachDeviceListener) {
         detachDeviceListener();
         detachDeviceListener = null;
+      }
+      if (detachProfileListener) {
+        detachProfileListener();
+        detachProfileListener = null;
+      }
+      if (detachDevicesListListener) {
+        detachDevicesListListener();
+        detachDevicesListListener = null;
       }
 
       if (fbUser) {
@@ -300,7 +312,7 @@ export const SyncAuthProvider: React.FC<{
             return;
           }
 
-          await ensureUserRootDocument(fbUser.uid, {
+          const hydrated = await ensureUserRootDocument(fbUser.uid, {
             email: nextProfile.email,
             displayName: nextProfile.name,
             photoUrl: nextProfile.avatarUrl,
@@ -308,6 +320,18 @@ export const SyncAuthProvider: React.FC<{
             preferredLang,
             devanagariNumerals,
           });
+          if (hydrated) {
+            const mergedProfile: UserProfile = {
+              ...nextProfile,
+              name: hydrated.displayName || nextProfile.name,
+              phone: hydrated.phone,
+              nagarikId: hydrated.nagarikId,
+              avatarUrl: hydrated.photoUrl || nextProfile.avatarUrl,
+            };
+            setUserProfile((prev) => ({ ...prev, ...mergedProfile }));
+            setActiveCitizenSession(mergedProfile);
+          }
+
           const devices = await listUserDevicesFromCloud(fbUser.uid);
           setLinkedDevices(devices as LinkedDeviceInfo[]);
 
@@ -318,6 +342,25 @@ export const SyncAuthProvider: React.FC<{
               void handleDeviceRevoked();
             }
           );
+
+          detachProfileListener = subscribeToUserProfile(fbUser.uid, (remoteProf) => {
+            setUserProfile((prev) => {
+              const updated: UserProfile = {
+                ...prev,
+                isLoggedIn: true,
+                name: remoteProf.displayName || prev.name,
+                phone: remoteProf.phone ?? prev.phone,
+                nagarikId: remoteProf.nagarikId ?? prev.nagarikId,
+                avatarUrl: remoteProf.photoUrl || prev.avatarUrl,
+              };
+              setActiveCitizenSession(updated);
+              return updated;
+            });
+          });
+
+          detachDevicesListListener = subscribeToUserDevices(fbUser.uid, (liveDevices) => {
+            setLinkedDevices(liveDevices as LinkedDeviceInfo[]);
+          });
 
           detachListeners = syncEngine.attachCloudListeners(fbUser.uid, () => {
             void refreshFromOfflineDb();
@@ -337,6 +380,8 @@ export const SyncAuthProvider: React.FC<{
       unsubAuth();
       if (detachListeners) detachListeners();
       if (detachDeviceListener) detachDeviceListener();
+      if (detachProfileListener) detachProfileListener();
+      if (detachDevicesListListener) detachDevicesListListener();
     };
   }, [devanagariNumerals, handleDeviceRevoked, isOnline, preferredLang, preferredTheme, refreshFromOfflineDb]);
 
@@ -353,16 +398,20 @@ export const SyncAuthProvider: React.FC<{
       // ignore
     }
     if (activeCloudUid && profile.isLoggedIn) {
-      void ensureUserRootDocument(activeCloudUid, {
-        email: profile.email,
-        displayName: profile.name,
-        phone: profile.phone,
-        nagarikId: profile.nagarikId,
-        photoUrl: profile.avatarUrl,
-        preferredTheme,
-        preferredLang,
-        devanagariNumerals,
-      });
+      void ensureUserRootDocument(
+        activeCloudUid,
+        {
+          email: profile.email,
+          displayName: profile.name,
+          phone: profile.phone,
+          nagarikId: profile.nagarikId,
+          photoUrl: profile.avatarUrl,
+          preferredTheme,
+          preferredLang,
+          devanagariNumerals,
+        },
+        true
+      );
     }
   }, [activeCloudUid, devanagariNumerals, preferredLang, preferredTheme]);
 
