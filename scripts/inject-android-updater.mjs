@@ -466,8 +466,8 @@ public class SaarthiUpdaterPlugin extends Plugin {
                             existingCheck.fileSize,
                             started ? "installing" : "downloaded_ready",
                             started
-                                ? "Launching Android Package Installer..."
-                                : "Update APK already downloaded and ready to install.",
+                                ? "Opening installer..."
+                                : "Update downloaded and ready to install.",
                             existingCheck.signatureMatches
                         );
                         JSObject res = new JSObject();
@@ -482,7 +482,7 @@ public class SaarthiUpdaterPlugin extends Plugin {
                     }
                 }
 
-                emitProgress(1, 0, 0, "downloading", "Connecting to GitHub release server...", null);
+                emitProgress(1, 0, 0, "downloading", "Downloading app update...", null);
 
                 String currentUrl = apkUrl.trim();
                 for (int redirects = 0; redirects < 6; redirects++) {
@@ -538,7 +538,7 @@ public class SaarthiUpdaterPlugin extends Plugin {
                             int pct = (int) Math.min(99, (downloaded * 100L) / totalBytes);
                             if (pct > lastPercent) {
                                 lastPercent = pct;
-                                emitProgress(pct, downloaded, totalBytes, "downloading", "Downloading APK update (" + pct + "%)...", null);
+                                emitProgress(pct, downloaded, totalBytes, "downloading", "Downloading app update (" + pct + "%)...", null);
                             }
                         }
                     }
@@ -584,7 +584,7 @@ public class SaarthiUpdaterPlugin extends Plugin {
                     totalBytes > 0 ? totalBytes : finalFile.length(),
                     started ? "installing" : (canInstall ? "downloaded_ready" : "permission_required"),
                     started
-                        ? "Launching Android Package Installer..."
+                        ? "Opening installer..."
                         : canInstall
                             ? "Update downloaded and ready. Tap Install Update to finish."
                             : "Update downloaded! Allow 'Install unknown apps' to finish updating.",
@@ -601,7 +601,7 @@ public class SaarthiUpdaterPlugin extends Plugin {
                 call.resolve(res);
             } catch (Exception e) {
                 emitProgress(0, 0, 0, "error", e.getMessage(), null);
-                call.reject("In-app APK update failed: " + e.getMessage());
+                call.reject("App update failed: " + e.getMessage());
             } finally {
                 if (conn != null) conn.disconnect();
             }

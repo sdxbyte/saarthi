@@ -496,7 +496,7 @@ export const AccountView: React.FC<AccountViewProps> = ({
               </span>
               <Button variant="secondary" size="sm" onClick={() => openAppSyncModal()}>
                 <Smartphone className="w-3.5 h-3.5" />
-                <span>{isNe ? 'अपडेट जाँच' : 'Check APK & Sync'}</span>
+                <span>{isNe ? 'अपडेट जाँच गर्नुहोस्' : 'Check for Update'}</span>
               </Button>
             </div>
           </div>

@@ -335,8 +335,8 @@ class LiveSyncCoordinator {
       errorMsg = err?.message || 'Unable to reach SAARTHI live server';
     }
 
-    // Fallback to public GitHub Releases API when server release cache is empty or force-checking
-    if (force || !latestRelease || latestRelease.buildNumber === null) {
+    // Connect directly to GitHub Releases inside native APK (silently in background) or when forced/missing
+    if (this.snapshot.isNativeApk || force || !latestRelease || latestRelease.buildNumber === null) {
       try {
         const ghRes = await fetch(GITHUB_LATEST_RELEASE_URL, {
           cache: 'no-store',
@@ -344,10 +344,16 @@ class LiveSyncCoordinator {
         });
         if (ghRes.ok) {
           const parsed = parseGitHubReleasePayload(await ghRes.json());
-          if (parsed) latestRelease = parsed;
+          if (parsed) {
+            const currentBuild = latestRelease?.buildNumber ?? -1;
+            const ghBuild = parsed.buildNumber ?? -1;
+            if (!latestRelease || ghBuild >= currentBuild) {
+              latestRelease = parsed;
+            }
+          }
         }
       } catch {
-        // Silent fallback if GitHub is unreachable
+        // Silent fallback if release feed is unreachable
       }
     }
 

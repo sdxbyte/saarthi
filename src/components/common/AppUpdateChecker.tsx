@@ -5,7 +5,6 @@ import {
   Download,
   PackageCheck,
   RefreshCw,
-  Settings2,
   ShieldCheck,
   Smartphone,
   X,
@@ -103,16 +102,12 @@ export const AppUpdateChecker: React.FC = () => {
       if (!pending.canInstallPackages) {
         setInstallStage('permission_required');
         setInstallMessage(
-          'Update APK is downloaded and ready. Allow "Install unknown apps" once to install.'
+          'Update is downloaded and ready. Allow "Install unknown apps" once to finish.'
         );
       } else if (installStage === 'idle' || installStage === 'downloading' || installStage === 'permission_required') {
         setInstallStage('downloaded_ready');
         setDownloadPercent(100);
-        setInstallMessage(
-          pending.signatureMatches
-            ? 'New SAARTHI update is downloaded and waiting — tap Install Update.'
-            : 'Update APK is downloaded and ready. Tap Install Update (note: different release key may prompt reinstall).'
-        );
+        setInstallMessage('New update is downloaded and waiting — tap Install Update.');
       }
     }
   }, [sync.pendingApkUpdate, downloading, installStage]);
@@ -163,11 +158,11 @@ export const AppUpdateChecker: React.FC = () => {
         pendingPermissionReturnRef.current = true;
         setInstallStage('permission_required');
         setInstallMessage(
-          'Enable "Allow from this source" for SAARTHI in Android Settings, then return here to install immediately.'
+          'Enable "Allow from this source" for SAARTHI in Settings, then return here to install immediately.'
         );
       } else {
         setInstallStage('installing');
-        setInstallMessage('Android installer opened — tap Update/Install to complete.');
+        setInstallMessage('Installer opened — tap Update/Install to finish.');
       }
     } catch {
       // Cache may have been cleared by OS — re-download smoothly
@@ -199,8 +194,8 @@ export const AppUpdateChecker: React.FC = () => {
         setInstallStage('downloading');
         setInstallMessage(
           isAuto
-            ? 'Downloading new SAARTHI update in the background...'
-            : 'Downloading latest SAARTHI APK...'
+            ? 'Downloading new update in the background...'
+            : 'Downloading latest app update...'
         );
 
         const plugin = liveSyncEngine.getNativeUpdaterPlugin();
@@ -230,12 +225,12 @@ export const AppUpdateChecker: React.FC = () => {
         if (result?.needsPermission) {
           setInstallStage('permission_required');
           setInstallMessage(
-            'Update downloaded & ready! Tap "Allow & Install" to enable app installs once.'
+            'Update downloaded and ready! Tap "Allow & Install Update" once to finish.'
           );
         } else if (result?.started) {
           setInstallStage('installing');
           setInstallMessage(
-            'Update downloaded & installer launched. Tap Install/Update when prompted (or tap Install Update below anytime).'
+            'Update downloaded and installer opened. Tap Install/Update when prompted.'
           );
         } else {
           setInstallStage('downloaded_ready');
@@ -244,7 +239,7 @@ export const AppUpdateChecker: React.FC = () => {
       } catch (err: any) {
         setDownloading(false);
         setInstallStage('error');
-        setInstallMessage(err?.message || 'In-app download failed. Tap Retry to download APK.');
+        setInstallMessage(err?.message || 'Update download failed. Tap Retry to try again.');
       }
       return;
     }
@@ -259,7 +254,7 @@ export const AppUpdateChecker: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  // Automatically download every new release in the background inside standalone Android APK
+  // Automatically download every new release in the background inside standalone Android app
   useEffect(() => {
     if (!sync.isNativeApk || !sync.updateAvailable || !sync.autoUpdateEnabled) return;
     if (!liveSyncEngine.isNativeUpdaterAvailable()) return;
@@ -326,7 +321,7 @@ export const AppUpdateChecker: React.FC = () => {
 
   return (
     <>
-      {/* Thumb-First In-APK Update Sheet (Sits cleanly above MobileBottomNav) */}
+      {/* Thumb-First In-App Update Sheet (Sits cleanly above MobileBottomNav) */}
       {sync.isNativeApk && (sync.updateAvailable || hasReadyApk) && !minimized && (
         <div
           className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 z-50 w-[min(94vw,460px)] rounded-2xl border border-blue-200 dark:border-blue-800/80 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-md p-3.5 shadow-2xl space-y-2.5 text-slate-900 dark:text-white"
@@ -352,29 +347,24 @@ export const AppUpdateChecker: React.FC = () => {
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[#0B1F3A] dark:text-white truncate">
                   {hasReadyApk
-                    ? 'SAARTHI Update Downloaded & Ready'
+                    ? 'App Update Ready'
                     : downloading
-                    ? 'Downloading SAARTHI Update...'
-                    : 'New SAARTHI Update Available'}
-                  {sync.latestRelease?.buildNumber ? ` (#${sync.latestRelease.buildNumber})` : ''}
+                    ? 'Downloading Update...'
+                    : 'New Update Available'}
                 </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-mono mt-0.5">
-                  {sync.latestRelease?.tagName || 'latest'}
-                  {sync.latestRelease?.commitSha ? ` · ${sync.latestRelease.commitSha}` : ''}
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                  v{sync.installedVersion}
                   {displayBytes ? ` · ${formatBytes(displayBytes)}` : ''}
+                  {hasReadyApk
+                    ? ' · Ready to install'
+                    : downloading
+                    ? ' · Downloading in background'
+                    : ' · Tap below to install'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <button
-                type="button"
-                onClick={() => setModalOpen(true)}
-                aria-label="App Sync and Auto-Update Settings"
-                className="min-h-[36px] min-w-[36px] rounded-lg text-slate-500 dark:text-slate-400 hover:text-[#0B1F3A] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <Settings2 className="w-4 h-4" />
-              </button>
               <button
                 type="button"
                 onClick={() => setMinimized(true)}
@@ -400,7 +390,7 @@ export const AppUpdateChecker: React.FC = () => {
                 </svg>
               </div>
               <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                <span>{installMessage || 'Downloading package...'}</span>
+                <span>Downloading update...</span>
                 <span>{downloadPercent}%</span>
               </div>
             </div>
@@ -416,7 +406,7 @@ export const AppUpdateChecker: React.FC = () => {
             <div className="flex items-start gap-1.5 text-[11px] text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-lg px-2.5 py-1.5">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>
-                Signing key changed on CI; if Android rejects in-place update, uninstall old APK once before tapping Install.
+                One-time reinstall may be needed for this update if Android asks to replace the existing app. Future updates will install directly.
               </span>
             </div>
           )}
@@ -443,8 +433,8 @@ export const AppUpdateChecker: React.FC = () => {
                   {downloading
                     ? `Downloading ${downloadPercent}%`
                     : hasReadyApk
-                    ? 'Install Downloaded Update'
-                    : 'Download & Install'}
+                    ? 'Install Update'
+                    : 'Download & Install Update'}
                 </span>
               </button>
             )}
@@ -452,7 +442,7 @@ export const AppUpdateChecker: React.FC = () => {
         </div>
       )}
 
-      {/* App Sync & In-APK Auto-Update Modal */}
+      {/* Clean App Updates Modal */}
       {modalOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
@@ -466,12 +456,10 @@ export const AppUpdateChecker: React.FC = () => {
                 <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 <div>
                   <h2 id="saarthi-sync-modal-title" className="text-sm font-semibold text-[#0B1F3A] dark:text-white">
-                    SAARTHI App Sync &amp; Auto-Update
+                    App Updates
                   </h2>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {sync.isNativeApk
-                      ? 'Native Android App (Local Bundle + Live Server Sync)'
-                      : 'Web Platform + Android APK Distribution'}
+                    Automatic Background Updates
                   </p>
                 </div>
               </div>
@@ -486,65 +474,25 @@ export const AppUpdateChecker: React.FC = () => {
             </div>
 
             <div className="p-5 space-y-4 text-xs">
-              {/* Server Real-Time Sync Block */}
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] p-3.5 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-slate-500 dark:text-slate-400">Live Server Endpoint</span>
-                  <span className="font-mono text-blue-600 dark:text-blue-400 truncate">
-                    {sync.apiBaseUrl || 'https://saarthi.dpdns.org'}
-                  </span>
-                </div>
+              {/* Clean App Status Block */}
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Sync State</span>
-                  <span className="font-mono text-slate-800 dark:text-slate-200">
-                    {sync.connected
-                      ? `Synced (${sync.latencyMs ?? 0}ms)`
-                      : sync.checking
-                      ? 'Syncing...'
-                      : sync.error || 'Standby'}
-                  </span>
-                </div>
-                {sync.bsDate && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Server Dual Date</span>
-                    <span className="font-mono text-slate-700 dark:text-slate-300">
-                      {sync.bsDate} · {sync.adDate} AD
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Build & GitHub Release Block */}
-              <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] p-3.5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Installed App Build</span>
+                  <span className="text-slate-500 dark:text-slate-400">Current Version</span>
                   <span className="font-mono text-[#0B1F3A] dark:text-white font-semibold">
                     v{sync.installedVersion}
-                    {sync.installedBuildNumber > 0 ? ` (#${sync.installedBuildNumber})` : ''}
-                    {sync.installedCommitShort ? ` · ${sync.installedCommitShort}` : ''}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Latest GitHub Release</span>
-                  <span className="font-mono text-slate-700 dark:text-slate-200">
-                    {sync.latestRelease
-                      ? `Build #${sync.latestRelease.buildNumber ?? 'latest'}${
-                          sync.latestRelease.commitSha ? ` · ${sync.latestRelease.commitSha}` : ''
-                        }`
-                      : 'Checking...'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-1">
                   <span className="text-slate-500 dark:text-slate-400">Update Status</span>
                   {hasReadyApk ? (
                     <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                       <PackageCheck className="w-3.5 h-3.5" />
-                      Downloaded &amp; Ready
+                      Ready to Install
                     </span>
                   ) : sync.updateAvailable ? (
                     <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold">
                       <Download className="w-3.5 h-3.5" />
-                      New APK Available
+                      Update Available
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-slate-700 dark:text-slate-300">
@@ -559,10 +507,10 @@ export const AppUpdateChecker: React.FC = () => {
               <div className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] p-3.5">
                 <div className="pr-3">
                   <p className="font-medium text-[#0B1F3A] dark:text-white">
-                    Auto-Download Updates in Background
+                    Auto-Download Updates
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    Pre-downloads new APK releases automatically and prompts Android Installer when ready.
+                    Automatically downloads new updates in the background and notifies you when ready to install.
                   </p>
                 </div>
                 <button
@@ -585,7 +533,7 @@ export const AppUpdateChecker: React.FC = () => {
               {downloading && (
                 <div className="space-y-1">
                   <div className="flex justify-between text-[11px] text-slate-600 dark:text-slate-300">
-                    <span>Downloading APK update...</span>
+                    <span>Downloading update...</span>
                     <span className="font-mono">{downloadPercent}%</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -627,10 +575,10 @@ export const AppUpdateChecker: React.FC = () => {
                 >
                   {hasReadyApk ? <PackageCheck className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
                   {hasReadyApk
-                    ? 'Install Ready APK'
+                    ? 'Install Update'
                     : sync.isNativeApk
-                    ? 'Download & Install'
-                    : 'Download Latest APK'}
+                    ? 'Download & Install Update'
+                    : 'Download App'}
                 </button>
               </div>
             </div>

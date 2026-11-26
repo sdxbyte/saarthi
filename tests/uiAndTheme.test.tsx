@@ -398,8 +398,12 @@ describe('SAARTHI UI, Design System, Zero-Mock & Offline Vault Tests', () => {
 
     try {
       render(<AppUpdateChecker />);
-      expect(screen.getByText(/SAARTHI Update Downloaded & Ready/i)).toBeInTheDocument();
-      const installBtn = screen.getByRole('button', { name: /Install Downloaded Update/i });
+      expect(screen.getByText(/App Update Ready/i)).toBeInTheDocument();
+      expect(screen.queryByText(/GitHub/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Live Server Endpoint/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/abc1234/i)).not.toBeInTheDocument();
+
+      const installBtn = screen.getByRole('button', { name: /Install Update/i });
       fireEvent.click(installBtn);
 
       await waitFor(() => {
