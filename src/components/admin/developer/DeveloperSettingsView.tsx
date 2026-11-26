@@ -221,7 +221,7 @@ export const DeveloperSettingsView: React.FC<DeveloperSettingsViewProps> = ({
         </div>
 
         {showSavedToast && (
-          <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40 flex items-center gap-1.5 animate-pulse">
+          <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40 flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             Settings Saved
           </span>
@@ -246,7 +246,7 @@ export const DeveloperSettingsView: React.FC<DeveloperSettingsViewProps> = ({
                 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                 : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
             }`}>
-              <div className={`w-2 h-2 rounded-full ${isSmtpConfigured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+              <div className={`w-2 h-2 rounded-full ${isSmtpConfigured ? 'bg-emerald-400' : 'bg-amber-400'}`} />
               {isSmtpConfigured ? 'SMTP LIVE CONFIGURED' : 'PENDING CREDENTIALS'}
             </span>
           </div>

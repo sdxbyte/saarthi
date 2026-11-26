@@ -3,63 +3,13 @@ import { convertAdToBs } from './bsAdConverter';
 
 const KEEPER_STORAGE_KEY = 'saarthi_sajilo_keeper_items';
 
-const DEFAULT_ITEMS: KeeperItem[] = [
-  {
-    id: 'keeper-1',
-    title: 'Nepali Machine Readable Passport (MRP/e-Passport)',
-    category: 'passport',
-    documentNumber: 'PA1089422',
-    expiryDateAd: '2027-05-14',
-    expiryDateBs: '2084-01-31',
-    remindDaysBefore: 90,
-    notes: 'Renew at Department of Passport, Tripureshwor or District Administration Office.',
-    createdAt: '2026-08-01T00:00:00.000Z',
-    updatedAt: '2026-08-01T00:00:00.000Z',
-  },
-  {
-    id: 'keeper-2',
-    title: 'Two-Wheeler Bluebook Annual Tax & Insurance',
-    category: 'bluebook',
-    documentNumber: 'BA 85 PA 4920',
-    expiryDateAd: '2026-10-25',
-    expiryDateBs: '2083-07-09',
-    remindDaysBefore: 30,
-    notes: 'Pay transport tax at Transport Management Office (DoTM Ekantakuna/Gurjudhara) or online.',
-    createdAt: '2026-08-15T00:00:00.000Z',
-    updatedAt: '2026-08-15T00:00:00.000Z',
-  },
-  {
-    id: 'keeper-3',
-    title: 'Smart Card Driving License (Cat A & B)',
-    category: 'license',
-    documentNumber: '01-06-00849201',
-    expiryDateAd: '2028-11-12',
-    expiryDateBs: '2085-07-27',
-    remindDaysBefore: 60,
-    notes: 'Renewable 3 months before expiry at Yatayat Karyalaya.',
-    createdAt: '2026-08-20T00:00:00.000Z',
-    updatedAt: '2026-08-20T00:00:00.000Z',
-  },
-  {
-    id: 'keeper-4',
-    title: 'Home Internet & NEA Electricity Bill Cycle',
-    category: 'bill',
-    documentNumber: 'NEA-KTM-8942',
-    expiryDateAd: '2026-09-30',
-    expiryDateBs: '2083-06-14',
-    remindDaysBefore: 7,
-    notes: 'Pay electricity bill within 7 days for 2% rebate at NEA counters or eSewa/Khalti.',
-    createdAt: '2026-09-01T00:00:00.000Z',
-    updatedAt: '2026-09-01T00:00:00.000Z',
-  },
-];
+const DEFAULT_ITEMS: KeeperItem[] = [];
 
 export function getKeeperItems(): KeeperItem[] {
   if (typeof window === 'undefined') return DEFAULT_ITEMS;
   try {
     const raw = localStorage.getItem(KEEPER_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(KEEPER_STORAGE_KEY, JSON.stringify(DEFAULT_ITEMS));
       return DEFAULT_ITEMS;
     }
     const parsed = JSON.parse(raw);

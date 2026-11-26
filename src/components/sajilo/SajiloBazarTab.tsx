@@ -35,22 +35,59 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [lastSyncTime, setLastSyncTime] = useState<string>('');
 
+  const [metalsPayload, setMetalsPayload] = useState<any>(null);
+  const [isLoadingMetals, setIsLoadingMetals] = useState(false);
+  const [fuelPayload, setFuelPayload] = useState<any>(null);
+  const [isLoadingFuel, setIsLoadingFuel] = useState(false);
+  const [nepsePayload, setNepsePayload] = useState<any>(null);
+  const [isLoadingNepse, setIsLoadingNepse] = useState(false);
+
   useEffect(() => {
     fetchKalimatiData();
+    fetchMetalsData();
+    fetchFuelData();
+    fetchNepseData();
   }, []);
 
   const fetchKalimatiData = () => {
     setIsLoadingKalimati(true);
     fetch('/api/live/kalimati')
-      .then((res) => res.json())
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
       .then((payload) => {
         if (payload?.data && Array.isArray(payload.data)) {
           setKalimatiData(payload.data);
           setLastSyncTime(payload.timeStr || new Date().toLocaleTimeString());
         }
       })
-      .catch((e) => console.warn('Kalimati fetch error:', e))
+      .catch(() => {})
       .finally(() => setIsLoadingKalimati(false));
+  };
+
+  const fetchMetalsData = () => {
+    setIsLoadingMetals(true);
+    fetch('/api/live/metals')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((payload) => setMetalsPayload(payload))
+      .catch(() => setMetalsPayload({ error: 'Official data is currently unavailable.', data: [] }))
+      .finally(() => setIsLoadingMetals(false));
+  };
+
+  const fetchFuelData = () => {
+    setIsLoadingFuel(true);
+    fetch('/api/live/fuel')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((payload) => setFuelPayload(payload))
+      .catch(() => setFuelPayload({ error: 'Official data is currently unavailable.', data: [] }))
+      .finally(() => setIsLoadingFuel(false));
+  };
+
+  const fetchNepseData = () => {
+    setIsLoadingNepse(true);
+    fetch('/api/live/nepse')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
+      .then((payload) => setNepsePayload(payload))
+      .catch(() => setNepsePayload({ error: 'Official data is currently unavailable.', data: null }))
+      .finally(() => setIsLoadingNepse(false));
   };
 
   const formatDigits = (val: string | number): string => {
@@ -137,8 +174,9 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
         </div>
 
         <div className="flex items-center gap-2 text-[11px] font-mono text-[#8b909b]">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           <span>{currentLang === 'ne' ? 'प्रत्यक्ष बजार दर' : 'Authentic Market Feeds'}</span>
+          {lastSyncTime && <span className="text-[10px] text-[#8b909b]">• {lastSyncTime}</span>}
         </div>
       </div>
 
@@ -240,7 +278,11 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
                   {filteredProduce.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-[#8b909b] font-mono">
-                        {isLoadingKalimati ? 'Loading produce prices...' : 'No commodities matching your search filter.'}
+                        {isLoadingKalimati
+                          ? 'Loading produce prices...'
+                          : kalimatiData.length === 0
+                          ? 'Official data is currently unavailable.'
+                          : 'No commodities matching your search filter.'}
                       </td>
                     </tr>
                   ) : (
@@ -297,71 +339,61 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
                     : "Federation of Nepal Gold & Silver Dealers' Association"}
                 </h3>
                 <span className="px-2 py-0.2 rounded text-[10px] font-mono bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                  Official Federation
+                  {metalsPayload?.isLive ? 'Live Official Feed' : 'Official Source'}
                 </span>
               </div>
               <p className="text-xs text-[#8b909b]">
-                {currentLang === 'ne' ? 'काठमाडौँ बजारको आधिकारिक दैनिक सुन तथा चाँदी कारोबार दर' : 'Official daily Bullion market bullion rates in Nepal'}
+                {metalsPayload?.dataSource
+                  ? `${metalsPayload.dataSource} • AD: ${metalsPayload.lastUpdatedAd || 'N/A'} | BS: ${metalsPayload.lastUpdatedBs || 'N/A'}`
+                  : currentLang === 'ne'
+                  ? 'काठमाडौँ बजारको आधिकारिक दैनिक सुन तथा चाँदी कारोबार दर'
+                  : 'Official daily bullion rates in Nepal'}
               </p>
             </div>
-            <div className="text-xs font-mono text-emerald-400">Verified Authentic Rates</div>
+            <button
+              onClick={fetchMetalsData}
+              disabled={isLoadingMetals}
+              className="px-3 py-1.5 rounded-lg bg-[#1f232b] hover:bg-[#262a31] border border-[#262a31] text-xs font-mono text-[#edeef0] flex items-center gap-1.5 transition-colors disabled:opacity-50 self-start sm:self-auto"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingMetals ? 'animate-spin' : ''}`} />
+              <span>{currentLang === 'ne' ? 'ताजा बनाउनुहोस्' : 'Refresh'}</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Fine Gold */}
-            <div className="p-5 rounded-xl bg-[#14161b] border border-amber-500/30 hover:border-amber-500/50 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono text-amber-400 font-bold uppercase">Fine Gold (24K)</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">छापावाल सुन</span>
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-[10px] text-[#8b909b]">Rate per Tola (११.६६४ ग्राम)</div>
-                  <div className="text-2xl font-black font-mono text-amber-400">रू. {formatDigits('152,400')}</div>
-                </div>
-                <div className="pt-2 border-t border-[#262a31]">
-                  <div className="text-[10px] text-[#8b909b]">Rate per 10 Grams</div>
-                  <div className="text-sm font-bold font-mono text-[#edeef0]">रू. {formatDigits('130,660')}</div>
-                </div>
-              </div>
+          {!metalsPayload?.data || !Array.isArray(metalsPayload.data) || metalsPayload.data.length === 0 ? (
+            <div className="p-8 rounded-xl bg-[#14161b] border border-[#262a31] text-center text-xs font-mono text-[#8b909b]">
+              {isLoadingMetals ? 'Loading official bullion rates...' : 'Official data is currently unavailable.'}
             </div>
-
-            {/* Tejabi Gold */}
-            <div className="p-5 rounded-xl bg-[#14161b] border border-amber-500/20 hover:border-amber-500/40 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono text-amber-300 font-bold uppercase">Tejabi Gold (22K)</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300">तेजाबी सुन</span>
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-[10px] text-[#8b909b]">Rate per Tola (११.६६४ ग्राम)</div>
-                  <div className="text-2xl font-black font-mono text-amber-300">रू. {formatDigits('151,650')}</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {metalsPayload.data.slice(0, 6).map((m: any) => (
+                <div key={m.id || m.categoryEn} className="p-5 rounded-xl bg-[#14161b] border border-amber-500/25 hover:border-amber-500/50 transition-all">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="text-xs font-mono text-amber-400 font-bold uppercase truncate">
+                      {currentLang === 'ne' ? m.categoryNp || m.categoryEn : m.categoryEn}
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 shrink-0">
+                      {m.purity || m.statusLabel || 'Official'}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <div className="text-[10px] text-[#8b909b]">{m.unitTolaLabel || 'Rate per Tola (11.664g)'}</div>
+                      <div className="text-2xl font-black font-mono text-amber-400">
+                        रू. {formatDigits(Number(m.nprPerTola || 0).toLocaleString())}
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-[#262a31]">
+                      <div className="text-[10px] text-[#8b909b]">{m.unitGramLabel || 'Rate per 10 Grams'}</div>
+                      <div className="text-sm font-bold font-mono text-[#edeef0]">
+                        रू. {formatDigits(Number(m.nprPerTenGram || 0).toLocaleString())}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-2 border-t border-[#262a31]">
-                  <div className="text-[10px] text-[#8b909b]">Rate per 10 Grams</div>
-                  <div className="text-sm font-bold font-mono text-[#edeef0]">रू. {formatDigits('130,015')}</div>
-                </div>
-              </div>
+              ))}
             </div>
-
-            {/* Silver */}
-            <div className="p-5 rounded-xl bg-[#14161b] border border-[#262a31] hover:border-slate-400/40 transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-mono text-slate-300 font-bold uppercase">Silver (चाँदी)</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-500/10 text-slate-300">शुद्ध चाँदी</span>
-              </div>
-              <div className="space-y-2">
-                <div>
-                  <div className="text-[10px] text-[#8b909b]">Rate per Tola (११.६६४ ग्राम)</div>
-                  <div className="text-2xl font-black font-mono text-[#edeef0]">रू. {formatDigits('1,820')}</div>
-                </div>
-                <div className="pt-2 border-t border-[#262a31]">
-                  <div className="text-[10px] text-[#8b909b]">Rate per 10 Grams</div>
-                  <div className="text-sm font-bold font-mono text-[#edeef0]">रू. {formatDigits('1,560')}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -375,37 +407,53 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
                   {currentLang === 'ne' ? 'नेपाल आयल निगम (NOC)' : 'Nepal Oil Corporation (NOC)'}
                 </h3>
                 <span className="px-2 py-0.2 rounded text-[10px] font-mono bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                  State Oil Monopoly
+                  State Oil Authority
                 </span>
               </div>
               <p className="text-xs text-[#8b909b]">
-                {currentLang === 'ne' ? 'पेट्रोल, डिजेल, मट्टितेल र एल.पी. ग्यासको आधिकारिक खुद्रा मूल्य' : 'Official retail tariff across Kathmandu Valley (Category 3)'}
+                {fuelPayload?.dataSource
+                  ? `${fuelPayload.dataSource} • AD: ${fuelPayload.lastUpdatedAd || 'N/A'} | BS: ${fuelPayload.lastUpdatedBs || 'N/A'}`
+                  : currentLang === 'ne'
+                  ? 'पेट्रोल, डिजेल, मट्टितेल र एल.पी. ग्यासको आधिकारिक खुद्रा मूल्य'
+                  : 'Official retail tariff published by Nepal Oil Corporation'}
               </p>
             </div>
-            <div className="text-xs font-mono text-emerald-400">Authentic NOC Published Tariff</div>
+            <button
+              onClick={fetchFuelData}
+              disabled={isLoadingFuel}
+              className="px-3 py-1.5 rounded-lg bg-[#1f232b] hover:bg-[#262a31] border border-[#262a31] text-xs font-mono text-[#edeef0] flex items-center gap-1.5 transition-colors disabled:opacity-50 self-start sm:self-auto"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingFuel ? 'animate-spin' : ''}`} />
+              <span>{currentLang === 'ne' ? 'ताजा बनाउनुहोस्' : 'Refresh'}</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { nameEn: 'Petrol', nameNp: 'पेट्रोल', unit: 'Litre', rate: 170.0, color: 'blue' },
-              { nameEn: 'Diesel', nameNp: 'डिजेल', unit: 'Litre', rate: 160.0, color: 'emerald' },
-              { nameEn: 'Kerosene', nameNp: 'मट्टितेल', unit: 'Litre', rate: 160.0, color: 'slate' },
-              { nameEn: 'LP Gas Cylinder', nameNp: 'एल.पी. ग्यास', unit: '14.2 KG Cylinder', rate: 1895.0, color: 'amber' },
-              { nameEn: 'Aviation Fuel (Domestic)', nameNp: 'हवाई इन्धन (आन्तरिक)', unit: 'Litre', rate: 136.0, color: 'purple' },
-              { nameEn: 'Aviation Fuel (Intl)', nameNp: 'हवाई इन्धन (अन्तर्राष्ट्रिय)', unit: 'Kilolitre', rate: 1035.0, currency: '$', color: 'indigo' },
-            ].map((f, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-[#edeef0]">{currentLang === 'ne' ? f.nameNp : f.nameEn}</span>
-                  <span className="text-[10px] font-mono text-[#8b909b]">{f.unit}</span>
+          {!fuelPayload?.data || !Array.isArray(fuelPayload.data) || fuelPayload.data.length === 0 ? (
+            <div className="p-8 rounded-xl bg-[#14161b] border border-[#262a31] text-center text-xs font-mono text-[#8b909b]">
+              {isLoadingFuel ? 'Loading official NOC fuel tariff...' : 'Official data is currently unavailable.'}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {fuelPayload.data.map((f: any, idx: number) => (
+                <div key={idx} className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-[#edeef0]">
+                      {currentLang === 'ne' ? f.itemNp || f.item : f.item}
+                    </span>
+                    <span className="text-[10px] font-mono text-[#8b909b]">
+                      {currentLang === 'ne' ? f.unitNp || f.unit : f.unit}
+                    </span>
+                  </div>
+                  <div className="text-2xl font-black font-mono text-[#edeef0] mt-2">
+                    रू. {formatDigits(Number(f.priceNpr || 0).toLocaleString())}
+                  </div>
+                  <div className="text-[10px] text-[#8b909b] font-mono mt-1 truncate">
+                    {f.notesEn || 'Kathmandu / Pokhara Official Category'}
+                  </div>
                 </div>
-                <div className="text-2xl font-black font-mono text-[#edeef0] mt-2">
-                  {f.currency || 'रू.'} {formatDigits(f.rate.toLocaleString())}
-                </div>
-                <div className="text-[10px] text-[#8b909b] font-mono mt-1">Kathmandu / Pokhara Category</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -419,71 +467,97 @@ export const SajiloBazarTab: React.FC<SajiloBazarTabProps> = ({ currentLang, dev
                   {currentLang === 'ne' ? 'नेपाल स्टक एक्सचेन्ज (NEPSE)' : 'Nepal Stock Exchange (NEPSE)'}
                 </h3>
                 <span className="px-2 py-0.2 rounded text-[10px] font-mono bg-emerald-500/15 text-[#00e599] border border-emerald-500/30">
-                  Live Market Feed
+                  {nepsePayload?.marketStatus || 'Market Feed'}
                 </span>
               </div>
               <p className="text-xs text-[#8b909b]">
-                {currentLang === 'ne' ? 'दैनिक परिसूचक, कुल कारोबार रकम र नयाँ प्राथमिक सेयर (IPO)' : 'Daily indices, aggregate turnover and active public offerings'}
+                {nepsePayload?.dataSource
+                  ? `${nepsePayload.dataSource} • AD: ${nepsePayload.lastUpdatedAd || 'N/A'} | BS: ${nepsePayload.lastUpdatedBs || 'N/A'}`
+                  : currentLang === 'ne'
+                  ? 'दैनिक परिसूचक, कुल कारोबार रकम र नयाँ प्राथमिक सेयर (IPO)'
+                  : 'Daily indices, aggregate turnover and active public offerings'}
               </p>
             </div>
-            <div className="text-xs font-mono text-emerald-400">Source: NEPSE / CDSC Official</div>
+            <button
+              onClick={fetchNepseData}
+              disabled={isLoadingNepse}
+              className="px-3 py-1.5 rounded-lg bg-[#1f232b] hover:bg-[#262a31] border border-[#262a31] text-xs font-mono text-[#edeef0] flex items-center gap-1.5 transition-colors disabled:opacity-50 self-start sm:self-auto"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingNepse ? 'animate-spin' : ''}`} />
+              <span>{currentLang === 'ne' ? 'ताजा बनाउनुहोस्' : 'Refresh'}</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
-              <div className="text-xs text-[#8b909b]">NEPSE Benchmark Index</div>
-              <div className="text-2xl font-black font-mono text-[#00e599] mt-1">{formatDigits('2,748.65')}</div>
-              <div className="text-[11px] font-mono text-emerald-400 mt-0.5 flex items-center gap-1">
-                <ArrowUp className="w-3 h-3" /> +{formatDigits('24.81')} (+{formatDigits('0.91')}%)
-              </div>
+          {!nepsePayload?.data ? (
+            <div className="p-8 rounded-xl bg-[#14161b] border border-[#262a31] text-center text-xs font-mono text-[#8b909b]">
+              {isLoadingNepse ? 'Loading official NEPSE & CDSC market feed...' : 'Official data is currently unavailable.'}
             </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(nepsePayload.data.indices || []).slice(0, 2).map((idxItem: any) => (
+                  <div key={idxItem.name} className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
+                    <div className="text-xs text-[#8b909b]">{idxItem.name}</div>
+                    <div className="text-2xl font-black font-mono text-[#00e599] mt-1">
+                      {formatDigits(Number(idxItem.value || 0).toLocaleString())}
+                    </div>
+                    <div
+                      className={`text-[11px] font-mono mt-0.5 flex items-center gap-1 ${
+                        Number(idxItem.change) >= 0 ? 'text-emerald-400' : 'text-red-400'
+                      }`}
+                    >
+                      {Number(idxItem.change) >= 0 ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                      {Number(idxItem.change) >= 0 ? '+' : ''}
+                      {formatDigits(idxItem.change)} ({formatDigits(idxItem.pChange)}%)
+                    </div>
+                  </div>
+                ))}
 
-            <div className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
-              <div className="text-xs text-[#8b909b]">Sensitive Index</div>
-              <div className="text-2xl font-black font-mono text-[#edeef0] mt-1">{formatDigits('482.19')}</div>
-              <div className="text-[11px] font-mono text-emerald-400 mt-0.5 flex items-center gap-1">
-                <ArrowUp className="w-3 h-3" /> +{formatDigits('3.42')} (+{formatDigits('0.71')}%)
-              </div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
-              <div className="text-xs text-[#8b909b]">Daily Turnover</div>
-              <div className="text-2xl font-black font-mono text-[#edeef0] mt-1">रू. {formatDigits('7.84')} अर्ब</div>
-              <div className="text-[11px] font-mono text-[#8b909b] mt-0.5">Total Traded Shares: {formatDigits('18,940,210')}</div>
-            </div>
-          </div>
-
-          {/* Active IPOs */}
-          <div className="rounded-xl border border-[#262a31] bg-[#14161b] p-4">
-            <h4 className="text-xs font-mono font-bold text-[#edeef0] uppercase tracking-wider mb-3">
-              {currentLang === 'ne' ? 'जारी तथा निष्कासित नयाँ आइपिओ (Active IPOs)' : 'Current & Upcoming IPOs (CDSC)'}
-            </h4>
-            <div className="space-y-2">
-              <div className="p-3 rounded-lg bg-[#1a1d24] border border-[#262a31] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <div className="font-bold text-xs text-[#edeef0]">Bhugol Energy Development Company Ltd.</div>
-                  <div className="text-[10px] text-[#8b909b]">Sector: Hydropower | Issue Manager: NIC Asia Capital | Units: 1,632,160</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-[#00e599] border border-emerald-500/30">
-                    Open for General Public
-                  </span>
+                <div className="p-4 rounded-xl bg-[#14161b] border border-[#262a31]">
+                  <div className="text-xs text-[#8b909b]">Daily Turnover</div>
+                  <div className="text-2xl font-black font-mono text-[#edeef0] mt-1">
+                    {nepsePayload.data.turnoverNpr
+                      ? `रू. ${formatDigits(Number(nepsePayload.data.turnoverNpr).toLocaleString())}`
+                      : 'Official data is currently unavailable.'}
+                  </div>
+                  <div className="text-[11px] font-mono text-[#8b909b] mt-0.5">
+                    Total Traded Shares: {formatDigits(Number(nepsePayload.data.totalSharesTraded || 0).toLocaleString())}
+                  </div>
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#1a1d24] border border-[#262a31] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <div className="font-bold text-xs text-[#edeef0]">Himalayan Reinsurance Limited (Right Share)</div>
-                  <div className="text-[10px] text-[#8b909b]">Sector: Reinsurance | Face Value: NPR 100 | Ratio: 10:8</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                    Approved by SEBON
-                  </span>
-                </div>
+              {/* Active IPOs */}
+              <div className="rounded-xl border border-[#262a31] bg-[#14161b] p-4">
+                <h4 className="text-xs font-mono font-bold text-[#edeef0] uppercase tracking-wider mb-3">
+                  {currentLang === 'ne' ? 'जारी तथा निष्कासित नयाँ आइपिओ (Active IPOs)' : 'Current & Upcoming IPOs (CDSC)'}
+                </h4>
+                {!nepsePayload.data.ipos || nepsePayload.data.ipos.length === 0 ? (
+                  <p className="text-xs font-mono text-[#8b909b] py-3">Official data is currently unavailable.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {nepsePayload.data.ipos.slice(0, 6).map((ipo: any) => (
+                      <div
+                        key={ipo.id || ipo.companyName}
+                        className="p-3 rounded-lg bg-[#1a1d24] border border-[#262a31] flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                      >
+                        <div>
+                          <div className="font-bold text-xs text-[#edeef0]">{ipo.companyName}</div>
+                          <div className="text-[10px] text-[#8b909b]">
+                            Type: {ipo.type} | Issue Manager: {ipo.issueManager} | Units: {formatDigits(Number(ipo.units || 0).toLocaleString())}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-[#00e599] border border-emerald-500/30">
+                            {ipo.status}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
 

@@ -30,6 +30,9 @@ jobs:
       - name: 🔍 Lint & TypeCheck
         run: npm run lint
 
+      - name: 🧪 Run Unit & Security Tests
+        run: npm test
+
       - name: ⚡ Production Build (Vite & Express Server)
         run: npm run build
         env:
@@ -53,5 +56,6 @@ jobs:
 
       - name: 🚀 Deployment Status
         run: |
-          echo "🎉 SAARTHI Civic Platform (v1.4.1) build passed and ready for distribution."
+          PKG_VER=$(node -p "require('./package.json').version")
+          echo "🎉 SAARTHI Civic Platform (v${PKG_VER}) build passed and ready for distribution."
           echo "Commit SHA: ${{ github.sha }}"

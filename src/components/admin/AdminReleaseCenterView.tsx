@@ -22,12 +22,13 @@ export const AdminReleaseCenterView: React.FC = () => {
   const [isAddingNote, setIsAddingNote] = useState<boolean>(false);
 
   // Form State for Manual Release Note
-  const [newVersion, setNewVersion] = useState<string>('v1.4.2');
-  const [newBuild, setNewBuild] = useState<number>(242);
+  const [newVersion, setNewVersion] = useState<string>(CURRENT_VERSION_INFO.version);
+  const [newBuild, setNewBuild] = useState<number>(CURRENT_VERSION_INFO.buildNumber);
   const [newTitle, setNewTitle] = useState<string>('');
   const [newWhatsNew, setNewWhatsNew] = useState<string>('');
   const [newImprovements, setNewImprovements] = useState<string>('');
   const [newBugFixes, setNewBugFixes] = useState<string>('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const liveTime = useTimeCalendar('Asia/Kathmandu');
 
@@ -40,8 +41,9 @@ export const AdminReleaseCenterView: React.FC = () => {
 
   const handleAddReleaseNote = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     if (!newTitle.trim()) {
-      alert('Please enter a release title');
+      setFormError('Please enter a release title.');
       return;
     }
 
@@ -128,6 +130,12 @@ export const AdminReleaseCenterView: React.FC = () => {
             <Sparkles className="w-4 h-4" />
             <span>Add Manual Version Release Note</span>
           </h3>
+
+          {formError && (
+            <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs">
+              {formError}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
             <div>

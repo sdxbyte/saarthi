@@ -122,10 +122,14 @@ export async function loginMeroshare(
     });
 
     if (res.ok) {
-      const token = res.headers.get('Authorization') || '';
+      const token = (res.headers.get('Authorization') || '').trim();
       const body = await res.json().catch(() => ({}));
+      const resolvedToken = token || (typeof body.token === 'string' ? body.token.trim() : '');
+      if (!resolvedToken) {
+        return { error: 'CDSC MeroShare did not issue a valid session Authorization token.' };
+      }
       return {
-        token: token || body.token || 'Bearer_Mock_Auth_Token',
+        token: resolvedToken,
         demat: body.demat || body.boid || '',
         name: body.userFullName || username,
       };

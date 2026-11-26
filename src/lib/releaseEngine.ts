@@ -234,30 +234,31 @@ export interface MaskedGitHubCredentials {
   lastConnectedAt?: string;
 }
 
-// Load saved GitHub credentials from server storage
+// Load GitHub credentials from environment first, then optional runtime config
 export function loadGitHubCredentials(): GitHubCredentialsConfig | null {
   ensureDocsDirectory();
-  try {
-    if (fs.existsSync(CREDENTIALS_FILE_PATH)) {
-      const data = fs.readFileSync(CREDENTIALS_FILE_PATH, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (err) {
-    console.warn('Could not load GitHub credentials:', err);
-  }
-  // Check process.env fallback if present
-  if (process.env.GITHUB_TOKEN) {
+  if (process.env.GITHUB_TOKEN && process.env.GITHUB_TOKEN.trim().length > 5) {
     return {
-      githubToken: process.env.GITHUB_TOKEN,
+      githubToken: process.env.GITHUB_TOKEN.trim(),
       repoUrl: process.env.GITHUB_BACKUP_REPO_URL || 'https://github.com/sdxbyte/saarthi',
       repoName: 'saarthi',
       branch: 'main',
       autoCreateRepo: true,
       isPrivate: true,
       ownerEmail: process.env.ALLOWED_OWNER_EMAIL || 'sudipadhikari8107@gmail.com',
-      githubUser: 'sdxbyte',
+      githubUser: process.env.GITHUB_OWNER || 'sdxbyte',
       lastConnectedAt: new Date().toISOString(),
     };
+  }
+  try {
+    if (fs.existsSync(CREDENTIALS_FILE_PATH)) {
+      const data = JSON.parse(fs.readFileSync(CREDENTIALS_FILE_PATH, 'utf8'));
+      if (data && typeof data.githubToken === 'string' && data.githubToken.trim().length > 5) {
+        return data;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not load GitHub credentials:', err);
   }
   return null;
 }
@@ -428,7 +429,7 @@ export function getCurrentPackageVersion(): string {
   } catch (err) {
     console.warn('Failed to read package.json version:', err);
   }
-  return 'v1.4.0';
+  return 'v2.0.0';
 }
 
 // Auto-increment version (patch or minor)
@@ -796,8 +797,38 @@ export async function pushToGitHubViaAPI(
 
   // 2. Collect files in project
   const treeItems: Array<{ path: string; mode: string; type: string; content?: string; sha?: string }> = [];
-  const ignoredDirs = new Set(['node_modules', '.git', 'dist', 'build', '.cache', '.vite', '__pycache__', '.next']);
-  const ignoredFiles = new Set(['saarthi-source-code.zip', '.DS_Store', 'bun.lockb', 'github-credentials.json', 'smtp-credentials.json', 'smtp-config.json', '.env', '.env.local']);
+  const ignoredDirs = new Set([
+    'node_modules',
+    '.git',
+    'dist',
+    'dev-dist',
+    'build',
+    'coverage',
+    '.cache',
+    '.vite',
+    '__pycache__',
+    '.next',
+    '.aistudio',
+    'aistudio',
+    'android',
+    'android-build',
+    'android-release',
+  ]);
+  const ignoredFiles = new Set([
+    'saarthi-source-code.zip',
+    '.DS_Store',
+    'bun.lockb',
+    'github-credentials.json',
+    'smtp-credentials.json',
+    'smtp-config.json',
+    '.env',
+    '.env.local',
+    'data_update_counter.json',
+    'data_email_counter.json',
+    'data_version_state.json',
+    'data_email_history.json',
+    'data_update_manifests.json',
+  ]);
   const binaryExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.pdf', '.zip', '.tar', '.gz']);
 
   async function walk(dirPath: string, relativePath: string = '') {
@@ -805,7 +836,21 @@ export async function pushToGitHubViaAPI(
     for (const entry of entries) {
       if (ignoredDirs.has(entry.name)) continue;
       if (ignoredFiles.has(entry.name)) continue;
-      if (entry.name.endsWith('.zip') || entry.name.endsWith('.tar.gz')) continue;
+      if (
+        entry.name.endsWith('.zip') ||
+        entry.name.endsWith('.tar.gz') ||
+        entry.name.endsWith('.db') ||
+        entry.name.endsWith('.db-shm') ||
+        entry.name.endsWith('.db-wal') ||
+        entry.name.endsWith('.sqlite') ||
+        entry.name.endsWith('.pem') ||
+        entry.name.endsWith('.key') ||
+        entry.name.endsWith('.keystore') ||
+        entry.name.endsWith('.apk') ||
+        entry.name.endsWith('.aab')
+      ) {
+        continue;
+      }
 
       const fullPath = path.join(dirPath, entry.name);
       const relPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
@@ -859,11 +904,8 @@ export async function pushToGitHubViaAPI(
     throw new Error('No files found to backup.');
   }
 
-  // 3. Create tree object
+  // 3. Create clean tree object matching current workspace snapshot
   const treeBody: any = { tree: treeItems };
-  if (baseTreeSha) {
-    treeBody.base_tree = baseTreeSha;
-  }
 
   const createTreeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees`, {
     method: 'POST',
@@ -985,13 +1027,13 @@ export async function executeGitPushWithFallback(
     try { execSync('git remote remove origin', { stdio: 'pipe' }); } catch {}
     execSync(`git remote add origin ${authenticatedRemote}`, { stdio: 'pipe' });
 
-    let currentVer = '1.4.8';
+    let currentVer = '2.0.0';
     try {
       const pkgJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
       currentVer = pkgJson.version || currentVer;
     } catch {}
 
-    execSync(`git push -u origin ${branch} --force`, {
+    execSync(`git push -u origin ${branch}`, {
       stdio: 'pipe',
       timeout: 25000,
       env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
@@ -1014,7 +1056,7 @@ export async function executeGitPushWithFallback(
   } catch {
     // Seamless fallback to direct GitHub REST API push if Git CLI encounters environment limitations
     try {
-      let currentVer = '1.4.8';
+      let currentVer = '2.0.0';
       try {
         const pkgJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
         currentVer = pkgJson.version || currentVer;

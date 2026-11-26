@@ -1,5 +1,3 @@
-import jsPDF from 'jspdf';
-
 export interface TaxPDFData {
   annualSalary: number;
   maritalStatus: string;
@@ -13,7 +11,8 @@ export interface TaxPDFData {
   slabs: { range: string; rate: number; taxableAmount: number; taxAmount: number }[];
 }
 
-export function generateTaxReportPDF(data: TaxPDFData): void {
+export async function generateTaxReportPDF(data: TaxPDFData): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF();
 
   // Header banner
@@ -117,7 +116,8 @@ export interface BluebookPDFData {
   totalPayable: number;
 }
 
-export function generateBluebookReceiptPDF(data: BluebookPDFData): void {
+export async function generateBluebookReceiptPDF(data: BluebookPDFData): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF();
 
   // Header banner
@@ -186,7 +186,8 @@ export interface ReceiptPDFData {
   summaryNotes?: string;
 }
 
-export function generateReceiptPDF(data: ReceiptPDFData): void {
+export async function generateReceiptPDF(data: ReceiptPDFData): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF();
 
   // Header banner

@@ -49,6 +49,7 @@ export interface LiveApiDataPayload<T = any> {
   timestampIso: string;
   data: T;
   error: string | null;
+  marketStatus?: string;
 }
 
 // Data models for specific live feeds

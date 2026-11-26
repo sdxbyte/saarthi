@@ -1,0 +1,268 @@
+{
+  "entities": {
+    "UserProfileDoc": {
+      "title": "UserProfileDoc",
+      "description": "Unified cross-platform SAARTHI user profile, theme/locale preferences, and cloud sync anchor.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the account owner.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "nagarikId": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "photoUrl": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "role": {
+          "type": "string",
+          "enum": ["citizen"]
+        },
+        "preferredTheme": {
+          "type": "string",
+          "enum": ["light", "dark", "system"]
+        },
+        "preferredLang": {
+          "type": "string",
+          "enum": ["en", "ne"]
+        },
+        "devanagariNumerals": {
+          "type": "boolean"
+        },
+        "migratedFromLocalAt": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "version": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "email", "displayName", "role", "preferredTheme", "preferredLang", "version", "createdAt", "updatedAt"]
+    },
+    "VaultDocumentRecord": {
+      "title": "VaultDocumentRecord",
+      "description": "Personal citizen document metadata synchronized across Website, PWA, and Android APK.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "documentType": {
+          "type": "string",
+          "enum": ["Citizenship", "Passport", "Driving License", "Bluebook", "PAN Card", "Academic", "Other"]
+        },
+        "docNumber": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "issueDate": { "type": "string", "maxLength": 32 },
+        "expiryDate": { "type": "string", "maxLength": 32 },
+        "issuer": { "type": "string", "maxLength": 160 },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "version": { "type": "integer" },
+        "deviceId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "deleted": { "type": "boolean" },
+        "clientUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "documentType", "docNumber", "issueDate", "issuer", "version", "deviceId", "idempotencyKey", "deleted", "createdAt", "updatedAt"]
+    },
+    "KeeperItemRecord": {
+      "title": "KeeperItemRecord",
+      "description": "Sajilo document renewal and bill deadline reminder synced across devices.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "category": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "documentNumber": { "type": "string", "maxLength": 80 },
+        "expiryDateAd": { "type": "string", "maxLength": 32 },
+        "expiryDateBs": { "type": "string", "maxLength": 32 },
+        "remindDaysBefore": { "type": "integer" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "version": { "type": "integer" },
+        "deviceId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "deleted": { "type": "boolean" },
+        "clientUpdatedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "category", "expiryDateAd", "remindDaysBefore", "version", "deviceId", "idempotencyKey", "deleted", "createdAt", "updatedAt"]
+    },
+    "SavedItemRecord": {
+      "title": "SavedItemRecord",
+      "description": "User-saved services, shortcuts, watchlist items, and notes.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "kind": { "type": "string", "enum": ["shortcut", "saved_service", "watchlist", "note"] },
+        "targetId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "subtitle": { "type": "string", "maxLength": 240 },
+        "tags": { "type": "array", "description": "Up to 10 short string labels" },
+        "pinned": { "type": "boolean" },
+        "version": { "type": "integer" },
+        "deviceId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "idempotencyKey": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "deleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "kind", "targetId", "title", "pinned", "version", "deviceId", "idempotencyKey", "deleted", "createdAt", "updatedAt"]
+    },
+    "DeviceSessionRecord": {
+      "title": "DeviceSessionRecord",
+      "description": "Registered browser, PWA, or Android APK device linked to a citizen account.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "platform": { "type": "string", "enum": ["web", "pwa", "android-apk"] },
+        "deviceLabel": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "appVersion": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "revoked": { "type": "boolean" },
+        "lastSyncState": { "type": "string", "enum": ["synced", "syncing", "offline", "pending", "failed", "conflict"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "platform", "deviceLabel", "appVersion", "revoked", "lastSyncState", "createdAt", "updatedAt"]
+    },
+    "SyncAuditRecord": {
+      "title": "SyncAuditRecord",
+      "description": "Append-only cross-device sync and conflict audit event with dual AD/BS dates.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "action": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "entityType": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "entityId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "deviceId": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "adDate": { "type": "string", "minLength": 8, "maxLength": 32 },
+        "bsDate": { "type": "string", "minLength": 8, "maxLength": 32 },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 320 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "action", "entityType", "entityId", "deviceId", "adDate", "bsDate", "summary", "createdAt"]
+    },
+    "AdminRoleRecord": {
+      "title": "AdminRoleRecord",
+      "description": "Trusted administrator grant record.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "grantedAt"]
+    },
+    "SupportTicketRecord": {
+      "title": "SupportTicketRecord",
+      "description": "Citizen support or bug report tracked across devices.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "subject": { "type": "string", "minLength": 3, "maxLength": 160 },
+        "message": { "type": "string", "minLength": 5, "maxLength": 2000 },
+        "category": { "type": "string", "enum": ["sync", "finance", "civic", "bug", "feedback"] },
+        "status": { "type": "string", "enum": ["open", "in_review", "resolved", "closed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "subject", "message", "category", "status", "createdAt", "updatedAt"]
+    },
+    "ReleaseNoticeRecord": {
+      "title": "ReleaseNoticeRecord",
+      "description": "Published SAARTHI web & Android APK release metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "channel": { "type": "string", "enum": ["web", "android-apk", "unified"] },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "publishedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "version", "channel", "summary", "publishedAt"]
+    },
+    "ConnectionProbe": {
+      "title": "ConnectionProbe",
+      "description": "Read-only connectivity probe document for Firebase SDK initialization.",
+      "type": "object",
+      "properties": {
+        "ok": { "type": "boolean" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfileDoc" },
+      "description": "Private owner-only citizen account profile and synced preferences."
+    },
+    "/users/{userId}/vaultDocs/{docId}": {
+      "schema": { "$ref": "#/entities/VaultDocumentRecord" },
+      "description": "Citizen digital vault document entries synced across Web, PWA, and Android."
+    },
+    "/users/{userId}/keeperItems/{itemId}": {
+      "schema": { "$ref": "#/entities/KeeperItemRecord" },
+      "description": "Sajilo expiry reminders and bill alerts synced across devices."
+    },
+    "/users/{userId}/savedItems/{itemId}": {
+      "schema": { "$ref": "#/entities/SavedItemRecord" },
+      "description": "User shortcuts, saved modules, and watchlists."
+    },
+    "/users/{userId}/devices/{deviceId}": {
+      "schema": { "$ref": "#/entities/DeviceSessionRecord" },
+      "description": "Linked devices and session revocation status."
+    },
+    "/users/{userId}/syncHistory/{historyId}": {
+      "schema": { "$ref": "#/entities/SyncAuditRecord" },
+      "description": "Append-only audit trail of cross-device sync and conflict resolutions."
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminRoleRecord" },
+      "description": "Trusted administrator lookup collection."
+    },
+    "/supportTickets/{ticketId}": {
+      "schema": { "$ref": "#/entities/SupportTicketRecord" },
+      "description": "User support tickets scoped by ownerId or admin access."
+    },
+    "/releaseNotices/{noticeId}": {
+      "schema": { "$ref": "#/entities/ReleaseNoticeRecord" },
+      "description": "Published SAARTHI release notices."
+    },
+    "/test/connection": {
+      "schema": { "$ref": "#/entities/ConnectionProbe" },
+      "description": "Server connectivity probe checked on boot."
+    }
+  }
+}

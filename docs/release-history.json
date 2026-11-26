@@ -1,5 +1,56 @@
 [
   {
+    "version": "v2.0.0",
+    "title": "SAARTHI v2.0.0 Unified Cross-Platform Account, Offline Sync, Hybrid Design & Android APK Release",
+    "date": "Nov 25, 2026, 05:50:00 PM",
+    "timestamp": "2026-11-26T01:50:00.000Z",
+    "backupType": "Auto Sync",
+    "author": "sudipadhikari8107@gmail.com",
+    "commitHash": "unified-v2",
+    "repoUrl": "https://github.com/sdxbyte/saarthi",
+    "fileCount": 195,
+    "totalSize": "11.40 MB",
+    "summary": {
+      "added": [
+        "Unified Account Center (/account) and cross-device cloud sync via verified Firebase Auth + Cloud Firestore.",
+        "Resilient IndexedDB offline-first sync engine with object-store auto-repair, native transaction fallback, and 3-way conflict resolution.",
+        "Remote device session tracking and instant cross-device revocation termination.",
+        "44-test automated verification suite across 6 test files including Firestore rules, sync engine, and Rule 16 checks."
+      ],
+      "updated": [
+        "Hybrid Material Design 3 Light & Dark theme across all public, utility, financial, and admin screens.",
+        "Synchronized v2.0.0 version metadata across Web, PWA, and Capacitor Android APK release pipelines.",
+        "Replaced static health telemetry and blocking browser dialogs in Admin Portal with live /api/health checks and inline controls."
+      ],
+      "fixed": [
+        "Resolved native IDBDatabase.transaction exceptions in restricted/iframe browsers via self-healing IndexedDB + in-memory fallback.",
+        "Fixed TypeScript strict errors, support ticket submission routing, and Rule 16 market fallback behavior."
+      ],
+      "technical": [
+        "Compliant with SAARTHI Master Rules 1, 2, 3, 4, 8, 16, and 17.",
+        "Standalone Android APK build pipeline configured via .github/workflows/build-playstore-aab.yml."
+      ],
+      "modifiedFiles": [
+        "src/services/offlineDb.ts",
+        "src/services/syncEngine.ts",
+        "src/context/SyncAuthContext.tsx",
+        "src/components/account/AccountView.tsx",
+        "src/components/admin/AdminLayout.tsx",
+        "src/components/admin/AdminDashboard.tsx",
+        "src/utils/versionEngine.ts",
+        "package.json",
+        "CHANGELOG.md",
+        "docs/CHANGELOG.md"
+      ]
+    },
+    "developerNotes": "Verified v2.0.0 cross-platform release ready for GitHub push and standalone Android APK CI/CD build.",
+    "preSyncReview": {
+      "approved": true,
+      "reviewedBy": "SAARTHI Release Automation Engine",
+      "timestamp": "2026-11-26T01:50:00.000Z"
+    }
+  },
+  {
     "version": "v1.7.0",
     "title": "SAARTHI v1.7.0 Sajilo Daily Essentials Hub, Kalimati Wholesale Bazar & FM Radio Suite",
     "date": "Sep 18, 2026, 01:00:00 PM",

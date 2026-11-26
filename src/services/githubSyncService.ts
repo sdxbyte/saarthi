@@ -71,7 +71,21 @@ export function getSyncLockStatus(): SyncLockStatus {
 }
 
 export function loadServerGitHubConfig(): GitHubSyncConfig | null {
-  // Precedence 1: Server-side JSON persistent file (Configured via UI / Developer Command Center)
+  // Precedence 1: Environment Variables / Secret Manager (Authoritative Container Defaults)
+  const token = process.env.GITHUB_TOKEN;
+  if (token && token.trim().length > 5) {
+    return {
+      githubToken: token.trim(),
+      githubUser: process.env.GITHUB_OWNER || 'sdxbyte',
+      repoName: process.env.GITHUB_REPOSITORY || 'saarthi',
+      repoUrl: `https://github.com/${process.env.GITHUB_OWNER || 'sdxbyte'}/${process.env.GITHUB_REPOSITORY || 'saarthi'}`,
+      branch: process.env.GITHUB_BRANCH || 'main',
+      ownerEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
+      lastConnectedAt: new Date().toISOString(),
+    };
+  }
+
+  // Precedence 2: Server-side JSON persistent file (Configured via UI / Developer Command Center)
   try {
     if (fs.existsSync(CREDENTIALS_FILE)) {
       const data = JSON.parse(fs.readFileSync(CREDENTIALS_FILE, 'utf-8'));
@@ -89,20 +103,6 @@ export function loadServerGitHubConfig(): GitHubSyncConfig | null {
     }
   } catch (e) {
     console.warn('[GitHub Sync Service] Failed to read credentials file:', e);
-  }
-
-  // Precedence 2: Environment Variables / Secret Manager (Authoritative Container Defaults)
-  const token = process.env.GITHUB_TOKEN;
-  if (token && token.trim().length > 5) {
-    return {
-      githubToken: token.trim(),
-      githubUser: process.env.GITHUB_OWNER || 'sdxbyte',
-      repoName: process.env.GITHUB_REPOSITORY || 'saarthi',
-      repoUrl: `https://github.com/${process.env.GITHUB_OWNER || 'sdxbyte'}/${process.env.GITHUB_REPOSITORY || 'saarthi'}`,
-      branch: process.env.GITHUB_BRANCH || 'main',
-      ownerEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'sudipadhikari8107@gmail.com',
-      lastConnectedAt: new Date().toISOString(),
-    };
   }
 
   return null;

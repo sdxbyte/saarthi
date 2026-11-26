@@ -125,13 +125,14 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
   const [quoteLoading, setQuoteLoading] = useState(false);
 
   // QR Code
-  const [qrText, setQrText] = useState('https://saarthi.gov.np');
+  const [qrText, setQrText] = useState('https://saarthi.dpdns.org');
 
   // Currency Converter
   const [currAmount, setCurrAmount] = useState<number>(100);
   const [currFrom, setCurrFrom] = useState<string>('USD');
   const [currTo, setCurrTo] = useState<string>('NPR');
-  const [currResult, setCurrResult] = useState<number | null>(13450.0);
+  const [currResult, setCurrResult] = useState<number | null>(null);
+  const [currError, setCurrError] = useState<string>('');
   const [currLoading, setCurrLoading] = useState(false);
 
   // Initial loads for Tools
@@ -189,20 +190,23 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
 
   const handleConvertCurrency = async () => {
     setCurrLoading(true);
+    setCurrError('');
     try {
       const res = await fetch(`https://open.er-api.com/v6/latest/${currFrom}`);
-      if (res.ok) {
-        const data = await res.json();
-        const rate = data.rates?.[currTo];
-        if (rate) {
-          setCurrResult(currAmount * rate);
-        }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const rate = data.rates?.[currTo];
+      if (typeof rate === 'number') {
+        setCurrResult(currAmount * rate);
+      } else {
+        setCurrResult(null);
+        setCurrError('Official exchange rate feed is currently unavailable.');
       }
     } catch {
-      // Fallback conversion table
-      const fallbackRates: Record<string, number> = { NPR: 134.5, INR: 83.5, EUR: 0.92, GBP: 0.78, USD: 1.0, JPY: 155.0 };
-      const rate = fallbackRates[currTo] || 1.0;
-      setCurrResult(currAmount * rate);
+      setCurrResult(null);
+      setCurrError('Official exchange rate feed is currently unavailable.');
     }
     setCurrLoading(false);
   };
@@ -458,9 +462,9 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                           {weatherData.description}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-800/40 text-slate-400">
-                        <div>💨 Wind: <strong className="text-slate-200">{weatherData.windSpeed} km/h</strong></div>
-                        <div>💧 Humidity: <strong className="text-slate-200">{weatherData.humidity}%</strong></div>
+                      <div className={`grid grid-cols-2 gap-2 text-xs pt-2 border-t ${isDark ? 'border-slate-800/40 text-slate-400' : 'border-sky-200 text-slate-600'}`}>
+                        <div>💨 Wind: <strong className={isDark ? 'text-slate-200' : 'text-slate-900'}>{weatherData.windSpeed} km/h</strong></div>
+                        <div>💧 Humidity: <strong className={isDark ? 'text-slate-200' : 'text-slate-900'}>{weatherData.humidity}%</strong></div>
                       </div>
                     </div>
                   ) : (
@@ -542,10 +546,16 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                       <span>Calculate Exchange</span>
                     </button>
 
-                    {currResult !== null && (
+                    {currError && (
+                      <div className={`p-3 rounded-xl border text-center text-xs font-mono ${isDark ? 'bg-rose-950/30 border-rose-800/40 text-rose-300' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
+                        {currError}
+                      </div>
+                    )}
+
+                    {currResult !== null && !currError && (
                       <div className={`p-3 rounded-xl border text-center ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-amber-50/60 border-amber-200'}`}>
-                        <div className="text-xs text-slate-400">{currAmount} {currFrom} =</div>
-                        <div className="text-xl font-black text-amber-400 font-mono">
+                        <div className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{currAmount} {currFrom} =</div>
+                        <div className="text-xl font-black text-amber-500 font-mono">
                           {currResult.toLocaleString('en-US', { maximumFractionDigits: 2 })} {currTo}
                         </div>
                       </div>
@@ -589,20 +599,20 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                   {ipData ? (
                     <div className={`p-3.5 rounded-2xl border space-y-2 text-xs ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-emerald-50/50 border-emerald-100'}`}>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Public IP:</span>
-                        <span className="font-mono font-bold text-emerald-400">{ipData.ip || ipData.query || '103.1.200.42'}</span>
+                        <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Public IP:</span>
+                        <span className="font-mono font-bold text-emerald-500">{ipData.ip || ipData.query || 'Unavailable'}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Location:</span>
-                        <span className="font-bold text-slate-200">{ipData.city || 'Kathmandu'}, {ipData.country_name || ipData.country || 'Nepal'}</span>
+                        <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Location:</span>
+                        <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{ipData.city || 'Unavailable'}, {ipData.country_name || ipData.country || ''}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">ISP / Org:</span>
-                        <span className="font-bold text-slate-200 truncate max-w-[150px]">{ipData.org || ipData.isp || 'Telecom'}</span>
+                        <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>ISP / Org:</span>
+                        <span className={`font-bold truncate max-w-[150px] ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>{ipData.org || ipData.isp || 'Unavailable'}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Timezone:</span>
-                        <span className="font-mono text-slate-300">{ipData.timezone || 'Asia/Kathmandu'}</span>
+                        <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Timezone:</span>
+                        <span className={`font-mono ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{ipData.timezone || 'Unavailable'}</span>
                       </div>
                     </div>
                   ) : (
@@ -664,8 +674,8 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                       </div>
                       {dictData.meanings?.[0] && (
                         <div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">{dictData.meanings[0].partOfSpeech}</span>
-                          <p className="text-slate-300 text-[11px] leading-relaxed mt-0.5">
+                          <span className={`text-[10px] font-bold uppercase ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{dictData.meanings[0].partOfSpeech}</span>
+                          <p className={`text-[11px] leading-relaxed mt-0.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                             {dictData.meanings[0].definitions?.[0]?.definition}
                           </p>
                         </div>
@@ -724,8 +734,8 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
 
                   <div className={`p-2.5 rounded-2xl border space-y-1.5 max-h-36 overflow-y-auto text-xs ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-rose-50/50 border-rose-100'}`}>
                     {uniList.slice(0, 5).map((u, i) => (
-                      <div key={i} className="flex justify-between items-center py-1 border-b border-slate-800/30 last:border-0">
-                        <span className="font-medium text-slate-200 truncate max-w-[170px]">{u.name}</span>
+                      <div key={i} className={`flex justify-between items-center py-1 border-b last:border-0 ${isDark ? 'border-slate-800/30' : 'border-rose-200/70'}`}>
+                        <span className={`font-medium truncate max-w-[170px] ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{u.name}</span>
                         {u.web_pages?.[0] && (
                           <a
                             href={u.web_pages[0]}
@@ -781,17 +791,17 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
 
                   <div className="flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-200">
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText || 'https://saarthi.gov.np')}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrText || 'https://saarthi.dpdns.org')}`}
                       alt="Generated QR"
                       className="w-24 h-24"
                     />
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800/40 flex justify-between items-center text-[11px]">
+                <div className={`mt-4 pt-3 border-t flex justify-between items-center text-[11px] ${isDark ? 'border-slate-800/40' : 'border-slate-200'}`}>
                   <span className="text-slate-500">High-res PNG download</span>
                   <a
-                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrText || 'https://saarthi.gov.np')}`}
+                    href={`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(qrText || 'https://saarthi.dpdns.org')}`}
                     download="saarthi_qr.png"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -812,11 +822,11 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                     <Quote className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-black uppercase text-indigo-400 tracking-wider">Quote of the Day (Quotable API)</span>
-                    <p className="text-sm font-semibold italic text-slate-200 mt-1 max-w-2xl">
+                    <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">Quote of the Day (Quotable API)</span>
+                    <p className={`text-sm font-semibold italic mt-1 max-w-2xl ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
                       "{quoteData.quote}"
                     </p>
-                    <span className="text-xs text-slate-400 font-bold block mt-1">
+                    <span className={`text-xs font-bold block mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                       — {quoteData.author}
                     </span>
                   </div>
@@ -825,7 +835,9 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                   <button
                     onClick={loadQuote}
                     disabled={quoteLoading}
-                    className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5"
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                      isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200' : 'bg-white hover:bg-slate-100 text-slate-800 border border-slate-300'
+                    }`}
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${quoteLoading ? 'animate-spin' : ''}`} />
                     <span>New Quote</span>
@@ -945,7 +957,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                           <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
                             {api.category}
                           </span>
-                          <h3 className="text-base font-black text-white mt-1.5 group-hover:text-indigo-400 transition-colors">
+                          <h3 className={`text-base font-black mt-1.5 group-hover:text-indigo-500 transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
                             {api.name}
                           </h3>
                         </div>
@@ -961,7 +973,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                       </div>
 
                       {/* Description */}
-                      <p className="text-xs text-slate-400 leading-relaxed line-clamp-3 mb-4">
+                      <p className={`text-xs leading-relaxed line-clamp-3 mb-4 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                         {currentLang === 'ne' && api.descriptionNp ? api.descriptionNp : api.description}
                       </p>
 
@@ -969,24 +981,24 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                       <div className="flex flex-wrap items-center gap-1.5 mb-4">
                         <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
                           api.auth === 'No Auth'
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                            : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
                         }`}>
                           {api.auth}
                         </span>
 
                         <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
                           api.https
-                            ? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
-                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                            ? 'bg-sky-500/10 text-sky-500 border-sky-500/20'
+                            : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                         }`}>
                           {api.https ? 'HTTPS' : 'HTTP'}
                         </span>
 
                         <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
                           api.cors === 'yes'
-                            ? 'bg-teal-500/10 text-teal-400 border-teal-500/20'
-                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                            ? 'bg-teal-500/10 text-teal-500 border-teal-500/20'
+                            : isDark ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-600 border-slate-300'
                         }`}>
                           CORS: {api.cors.toUpperCase()}
                         </span>
@@ -994,12 +1006,12 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between gap-2">
+                    <div className={`pt-3 border-t flex items-center justify-between gap-2 ${isDark ? 'border-slate-800/60' : 'border-slate-200'}`}>
                       <a
                         href={api.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-bold transition"
+                        className={`text-xs flex items-center gap-1 font-bold transition ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
                       >
                         Docs <ExternalLink className="w-3 h-3" />
                       </a>
@@ -1008,7 +1020,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                         {api.sampleEndpoint && (
                           <button
                             onClick={() => handleCopy(api.sampleEndpoint!, api.id)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                            className={`p-1.5 rounded-lg transition ${isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
                             title="Copy sample endpoint"
                           >
                             {copiedId === api.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1180,14 +1192,16 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
               {/* Code Snippets Export */}
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black uppercase text-indigo-400 tracking-wider">Generate Client Code Snippet:</span>
-                  <div className="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                  <span className="text-xs font-black uppercase text-indigo-500 tracking-wider">Generate Client Code Snippet:</span>
+                  <div className={`flex gap-1 p-1 rounded-xl border ${isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-200'}`}>
                     {(['curl', 'js', 'python', 'axios'] as const).map(lang => (
                       <button
                         key={lang}
                         onClick={() => setActiveSnippetLang(lang)}
                         className={`px-3 py-1 rounded-lg text-[11px] font-black uppercase transition ${
-                          activeSnippetLang === lang ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                          activeSnippetLang === lang
+                            ? 'bg-indigo-600 text-white'
+                            : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
                         }`}
                       >
                         {lang}
@@ -1196,7 +1210,7 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                   </div>
                 </div>
 
-                <div className="relative rounded-2xl bg-black/70 p-4 border border-slate-800 font-mono text-xs text-sky-300">
+                <div className="relative rounded-2xl bg-slate-950 p-4 border border-slate-800 font-mono text-xs text-sky-300">
                   <button
                     onClick={() => handleCopy(generatedCodeSnippets[activeSnippetLang], 'snippet')}
                     className="absolute right-3 top-3 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300 transition flex items-center gap-1"
@@ -1230,20 +1244,20 @@ export const PublicApisHubView: React.FC<PublicApisHubViewProps> = React.memo(({
                 }`}
               >
                 <div>
-                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold mb-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
                     <Globe className="w-5 h-5" />
                   </div>
-                  <h3 className="text-sm font-black text-white group-hover:text-indigo-400 transition-colors">
+                  <h3 className={`text-sm font-black group-hover:text-indigo-500 transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
                     {cat.name}
                   </h3>
-                  <span className="text-xs text-slate-400 block mt-0.5">
+                  <span className={`text-xs block mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                     {cat.nameNp}
                   </span>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-800/40 flex justify-between items-center text-xs text-slate-500">
+                <div className={`mt-4 pt-3 border-t flex justify-between items-center text-xs text-slate-500 ${isDark ? 'border-slate-800/40' : 'border-slate-200'}`}>
                   <span>{cat.count} verified APIs</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ArrowRight className="w-3.5 h-3.5 text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </button>
             ))}

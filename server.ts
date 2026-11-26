@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { app } from './src/serverApp';
@@ -83,10 +84,49 @@ async function startServer() {
   // Initialize automated periodic check & update for AllSiteHub Directory
   allSiteHubSyncEngine.startPeriodicScheduler();
 
+  const httpServer = http.createServer(app);
+
   // Vite Middleware for Dev / Static Files for Prod
   if (process.env.NODE_ENV !== 'production') {
+    const hmrDisabled = process.env.DISABLE_HMR === 'true';
+    if (hmrDisabled) {
+      app.get('/@vite/client', (_req, res) => {
+        res.type('application/javascript').send(
+          [
+            'const sheetsMap = new Map();',
+            'export class ErrorOverlay extends HTMLElement {}',
+            'export function createHotContext() {',
+            '  return { data: {}, accept() {}, prune() {}, dispose() {}, invalidate() {}, decline() {}, on() {}, off() {}, send() {} };',
+            '}',
+            'export function injectQuery(url) { return url; }',
+            'export function updateStyle(id, content) {',
+            '  let style = sheetsMap.get(id);',
+            '  if (!style) {',
+            '    style = document.createElement("style");',
+            '    style.setAttribute("type", "text/css");',
+            '    style.setAttribute("data-vite-dev-id", id);',
+            '    document.head.appendChild(style);',
+            '  }',
+            '  style.textContent = content;',
+            '  sheetsMap.set(id, style);',
+            '}',
+            'export function removeStyle(id) {',
+            '  const style = sheetsMap.get(id);',
+            '  if (style) {',
+            '    style.remove();',
+            '    sheetsMap.delete(id);',
+            '  }',
+            '}',
+          ].join('\n')
+        );
+      });
+    }
+
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: hmrDisabled ? false : { server: httpServer },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -98,7 +138,7 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Saarthi Server running on http://0.0.0.0:${PORT}`);
   });
 }

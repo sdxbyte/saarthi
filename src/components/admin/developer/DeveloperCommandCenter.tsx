@@ -24,6 +24,7 @@ import {
   Wifi
 } from 'lucide-react';
 import { AdminUser } from '../../../types/admin';
+import { CURRENT_VERSION_INFO } from '../../../utils/versionEngine';
 import { SystemMonitorView } from './SystemMonitorView';
 import { BackupManagementView } from './BackupManagementView';
 import { VersionControlView } from './VersionControlView';
@@ -270,7 +271,7 @@ export const DeveloperCommandCenter: React.FC<DeveloperCommandCenterProps> = ({ 
             <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-mono font-bold text-[10px] uppercase tracking-wider">
               Super Admin Exclusive
             </span>
-            <span className="text-xs text-slate-400 font-mono">Saarthi Platform v1.4.0</span>
+            <span className="text-xs text-slate-400 font-mono">Saarthi Platform {CURRENT_VERSION_INFO.version}</span>
           </div>
           <h1 className="text-2xl font-black text-white flex items-center gap-2">
             <Terminal className="w-6 h-6 text-amber-400 shrink-0" />
@@ -286,7 +287,7 @@ export const DeveloperCommandCenter: React.FC<DeveloperCommandCenterProps> = ({ 
           <div className="text-right pr-2 border-r border-slate-800">
             <span className="text-[10px] text-slate-400 uppercase font-bold block">Auto Refresh In</span>
             <span className="text-sm font-mono font-black text-amber-400 flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
               {countdownFormatted}
             </span>
           </div>

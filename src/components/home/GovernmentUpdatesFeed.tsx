@@ -315,7 +315,7 @@ export const GovernmentUpdatesFeed: React.FC<GovernmentUpdatesFeedProps> = ({
                 : 'bg-slate-50 border-slate-200 text-rose-600 hover:bg-slate-100'
             }`}
           >
-            <Flame className="w-3.5 h-3.5 animate-pulse text-rose-400" />
+            <Flame className="w-3.5 h-3.5 text-rose-400" />
             <span>{currentLang === 'ne' ? 'जरुरी सूचना मात्र' : 'Urgent Only'}</span>
           </button>
         </div>
@@ -459,7 +459,7 @@ export const GovernmentUpdatesFeed: React.FC<GovernmentUpdatesFeedProps> = ({
 
             {isAnalysisLoading ? (
               <div className="p-8 text-center space-y-2">
-                <FileText className="w-8 h-8 text-purple-400 animate-pulse mx-auto" />
+                <FileText className="w-8 h-8 text-purple-400 mx-auto" />
                 <p className="text-xs font-mono text-slate-400">
                   {currentLang === 'ne' ? 'नेपाल राजपत्र र नियमहरूको विश्लेषण गर्दै...' : 'Analyzing official gazette notice details...'}
                 </p>

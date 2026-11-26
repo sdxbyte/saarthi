@@ -222,40 +222,15 @@ export const LokSewaJobsView: React.FC<LokSewaJobsViewProps> = ({ currentLang })
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'jobs' | 'dofe' | 'syllabus'>('jobs');
 
-  // DOFE Permit Status Lookup
+  // DOFE Permit Status Lookup (Redirects to official FEIMS portal; never fabricates records)
   const [passportNo, setPassportNo] = useState('');
-  const [isCheckingDofe, setIsCheckingDofe] = useState(false);
-  const [dofeResult, setDofeResult] = useState<{
-    status: 'VERIFIED' | 'NOT_FOUND';
-    passport: string;
-    company: string;
-    country: string;
-    jobTitle: string;
-    feimsRegNo: string;
-    issueDateBs: string;
-    insuranceStatus: string;
-    medicalStatus: string;
-  } | null>(null);
+  const [dofeGuidanceRef, setDofeGuidanceRef] = useState<string | null>(null);
 
   const handleDofeCheck = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!passportNo.trim()) return;
-    setIsCheckingDofe(true);
-
-    setTimeout(() => {
-      setIsCheckingDofe(false);
-      setDofeResult({
-        status: 'VERIFIED',
-        passport: passportNo.trim().toUpperCase(),
-        company: 'Al Shaya Trading & Retail LLC',
-        country: 'State of Qatar (कतार)',
-        jobTitle: 'Logistics Inventory Associate (स्टोर सहायक)',
-        feimsRegNo: 'FEIMS-QA-2083-918274',
-        issueDateBs: '२०८३-०३-१५ (Valid until 2085-03-14)',
-        insuranceStatus: 'Active (Sun Nepal Life Insurance - Policy #98124)',
-        medicalStatus: 'Fit / Biometrics Cleared (GAMCA Verified)',
-      });
-    }, 600);
+    const clean = passportNo.trim().toUpperCase();
+    if (!clean) return;
+    setDofeGuidanceRef(clean);
   };
 
   const filteredJobs = useMemo(() => {
@@ -470,17 +445,10 @@ export const LokSewaJobsView: React.FC<LokSewaJobsViewProps> = ({ currentLang })
               />
               <button
                 type="submit"
-                disabled={isCheckingDofe}
-                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-950/40"
+                className="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md shadow-emerald-950/40 cursor-pointer"
               >
-                {isCheckingDofe ? (
-                  <span>Checking DOFE Gateway...</span>
-                ) : (
-                  <>
-                    <Search className="w-3.5 h-3.5" />
-                    <span>{currentLang === 'ne' ? 'श्रम स्वीकृति स्थिति जाँच्नुहोस्' : 'Verify Labor Permit'}</span>
-                  </>
-                )}
+                <Search className="w-3.5 h-3.5" />
+                <span>{currentLang === 'ne' ? 'आधिकारिक FEIMS प्रमाणीकरण निर्देशन' : 'Official FEIMS Verification'}</span>
               </button>
             </form>
           </div>
@@ -500,41 +468,39 @@ export const LokSewaJobsView: React.FC<LokSewaJobsViewProps> = ({ currentLang })
         </div>
       </div>
 
-      {/* DOFE Verification Result Banner (if queried) */}
-      {dofeResult && (
-        <div className="p-5 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 text-xs space-y-3 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2.5">
+      {/* Official DOFE FEIMS Portal Verification Notice */}
+      {dofeGuidanceRef && (
+        <div className="p-5 rounded-2xl bg-slate-900 border border-blue-500/40 text-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <ShieldCheck className="w-4 h-4 text-blue-400" />
               <span className="font-bold text-white text-sm">
-                Labor Approval Verified: Passport #{dofeResult.passport}
+                {currentLang === 'ne'
+                  ? `राहदानी #${dofeGuidanceRef} का लागि आधिकारिक DOFE प्रमाणीकरण`
+                  : `Official DOFE Verification for Passport #${dofeGuidanceRef}`}
               </span>
             </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
-              STATUS: CLEARED
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 font-bold">
+              OFFICIAL PORTAL REQUIRED
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-slate-300">
-            <div>
-              <span className="text-[10px] font-mono text-slate-400 block uppercase">Destination & Employer</span>
-              <span className="font-bold text-white mt-0.5 block">{dofeResult.company}</span>
-              <span className="text-[11px] text-emerald-400">{dofeResult.country}</span>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-slate-400 block uppercase">Approved Designation</span>
-              <span className="font-bold text-white mt-0.5 block">{dofeResult.jobTitle}</span>
-              <span className="text-[10px] font-mono text-slate-400">Reg: {dofeResult.feimsRegNo}</span>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-slate-400 block uppercase">Life Insurance Coverage</span>
-              <span className="font-medium text-slate-200 mt-0.5 block">{dofeResult.insuranceStatus}</span>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono text-slate-400 block uppercase">Medical Fitness & Validity</span>
-              <span className="font-medium text-emerald-400 mt-0.5 block">{dofeResult.medicalStatus}</span>
-              <span className="text-[10px] text-slate-400">{dofeResult.issueDateBs}</span>
-            </div>
+          <p className="text-slate-300 leading-relaxed">
+            {currentLang === 'ne'
+              ? 'विभागको सार्वजनिक एपीआई सिधा उपलब्ध नभएकोले नक्कली विवरण देखाइँदैन। कृपया आधिकारिक FEIMS पोर्टलमा गई राहदानी नम्बर प्रविष्ट गर्नुहोस् वा SMS मार्फत जाँच गर्नुहोस् (LP <राहदानी नम्बर> लेखेर 34001 मा पठाउनुहोस्)।'
+              : 'Live DOFE FEIMS records cannot be fetched from third-party browsers without citizen CAPTCHA verification. Verify authentic labor approval status directly on feims.dofe.gov.np or via SMS (send "LP <PassportNo>" to 34001).'}
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <a
+              href="https://feims.dofe.gov.np/check-status"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold inline-flex items-center gap-1.5"
+            >
+              <span>{currentLang === 'ne' ? 'FEIMS पोर्टल खोल्नुहोस्' : 'Open Official FEIMS Portal'}</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
         </div>
       )}

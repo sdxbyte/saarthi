@@ -126,18 +126,18 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
                 <CheckCircle2 className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-emerald-400">Official Submission Recorded</span>
-                <h3 className="text-xl font-black text-white">Inquiry Sent Successfully</h3>
+                <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-emerald-500">Official Submission Recorded</span>
+                <h3 className={`text-xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Inquiry Sent Successfully</h3>
               </div>
 
               {/* Unique Enquiry ID Badge */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/30 max-w-sm mx-auto space-y-1 font-mono">
-                <span className="text-[10px] text-slate-400 uppercase block font-bold">Your Unique Enquiry Tracking ID</span>
-                <span className="text-2xl font-black text-amber-400 block tracking-wider">{submittedEnquiry.id}</span>
-                <span className="text-[10px] text-emerald-400 block">Stored in SAARTHI Support Queue &amp; Audit Log</span>
+              <div className={`p-4 rounded-2xl border border-emerald-500/30 max-w-sm mx-auto space-y-1 font-mono ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
+                <span className={`text-[10px] uppercase block font-bold ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Your Unique Enquiry Tracking ID</span>
+                <span className="text-2xl font-black text-amber-500 block tracking-wider">{submittedEnquiry.id}</span>
+                <span className="text-[10px] text-emerald-500 block">Stored in SAARTHI Support Queue &amp; Audit Log</span>
               </div>
 
-              <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+              <p className={`text-xs max-w-md mx-auto leading-relaxed ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                 Thank you, <strong>{submittedEnquiry.fullName}</strong>. Your inquiry has been routed to SAARTHI Administration. Please save your Enquiry ID <strong>#{submittedEnquiry.id}</strong> for future correspondence.
               </p>
 
@@ -146,7 +146,9 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
                   setSubmittedEnquiry(null);
                   setFormData({ name: '', email: '', phone: '', subject: 'General Inquiry', message: '', captchaAnswer: '' });
                 }}
-                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-all"
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all ${
+                  isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-white hover:bg-slate-100 text-slate-800 border-slate-300'
+                }`}
               >
                 Send Another Inquiry
               </button>
@@ -154,7 +156,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorMessage && (
-                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -162,29 +164,33 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 text-slate-300">
-                    Full Name <span className="text-rose-400">*</span>
+                  <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Full Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g. Ramesh Sharma"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-amber-500 ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 text-slate-300">
-                    Email Address <span className="text-rose-400">*</span>
+                  <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                    Email Address <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="e.g. citizen@domain.np"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-amber-500 ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
                     required
                   />
                 </div>
@@ -192,22 +198,26 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 text-slate-300">Mobile Phone</label>
+                  <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Mobile Phone</label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+977 98XXXXXXXX"
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-amber-500 ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold mb-1.5 text-slate-300">Subject Category</label>
+                  <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Subject Category</label>
                   <select
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-amber-500 ${
+                      isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                    }`}
                   >
                     <option value="Bug / Error">Bug / Error</option>
                     <option value="Data Issue">Data Issue</option>
@@ -223,23 +233,27 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
               </div>
 
               <div>
-                <label className="block text-xs font-bold mb-1.5 text-slate-300">
-                  Detailed Message / Inquiry <span className="text-rose-400">*</span>
+                <label className={`block text-xs font-bold mb-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  Detailed Message / Inquiry <span className="text-rose-500">*</span>
                 </label>
                 <textarea
                   rows={4}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   placeholder="Provide clear details regarding your query or requested service assistance..."
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-amber-500"
+                  className={`w-full px-4 py-2.5 rounded-xl border text-xs focus:outline-none focus:border-amber-500 ${
+                    isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                  }`}
                   required
                 />
               </div>
 
               {/* Anti-Spam Captcha Field */}
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-xs text-slate-300">
-                  <ShieldAlert className="w-4 h-4 text-amber-400" />
+              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                isDark ? 'bg-slate-950 border-slate-800/80' : 'bg-slate-50 border-slate-200'
+              }`}>
+                <div className={`flex items-center gap-2 text-xs ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                  <ShieldAlert className="w-4 h-4 text-amber-500" />
                   <span>Anti-Spam Challenge: What is <strong>{captchaMath.a} + {captchaMath.b}</strong>?</span>
                 </div>
                 <input
@@ -247,7 +261,9 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
                   value={formData.captchaAnswer}
                   onChange={(e) => setFormData({ ...formData, captchaAnswer: e.target.value })}
                   placeholder="Answer"
-                  className="w-24 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white text-center font-bold focus:outline-none focus:border-amber-500"
+                  className={`w-24 px-3 py-1.5 rounded-lg border text-xs text-center font-bold focus:outline-none focus:border-amber-500 ${
+                    isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                  }`}
                   required
                 />
               </div>
@@ -360,9 +376,14 @@ export const ContactView: React.FC<ContactViewProps> = ({ currentLang, theme }) 
               a: 'Yes. Saarthi utilizes encrypted sessions, secure password hashing, and strict role authorization. Personal data is never disclosed to unauthorized third parties.',
             },
           ].map((item, idx) => (
-            <div key={idx} className="p-4 rounded-2xl bg-slate-950 border border-slate-800/80 space-y-1.5">
-              <h4 className="font-bold text-amber-300 text-xs">{item.q}</h4>
-              <p className="text-slate-400 leading-relaxed">{item.a}</p>
+            <div
+              key={idx}
+              className={`p-4 rounded-2xl border space-y-1.5 ${
+                isDark ? 'bg-slate-950 border-slate-800/80' : 'bg-slate-50 border-slate-200'
+              }`}
+            >
+              <h4 className={`font-bold text-xs ${isDark ? 'text-amber-300' : 'text-slate-900'}`}>{item.q}</h4>
+              <p className={`leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{item.a}</p>
             </div>
           ))}
         </div>

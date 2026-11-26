@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Trash2, CheckCircle2, ArrowLeft, Mail, AlertTriangle } from 'lucide-react';
 import { deleteCitizenAccount } from '../../utils/citizenAuthStore';
+import { CURRENT_VERSION_INFO } from '../../utils/versionEngine';
 
 interface AccountDeletionViewProps {
   currentLang: 'en' | 'ne';
@@ -74,7 +75,7 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 py-6 px-4 font-sans text-slate-100">
+    <div className={`max-w-3xl mx-auto space-y-8 py-6 px-4 font-sans ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Header Banner */}
       <div
         className={`p-8 rounded-3xl border shadow-xl ${
@@ -131,13 +132,13 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
+            <div className={`p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs flex items-start gap-3 ${isDark ? 'text-amber-300' : 'text-amber-900'}`}>
+              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-500" />
               <div>
-                <strong className="block font-bold text-amber-200 mb-0.5">
+                <strong className={`block font-bold mb-0.5 ${isDark ? 'text-amber-200' : 'text-amber-900'}`}>
                   {currentLang === 'ne' ? 'महत्वपूर्ण जानकारी:' : 'What gets deleted:'}
                 </strong>
-                <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
+                <ul className={`list-disc list-inside space-y-1 text-[11px] ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                   <li>{currentLang === 'ne' ? 'तपाईंको प्रयोगकर्ता प्रोफाइल तथा लगइन विवरण' : 'User profile, email, and authentication credentials'}</li>
                   <li>{currentLang === 'ne' ? 'व्यक्तिगत कागजात, दर्ता गरिएका गुनासा तथा इतिहास' : 'Saved documents, filed grievance reports, and activity logs'}</li>
                   <li>{currentLang === 'ne' ? 'नोटिफिकेसन तथा प्राथमिकता सेटिङहरू' : 'Notification preferences and synced settings'}</li>
@@ -146,13 +147,13 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-semibold">
                 {errorMsg}
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-2">
+              <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                 {currentLang === 'ne' ? 'दर्ता गरिएको इमेल ठेगाना *' : 'Registered Account Email Address *'}
               </label>
               <div className="relative">
@@ -163,13 +164,17 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-rose-500 font-mono"
+                  className={`w-full border rounded-xl pl-10 pr-4 py-2.5 text-xs focus:outline-none focus:border-rose-500 font-mono ${
+                    isDark
+                      ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                  }`}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-2">
+              <label className={`block text-xs font-bold mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                 {currentLang === 'ne' ? 'खारेजीको कारण (वैकल्पिक)' : 'Reason for Deletion (Optional)'}
               </label>
               <textarea
@@ -181,7 +186,11 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
                     ? 'कृपया खाता बन्द गर्नुको कारण खुलाउनुहोस्...'
                     : 'Help us understand why you are leaving...'
                 }
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-rose-500"
+                className={`w-full border rounded-xl p-3 text-xs focus:outline-none focus:border-rose-500 ${
+                  isDark
+                    ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600'
+                    : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                }`}
               />
             </div>
 
@@ -192,7 +201,7 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
                 onChange={(e) => setConfirmCheckbox(e.target.checked)}
                 className="mt-1 rounded border-slate-700 text-rose-600 focus:ring-rose-500"
               />
-              <span className="text-xs text-slate-400 leading-relaxed">
+              <span className={`text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                 {currentLang === 'ne'
                   ? 'म स्वीकार गर्दछु कि खाता खारेज गरेपछि मेरो डाटा पुनः प्राप्त गर्न सकिने छैन।'
                   : 'I understand and confirm that upon processing, all my personal data and account records will be permanently deleted and cannot be recovered.'}
@@ -220,13 +229,13 @@ export const AccountDeletionView: React.FC<AccountDeletionViewProps> = ({
       <div className="flex justify-between items-center text-xs">
         <button
           onClick={() => onNavigateTab('privacy')}
-          className="text-slate-400 hover:text-white font-bold flex items-center gap-1.5"
+          className={`font-bold flex items-center gap-1.5 ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
         >
           <ArrowLeft className="w-4 h-4" />
           <span>{currentLang === 'ne' ? 'गोपनीयता नीति हेर्नुहोस्' : 'View Privacy Policy'}</span>
         </button>
 
-        <span className="text-slate-500 font-mono">SAARTHI User Data Rights v1.9.1</span>
+        <span className="text-slate-500 font-mono">SAARTHI User Data Rights {CURRENT_VERSION_INFO.version}</span>
       </div>
     </div>
   );

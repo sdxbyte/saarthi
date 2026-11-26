@@ -3,6 +3,7 @@
   "appId": "1:839252060091:web:ca686a7575cd36636c869e",
   "apiKey": "AIzaSyAd1mWEDrK6lxoSTZFVm7bWk0H1WIAq-JE",
   "authDomain": "friendly-canto-3ds98.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-sarathi-54a6a23c-5552-499c-9038-48dd469ebf11",
   "storageBucket": "friendly-canto-3ds98.firebasestorage.app",
   "messagingSenderId": "839252060091",
   "measurementId": "",

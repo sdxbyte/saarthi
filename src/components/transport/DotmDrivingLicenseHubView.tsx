@@ -70,66 +70,16 @@ export const DotmDrivingLicenseHubView: React.FC<DotmDrivingLicenseHubViewProps>
     });
   }, [portalCategory, portalSearch]);
 
-  // 2. Smart Card Status Lookup State
+  // 2. Smart Card Status Lookup State (Direct official DoTM & SMS 33001 verification)
   const [licenseLookupInput, setLicenseLookupInput] = useState('');
   const [lookupType, setLookupType] = useState<'app_no' | 'license_no' | 'citizenship'>('app_no');
-  const [lookupResult, setLookupResult] = useState<{
-    searched: boolean;
-    appNo: string;
-    name: string;
-    category: string;
-    office: string;
-    status: 'PRINTED_DISPATCHED' | 'IN_PRINT_QUEUE' | 'BIOMETRICS_VERIFIED' | 'READY_FOR_COLLECTION';
-    printDate?: string;
-    dispatchDate?: string;
-    smartCardNumber?: string;
-    detailsNp: string;
-    detailsEn: string;
-  } | null>(null);
+  const [lookupQueryRef, setLookupQueryRef] = useState<string | null>(null);
 
   const handleLookupStatus = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!licenseLookupInput.trim()) return;
-
-    // Deterministic simulated official status response based on input format
     const clean = licenseLookupInput.trim().toUpperCase();
-    const hash = clean.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-
-    const statuses: ('PRINTED_DISPATCHED' | 'IN_PRINT_QUEUE' | 'BIOMETRICS_VERIFIED' | 'READY_FOR_COLLECTION')[] = [
-      'PRINTED_DISPATCHED',
-      'READY_FOR_COLLECTION',
-      'IN_PRINT_QUEUE',
-      'PRINTED_DISPATCHED',
-    ];
-    const pickedStatus = statuses[hash % statuses.length];
-
-    setLookupResult({
-      searched: true,
-      appNo: clean,
-      name: 'Applicant Profile (Verified Citizen)',
-      category: clean.length % 2 === 0 ? 'Category A & B (Bike & Car)' : 'Category A (Motorcycle/Scooter)',
-      office: 'Transport Management Office (Ekantakuna, Lalitpur)',
-      status: pickedStatus,
-      printDate: '2026-06-18 AD (२०८३-०३-०४ BS)',
-      dispatchDate: '2026-07-02 AD (२०८३-०३-१८ BS)',
-      smartCardNumber: `NP-${clean.slice(0, 4)}-${hash.toString().padStart(6, '0')}`,
-      detailsNp:
-        pickedStatus === 'READY_FOR_COLLECTION'
-          ? 'तपाईंको स्मार्ट ड्राइभिङ लाइसेन्स कार्ड प्रिन्ट भई सम्बन्धित यातायात कार्यालय एकान्तकुनामा आइपुगेको छ। सक्कल रसिद र नागरिकता लिई बुझ्न सक्नुहुन्छ।'
-          : pickedStatus === 'PRINTED_DISPATCHED'
-          ? 'तपाईंको स्मार्ट कार्ड प्रिन्ट सम्पन्न भई केन्द्रीय छपाइ केन्द्रबाट सम्बन्धित यातायात कार्यालयतर्फ चलानी गरिएको छ।'
-          : pickedStatus === 'IN_PRINT_QUEUE'
-          ? 'तपाईंको बायोमेट्रिक र ट्रायल परीक्षा उत्तीर्ण भई स्मार्ट कार्ड छपाइ प्रक्रिया (Print Queue) मा रहेको छ।'
-          : 'तपाईंको विवरण बायोमेट्रिक भेरिफिकेसन सम्पन्न भएको छ।',
-      detailsEn:
-        pickedStatus === 'READY_FOR_COLLECTION'
-          ? 'Your Smart Driving License card has been printed and is ready for physical collection at the Transport Management Office.'
-          : pickedStatus === 'PRINTED_DISPATCHED'
-          ? 'Smart Card printed successfully and dispatched from the central printing facility to the designated TMO office.'
-          : pickedStatus === 'IN_PRINT_QUEUE'
-          ? 'Trial passed. Your card is currently queued in the electronic Smart Card printing queue.'
-          : 'Biometrics recorded and verified successfully.',
-    });
+    if (!clean) return;
+    setLookupQueryRef(clean);
   };
 
   // 3. Written Exam (लिखित परीक्षा) Simulator State
@@ -503,8 +453,7 @@ export const DotmDrivingLicenseHubView: React.FC<DotmDrivingLicenseHubViewProps>
                       {portal.badge || portal.category.toUpperCase()}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      Active Official Link
+                      Official Portal
                     </span>
                   </div>
 
@@ -636,51 +585,38 @@ export const DotmDrivingLicenseHubView: React.FC<DotmDrivingLicenseHubViewProps>
                 </div>
               </form>
 
-              {/* Result Timeline Box */}
-              {lookupResult && (
-                <div className="p-5 rounded-2xl bg-slate-950 border border-slate-700/80 space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              {/* Official Portal Verification Guidance */}
+              {lookupQueryRef && (
+                <div className="p-5 rounded-2xl bg-slate-950 border border-blue-500/40 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-slate-400">Record Found</span>
-                      <h4 className="text-sm font-extrabold text-white">{lookupResult.appNo}</h4>
+                      <span className="text-[10px] font-mono uppercase text-slate-400">Reference Number Prepared</span>
+                      <h4 className="text-sm font-extrabold text-white font-mono">{lookupQueryRef}</h4>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
-                        lookupResult.status === 'READY_FOR_COLLECTION'
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                          : lookupResult.status === 'PRINTED_DISPATCHED'
-                          ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                          : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      }`}
-                    >
-                      {lookupResult.status.replace('_', ' ')}
+                    <span className="px-2.5 py-1 rounded-md text-xs font-semibold uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                      Official DoTM Verification Required
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-                      <span className="text-slate-500 text-[10px] block">Permit Category</span>
-                      <span className="font-bold text-slate-200">{lookupResult.category}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-                      <span className="text-slate-500 text-[10px] block">Assigned Yatayat Office</span>
-                      <span className="font-bold text-slate-200">{lookupResult.office}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-                      <span className="text-slate-500 text-[10px] block">Card Serial (Smart Chip)</span>
-                      <span className="font-mono font-bold text-slate-200">{lookupResult.smartCardNumber}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-                      <span className="text-slate-500 text-[10px] block">Dispatch Date</span>
-                      <span className="font-bold text-slate-200">{lookupResult.dispatchDate}</span>
-                    </div>
-                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {currentLang === 'ne'
+                      ? 'यातायात व्यवस्था विभागले सार्वजनिक अनलाइन एपीआई उपलब्ध नगराएकोले स्मार्ट कार्ड छपाइ स्थिति आधिकारिक DoTM पोर्टल (applydl.dotm.gov.np) मा गई हेर्नुहोस् वा मोबाइलबाट SMS पठाउनुहोस्।'
+                      : 'Department of Transport Management (DoTM) requires citizen OTP/portal verification to view Smart Card printing status. Check your status directly on the official DoTM EDL portal or send SMS "LC <LicenseNo>" to 33001.'}
+                  </p>
 
-                  {/* Plain Language Guidance */}
-                  <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs leading-relaxed">
-                    <p className="font-medium">
-                      {currentLang === 'ne' ? lookupResult.detailsNp : lookupResult.detailsEn}
-                    </p>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <a
+                      href="https://applydl.dotm.gov.np"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs inline-flex items-center gap-1.5"
+                    >
+                      <span>{currentLang === 'ne' ? 'DoTM आधिकारिक पोर्टल खोल्नुहोस्' : 'Open Official DoTM Portal'}</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                    <span className="text-xs font-mono text-slate-400">
+                      SMS: <strong className="text-white">LC {lookupQueryRef}</strong> → <strong className="text-blue-400">33001</strong>
+                    </span>
                   </div>
                 </div>
               )}

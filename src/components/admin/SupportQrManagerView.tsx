@@ -30,6 +30,7 @@ export const SupportQrManagerView: React.FC<SupportQrManagerViewProps> = ({ curr
   const [activeTab, setActiveTab] = useState<'bank' | 'smartQr' | 'connectIps' | 'wallets' | 'history'>('bank');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [confirmUnpublish, setConfirmUnpublish] = useState(false);
 
   const handlePublishConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,14 +68,13 @@ export const SupportQrManagerView: React.FC<SupportQrManagerViewProps> = ({ curr
   };
 
   const handleUnpublish = () => {
-    if (confirm('Unpublish all donation details from the public website? Users will see a "pending verification" message.')) {
-      const updatedConfig: SupportDonationConfig = {
-        ...config,
-        isPublished: false,
-      };
-      setConfig(updatedConfig);
-      saveDonationConfig(updatedConfig);
-    }
+    const updatedConfig: SupportDonationConfig = {
+      ...config,
+      isPublished: false,
+    };
+    setConfig(updatedConfig);
+    saveDonationConfig(updatedConfig);
+    setConfirmUnpublish(false);
   };
 
   return (
@@ -111,18 +111,38 @@ export const SupportQrManagerView: React.FC<SupportQrManagerViewProps> = ({ curr
           </button>
 
           {config.isPublished ? (
-            <button
-              onClick={handleUnpublish}
-              className="px-3.5 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-xs font-bold flex items-center gap-1.5 border border-rose-800 transition-all"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Unpublish</span>
-            </button>
+            confirmUnpublish ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleUnpublish}
+                  className="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all"
+                >
+                  Confirm Unpublish
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmUnpublish(false)}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmUnpublish(true)}
+                className="px-3.5 py-2 rounded-xl bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-xs font-bold flex items-center gap-1.5 border border-rose-800 transition-all"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Unpublish</span>
+              </button>
+            )
           ) : null}
 
           <button
             onClick={handlePublishConfig}
-            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-950/50 transition-all cursor-pointer animate-pulse"
+            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-950/50 transition-all cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             <span>SAVE & SYNC TO LIVE</span>
@@ -562,7 +582,7 @@ export const SupportQrManagerView: React.FC<SupportQrManagerViewProps> = ({ curr
         {/* Global Save & Sync Action Bar */}
         <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${config.isPublished ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <div className={`w-3 h-3 rounded-full ${config.isPublished ? 'bg-emerald-400' : 'bg-amber-400'}`} />
             <div>
               <span className="text-xs font-bold text-white block">
                 {config.isPublished ? 'Live Website Integration Active' : 'Unpublished Payment Configuration'}

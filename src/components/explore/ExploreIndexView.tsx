@@ -319,69 +319,71 @@ export const ExploreIndexView: React.FC<ExploreIndexViewProps> = ({
   }, [entries]);
 
   return (
-    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 space-y-10 animate-fadeIn font-sans">
-      {/* Editorial Header */}
-      <div className="space-y-4 border-b border-zinc-800/80 pb-6">
+    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-10 space-y-8 font-sans">
+      {/* Header */}
+      <div className="space-y-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div className="space-y-2">
-          <span className="text-xs uppercase tracking-wider text-zinc-400 font-mono block">
-            Central Index
+          <span className="text-xs uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono font-semibold block">
+            {currentLang === 'ne' ? 'केन्द्रीय निर्देशिका' : 'Central Index'}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white font-sans">
-            {currentLang === 'ne' ? 'अन्वेषण (सार्ती निर्देशिका)' : 'Explore SAARTHI'}
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0B1F3A] dark:text-white">
+            {currentLang === 'ne' ? 'अन्वेषण (सारथी निर्देशिका)' : 'Explore SAARTHI'}
           </h1>
-          <p className="text-sm sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
+          <p className="text-sm text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
             {currentLang === 'ne'
               ? 'नेपालका लागि उपलब्ध सबै वित्तीय औजार, क्याल्कुलेटर, सरकारी सेवा र दैनिक उपयोगिताहरूको संगठित सूची।'
-              : 'The complete directory of financial instruments, civic calculators, official registries, and daily utilities.'}
+              : 'Complete directory of financial instruments, civic calculators, official registries, and daily utilities.'}
           </p>
         </div>
 
         {/* Live Search Bar */}
-        <div className="pt-2">
+        <div className="pt-1">
           <div className="relative max-w-xl">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={currentLang === 'ne' ? 'औजार वा सेवा खोज्नुहोस्...' : 'Search tools, forex, NEPSE, tax, calendar...'}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-600 transition-colors"
+              className="w-full pl-10 pr-16 py-2.5 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-sm text-[#0B1F3A] dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition-colors"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-zinc-400 hover:text-white cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-[#0B1F3A] dark:text-slate-400 dark:hover:text-white cursor-pointer"
               >
-                Clear
+                {currentLang === 'ne' ? 'हटाउनुहोस्' : 'Clear'}
               </button>
             )}
           </div>
         </div>
 
-        {/* Filter Tabs (Functional segmented buttons per frontend design constitution) */}
-        <div className="pt-2 flex flex-wrap items-center gap-2">
+        {/* Filter Tabs */}
+        <div className="pt-1 flex flex-wrap items-center gap-2">
           {(
             [
-              { id: 'all', label: 'All Items', count: domainCounts.all },
-              { id: 'finance', label: 'Finance', count: domainCounts.finance },
-              { id: 'tools', label: 'Tools', count: domainCounts.tools },
-              { id: 'civic', label: 'Civic & Govt', count: domainCounts.civic },
-              { id: 'resources', label: 'Resources', count: domainCounts.resources },
+              { id: 'all', label: currentLang === 'ne' ? 'सबै' : 'All Items', count: domainCounts.all },
+              { id: 'finance', label: currentLang === 'ne' ? 'वित्त' : 'Finance', count: domainCounts.finance },
+              { id: 'tools', label: currentLang === 'ne' ? 'औजार' : 'Tools', count: domainCounts.tools },
+              { id: 'civic', label: currentLang === 'ne' ? 'नागरिक तथा सरकारी' : 'Civic & Govt', count: domainCounts.civic },
+              { id: 'resources', label: currentLang === 'ne' ? 'स्रोतहरू' : 'Resources', count: domainCounts.resources },
             ] as const
           ).map((tab) => {
             const isActive = activeDomain === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveDomain(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 ${
+                className={`min-h-[38px] px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   isActive
-                    ? 'bg-white text-zinc-950 shadow-sm font-semibold'
-                    : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                    ? 'bg-[#0B1F3A] text-white dark:bg-blue-600 shadow-xs font-semibold'
+                    : 'bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white hover:border-blue-400'
                 }`}
               >
                 <span>{tab.label}</span>
-                <span className={`text-[10px] font-mono ${isActive ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                <span className={`text-[11px] font-mono tabular-nums ${isActive ? 'text-blue-200' : 'text-slate-400'}`}>
                   {tab.count}
                 </span>
               </button>
@@ -390,10 +392,12 @@ export const ExploreIndexView: React.FC<ExploreIndexViewProps> = ({
         </div>
       </div>
 
-      {/* Results Count & Status */}
-      <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
-        <span>
-          Showing {filteredEntries.length} of {entries.length} available utilities
+      {/* Results Count */}
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-mono">
+        <span className="tabular-nums">
+          {currentLang === 'ne'
+            ? `${entries.length} मध्ये ${filteredEntries.length} सेवा देखाइँदै`
+            : `Showing ${filteredEntries.length} of ${entries.length} available utilities`}
         </span>
         {searchQuery && (
           <span>
@@ -402,60 +406,67 @@ export const ExploreIndexView: React.FC<ExploreIndexViewProps> = ({
         )}
       </div>
 
-      {/* Editorial Index List (Project-like rows mirroring Sabin Paudel Projects page) */}
+      {/* Directory Index List */}
       {filteredEntries.length === 0 ? (
-        <div className="py-16 text-center space-y-3 bg-zinc-900/30 rounded-2xl border border-zinc-850 p-8">
-          <p className="text-sm text-zinc-300">No tools or services match your search.</p>
-          <p className="text-xs text-zinc-400">Try searching for forex, gold, bluebook, calendar, tax, or loksewa.</p>
+        <div className="py-14 text-center space-y-3 bg-white dark:bg-[#0F172A] rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+          <p className="text-sm font-medium text-[#0B1F3A] dark:text-white">
+            {currentLang === 'ne' ? 'तपाईँको खोजीसँग मिल्ने सेवा भेटिएन।' : 'No tools or services match your search.'}
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {currentLang === 'ne'
+              ? 'विदेशी मुद्रा, सुनचाँदी, ब्लुबुक, पात्रो वा कर खोज्नुहोस्।'
+              : 'Try searching for forex, gold, bluebook, calendar, tax, or loksewa.'}
+          </p>
           <button
+            type="button"
             onClick={() => {
               setSearchQuery('');
               setActiveDomain('all');
             }}
-            className="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs text-white hover:bg-zinc-700 transition-colors cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-[#0B1F3A] dark:bg-blue-600 text-xs font-semibold text-white hover:opacity-90 transition-opacity cursor-pointer"
           >
-            Reset Filters
+            {currentLang === 'ne' ? 'फिल्टर रिसेट गर्नुहोस्' : 'Reset Filters'}
           </button>
         </div>
       ) : (
-        <div className="divide-y divide-zinc-850">
+        <div className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
           {filteredEntries.map((item, index) => (
-            <div
+            <button
               key={item.id}
+              type="button"
               onClick={() => onNavigateTab(item.targetTab)}
-              className="py-5 sm:py-6 flex flex-col md:flex-row md:items-start justify-between gap-4 group cursor-pointer hover:bg-zinc-900/40 -mx-3 px-3 rounded-xl transition-all"
+              className="w-full text-left p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 group cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
             >
-              {/* Left Column: Number, Title, Metadata & Description */}
               <div className="space-y-1.5 flex-1 max-w-2xl">
-                {/* Unboxed metadata strip (Zero-pill discipline) */}
-                <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <span>{String(index + 1).padStart(2, '0')}.</span>
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-500 dark:text-slate-400">
+                  <span className="tabular-nums font-semibold text-blue-600 dark:text-blue-400">
+                    {String(index + 1).padStart(2, '0')}.
+                  </span>
                   <span>{item.categoryLabel}</span>
                   <span aria-hidden="true">·</span>
-                  <span className="text-zinc-400">{item.source}</span>
+                  <span>{item.source}</span>
                 </div>
 
-                <h3 className="text-base sm:text-lg font-semibold text-white tracking-tight group-hover:text-zinc-200 transition-colors flex items-center gap-2 font-sans">
+                <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex items-center gap-2">
                   <span>{currentLang === 'ne' ? item.titleNp : item.title}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5 opacity-30 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all text-zinc-400 group-hover:text-white" />
+                  <ArrowUpRight className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
                 </h3>
 
-                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                   {currentLang === 'ne' ? item.descriptionNp : item.description}
                 </p>
               </div>
 
-              {/* Right Column: Open Button & Data Source Indicator */}
-              <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 shrink-0 pt-1">
-                <span className="text-[11px] font-mono text-zinc-400 hidden md:inline">
-                  Verified Data
+              <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 shrink-0 pt-0.5">
+                <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hidden md:inline">
+                  {currentLang === 'ne' ? 'प्रमाणित स्रोत' : 'Verified Source'}
                 </span>
-                <span className="text-xs text-zinc-400 group-hover:text-white transition-colors flex items-center gap-1 font-mono">
-                  <span>Open</span>
-                  <span>→</span>
+                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1 font-mono">
+                  <span>{currentLang === 'ne' ? 'खोल्नुहोस्' : 'Open'}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       )}

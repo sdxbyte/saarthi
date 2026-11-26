@@ -76,7 +76,7 @@ export const SajiloRadioTab: React.FC<SajiloRadioTabProps> = ({ currentLang, dev
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#00e599]/15 border border-[#00e599]/30 flex items-center justify-center shrink-0 text-[#00e599] relative">
               <Radio className="w-8 h-8 sm:w-10 sm:h-10" />
               {isPlaying && (
-                <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00e599] animate-pulse" />
+                <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00e599]/80" />
               )}
             </div>
 
@@ -109,19 +109,24 @@ export const SajiloRadioTab: React.FC<SajiloRadioTabProps> = ({ currentLang, dev
 
           {/* Equalizer & Audio Controls */}
           <div className="flex flex-col items-center md:items-end gap-3 w-full md:w-auto">
-            {/* Animated Equalizer Waveform */}
-            <div className="flex items-end gap-1 h-8 px-4 py-1 rounded-xl bg-[#0f1115] border border-[#262a31]">
-              {[12, 24, 16, 28, 20, 32, 14, 26, 18, 22].map((height, idx) => (
-                <span
-                  key={idx}
-                  className={`w-1 rounded-full transition-all duration-150 ${
-                    isPlaying ? 'bg-[#00e599]' : 'bg-[#262a31]'
-                  }`}
-                  style={{
-                    height: isPlaying ? `${Math.max(4, Math.sin(idx + Date.now() / 200) * 16 + 16)}px` : '4px',
-                  }}
-                />
-              ))}
+            {/* Equalizer Waveform */}
+            <div className="flex items-center justify-center h-8 px-3 py-1 rounded-xl bg-[#0f1115] border border-[#262a31]">
+              <svg viewBox="0 0 80 24" className="w-20 h-6" aria-hidden="true">
+                {[10, 18, 12, 22, 16, 20, 11, 19, 14, 15].map((barH, idx) => {
+                  const activeH = isPlaying ? barH : 4;
+                  return (
+                    <rect
+                      key={idx}
+                      x={idx * 8 + 2}
+                      y={24 - activeH}
+                      width={4}
+                      height={activeH}
+                      rx={2}
+                      className={isPlaying ? 'fill-[#00e599]' : 'fill-[#262a31]'}
+                    />
+                  );
+                })}
+              </svg>
             </div>
 
             {/* Playback Controls & Volume Slider */}

@@ -55,6 +55,8 @@ export const LiveDataMonitoringView: React.FC = () => {
   const [newApiUrl, setNewApiUrl] = useState<string>('');
   const [newApiSource, setNewApiSource] = useState<string>('');
   const [newApiInterval, setNewApiInterval] = useState<number>(300000);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Dual Date Current Clock
   const dualDate = formatDualDate();
@@ -145,14 +147,15 @@ export const LiveDataMonitoringView: React.FC = () => {
   const handleClearCache = (apiId?: string) => {
     clearLiveApiCache(apiId);
     reloadData();
-    alert(apiId ? `Cleared local cache for ${apiId}` : 'Cleared all cached live API streams.');
+    setActionNotice(apiId ? `Cleared local cache for ${apiId}.` : 'Cleared all cached live API streams.');
   };
 
   // Handler: Add Custom API Endpoint
   const handleAddCustomApi = (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (!newApiName.trim() || !newApiUrl.trim()) {
-      alert('Please provide an API Name and Endpoint URL');
+      setModalError('Please provide an API Name and Endpoint URL.');
       return;
     }
 
@@ -270,7 +273,7 @@ export const LiveDataMonitoringView: React.FC = () => {
       <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Radio className="w-6 h-6 text-emerald-400 animate-pulse" />
+            <Radio className="w-6 h-6 text-emerald-400" />
             <h1 className="text-xl font-black tracking-tight text-white">SAARTHI Live Data Engine Control Center</h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
               REAL-TIME HIGH AVAILABILITY
@@ -283,7 +286,10 @@ export const LiveDataMonitoringView: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setModalError(null);
+              setIsAddModalOpen(true);
+            }}
             className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shadow-blue-600/20"
           >
             <Plus className="w-4 h-4" />
@@ -314,7 +320,9 @@ export const LiveDataMonitoringView: React.FC = () => {
             </span>
           </div>
           <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${globalSuccessRate}%` }} />
+            <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="w-full h-full block" aria-hidden="true">
+              <rect x="0" y="0" width={Math.max(0, Math.min(100, globalSuccessRate))} height="6" className="fill-emerald-500" />
+            </svg>
           </div>
         </div>
 
@@ -354,6 +362,23 @@ export const LiveDataMonitoringView: React.FC = () => {
           <p className="text-[10px] text-slate-400 mt-1 font-mono">{dualDate.timeStr} (Asia/Kathmandu)</p>
         </div>
       </div>
+
+      {/* Action Notice Banner */}
+      {actionNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{actionNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionNotice(null)}
+            className="text-emerald-300 hover:text-white font-semibold"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Tabs Switcher: Matrix View vs Audit Logs */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
@@ -459,7 +484,7 @@ export const LiveDataMonitoringView: React.FC = () => {
                                 !api.enabled
                                   ? 'bg-slate-600'
                                   : api.status === 'online'
-                                  ? 'bg-emerald-500 animate-pulse'
+                                  ? 'bg-emerald-500'
                                   : api.status === 'degraded'
                                   ? 'bg-amber-500'
                                   : 'bg-rose-500'
@@ -668,6 +693,12 @@ export const LiveDataMonitoringView: React.FC = () => {
             </div>
 
             <form onSubmit={handleAddCustomApi} className="space-y-4 text-xs">
+              {modalError && (
+                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">API Service Name *</label>
                 <input

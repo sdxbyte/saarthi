@@ -30,7 +30,7 @@ export const TermsView: React.FC<TermsViewProps> = ({ theme, onNavigateTab }) =>
           </div>
         </div>
         <p className={`text-xs sm:text-sm leading-relaxed ${bodyText}`}>
-          Effective Date: August 2026. Please read these Terms and Conditions carefully before using SAARTHI (<code className="font-mono">saarthi.dpdns.org</code> or the Android TWA package <code className="font-mono">com.sdxbyte.saarthi</code>).
+          Effective Date: August 2026 (Updated November 2026). Please read these Terms and Conditions carefully before using SAARTHI (<code className="font-mono">saarthi.dpdns.org</code> or the Android application <code className="font-mono">com.sdxbyte.saarthi</code>).
         </p>
       </div>
 
@@ -78,10 +78,10 @@ export const TermsView: React.FC<TermsViewProps> = ({ theme, onNavigateTab }) =>
         <section className={`space-y-2 border-t pt-4 ${sectionBorder}`}>
           <h2 className="text-lg font-bold text-amber-500 flex items-center gap-2">
             <Lock className="w-4 h-4" />
-            <span>4. Accounts, Issue Reports &amp; Data Deletion</span>
+            <span>4. Unified Accounts, Cloud Sync &amp; Data Deletion</span>
           </h2>
           <p className={`text-xs leading-relaxed ${bodyText}`}>
-            Local citizen profiles and vault entries remain under your control on your device. Issue reports submitted to <code className="font-mono">/api/support/tickets</code> are rate-limited to prevent abuse. You may purge local data and request ticket deletion anytime at{' '}
+            You may browse public tools anonymously or sign in using Firebase Authentication to synchronize preferences, saved tools, Sajilo Keeper entries, and active sessions across web and Android devices via Cloud Firestore and offline IndexedDB queues. Issue reports submitted to <code className="font-mono">/api/support/tickets</code> are rate-limited to prevent abuse. You may export or delete your account and cloud records anytime inside Account &amp; Cloud Sync or at{' '}
             <button
               onClick={() => onNavigateTab('account-deletion')}
               className="text-amber-500 font-bold underline hover:text-amber-400"

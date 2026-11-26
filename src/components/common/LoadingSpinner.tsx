@@ -12,13 +12,15 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     <div
       role="status"
       aria-label={label}
-      className="min-h-[350px] w-full flex flex-col items-center justify-center p-8 space-y-3 animate-in fade-in duration-150"
+      className="min-h-[320px] w-full flex flex-col items-center justify-center p-8 space-y-3 animate-in fade-in duration-150"
     >
       <div className="relative flex items-center justify-center">
-        <div className="w-12 h-12 rounded-full border-4 border-slate-800 border-t-red-600 animate-spin" />
-        <Loader2 className="w-5 h-5 text-red-500 absolute animate-pulse" />
+        <div className="w-11 h-11 rounded-full border-[3px] border-slate-200 dark:border-slate-800 border-t-[#0B1F3A] dark:border-t-blue-500 animate-spin" />
+        <Loader2 className="w-4 h-4 text-blue-600 dark:text-blue-400 absolute" />
       </div>
-      <p className="text-xs font-medium text-slate-400 font-mono tracking-wide">{label}</p>
+      <p className="text-xs font-medium text-slate-600 dark:text-slate-400 font-mono tracking-wide text-center">
+        {label}
+      </p>
     </div>
   );
 };

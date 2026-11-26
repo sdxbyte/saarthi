@@ -24,6 +24,7 @@ import {
   Plus
 } from 'lucide-react';
 import { AdminUser } from '../../../types/admin';
+import { CURRENT_VERSION_INFO } from '../../../utils/versionEngine';
 
 interface BackupManagementViewProps {
   currentAdmin: AdminUser;
@@ -79,7 +80,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
   const [isRunningPreSync, setIsRunningPreSync] = useState<boolean>(false);
 
   // Settings & GitHub State
-  const [githubMsg, setGithubMsg] = useState<string>('SAARTHI v1.4.1 - Complete Project Release & Backup');
+  const [githubMsg, setGithubMsg] = useState<string>(`SAARTHI ${CURRENT_VERSION_INFO.version} - Complete Project Release & Backup`);
   const [developerNotes, setDeveloperNotes] = useState<string>('Complete SAARTHI platform push with latest features, configs, and verified build.');
   const [githubToken, setGithubToken] = useState<string>('');
   const [githubRepoUrl, setGithubRepoUrl] = useState<string>('https://github.com/sdxbyte/saarthi');
@@ -92,7 +93,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
   const [backupErrorMsg, setBackupErrorMsg] = useState<string | null>(null);
   const [backupSuccessMsg, setBackupSuccessMsg] = useState<string | null>(null);
   const [preSyncData, setPreSyncData] = useState<PreSyncReviewData | null>(null);
-  const [currentVersion, setCurrentVersion] = useState<string>('v1.4.1');
+  const [currentVersion, setCurrentVersion] = useState<string>(CURRENT_VERSION_INFO.version);
   const [releaseHistory, setReleaseHistory] = useState<ReleaseRecord[]>([]);
   const [lastSyncResult, setLastSyncResult] = useState<ReleaseRecord | null>(null);
 
@@ -197,10 +198,11 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
   }>>([]);
   const [isFetchingReleases, setIsFetchingReleases] = useState<boolean>(false);
   const [newReleaseModal, setNewReleaseModal] = useState<boolean>(false);
-  const [newTagInput, setNewTagInput] = useState<string>('v1.4.8');
-  const [newReleaseNameInput, setNewReleaseNameInput] = useState<string>('SAARTHI Release v1.4.8');
+  const [newTagInput, setNewTagInput] = useState<string>(CURRENT_VERSION_INFO.version);
+  const [newReleaseNameInput, setNewReleaseNameInput] = useState<string>(`SAARTHI Release ${CURRENT_VERSION_INFO.version}`);
   const [newReleaseNotesInput, setNewReleaseNotesInput] = useState<string>('Production build and civic platform deployment update.');
   const [isCreatingRelease, setIsCreatingRelease] = useState<boolean>(false);
+  const [releaseError, setReleaseError] = useState<string | null>(null);
 
   // Issues State
   const [issuesList, setIssuesList] = useState<Array<{
@@ -218,6 +220,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
   const [newIssueTitle, setNewIssueTitle] = useState<string>('');
   const [newIssueBody, setNewIssueBody] = useState<string>('');
   const [isCreatingIssue, setIsCreatingIssue] = useState<boolean>(false);
+  const [issueError, setIssueError] = useState<string | null>(null);
 
   // Stats / Quota State
   const [rateLimit, setRateLimit] = useState<{ limit: number; remaining: number; resetDateIso: string; percentUsed: number } | null>(null);
@@ -286,6 +289,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
   const handleCreateRelease = async () => {
     if (!newTagInput.trim() || !newReleaseNameInput.trim()) return;
     setIsCreatingRelease(true);
+    setReleaseError(null);
     try {
       const res = await fetch('/api/github/releases', {
         method: 'POST',
@@ -302,10 +306,10 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
         setNewReleaseModal(false);
         fetchReleases();
       } else {
-        alert(data.message || 'Failed to create release');
+        setReleaseError(data.message || 'Failed to create release');
       }
     } catch (err: any) {
-      alert(`Error creating release: ${err.message}`);
+      setReleaseError(`Error creating release: ${err.message}`);
     } finally {
       setIsCreatingRelease(false);
     }
@@ -331,6 +335,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
   const handleCreateIssue = async () => {
     if (!newIssueTitle.trim() || !newIssueBody.trim()) return;
     setIsCreatingIssue(true);
+    setIssueError(null);
     try {
       const res = await fetch('/api/github/issues', {
         method: 'POST',
@@ -349,10 +354,10 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
         setNewIssueBody('');
         fetchIssues();
       } else {
-        alert(data.message || 'Failed to create issue');
+        setIssueError(data.message || 'Failed to create issue');
       }
     } catch (err: any) {
-      alert(`Error creating issue: ${err.message}`);
+      setIssueError(`Error creating issue: ${err.message}`);
     } finally {
       setIsCreatingIssue(false);
     }
@@ -1204,10 +1209,15 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
                     <strong className="text-emerald-400 font-mono">{rateLimit.remaining} / {rateLimit.limit}</strong>
                   </div>
                   <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-emerald-400 h-full transition-all"
-                      style={{ width: `${100 - rateLimit.percentUsed}%` }}
-                    />
+                    <svg viewBox="0 0 100 8" preserveAspectRatio="none" className="w-full h-full block" aria-hidden="true">
+                      <rect
+                        x="0"
+                        y="0"
+                        width={Math.max(0, Math.min(100, 100 - rateLimit.percentUsed))}
+                        height="8"
+                        className="fill-emerald-400"
+                      />
+                    </svg>
                   </div>
                   <div className="text-[11px] text-slate-400">
                     Quota resets at: {formatFullDateTime(rateLimit.resetDateIso)}
@@ -1235,10 +1245,15 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
                         <span className="font-mono text-amber-300">{lang.percentage}%</span>
                       </div>
                       <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="bg-amber-400 h-full"
-                          style={{ width: `${lang.percentage}%` }}
-                        />
+                        <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="w-full h-full block" aria-hidden="true">
+                          <rect
+                            x="0"
+                            y="0"
+                            width={Math.max(0, Math.min(100, Number(lang.percentage) || 0))}
+                            height="6"
+                            className="fill-amber-400"
+                          />
+                        </svg>
                       </div>
                     </div>
                   ))}
@@ -1268,6 +1283,11 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
             </div>
 
             <div className="space-y-3 text-xs">
+              {releaseError && (
+                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs">
+                  {releaseError}
+                </div>
+              )}
               <div>
                 <label className="block text-slate-300 font-bold mb-1">Release Tag (e.g. v1.4.8)</label>
                 <input
@@ -1334,6 +1354,11 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
             </div>
 
             <div className="space-y-3 text-xs">
+              {issueError && (
+                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs">
+                  {issueError}
+                </div>
+              )}
               <div>
                 <label className="block text-slate-300 font-bold mb-1">Issue Title</label>
                 <input

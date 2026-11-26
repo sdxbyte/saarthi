@@ -19,28 +19,64 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
   const [message, setMessage] = useState('');
   const [type, setType] = useState<'question' | 'problem' | 'feedback' | 'assistance'>('question');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [ticketError, setTicketError] = useState('');
   const [submittedTicket, setSubmittedTicket] = useState<ContactEnquiry | null>(null);
 
-  const handleSubmitTicket = (e: React.FormEvent) => {
+  const handleSubmitTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subject.trim() || !message.trim()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const created = addContactEnquiry({
-        fullName: email.trim() ? email.split('@')[0] : 'Citizen User',
-        email: email.trim() || 'support@citizen.np',
-        phone: 'N/A',
-        category: `Support Ticket (${type.toUpperCase()})`,
-        message: `Subject: ${subject.trim()}\n\n${message.trim()}`,
+    setTicketError('');
+    try {
+      const fullName = email.trim() ? email.split('@')[0] : 'Citizen User';
+      const contactEmail = email.trim() || 'support@saarthi.dpdns.org';
+      const category = `Support Ticket (${type.toUpperCase()})`;
+
+      const res = await fetch('/api/support/tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName,
+          email: contactEmail,
+          phone: 'N/A',
+          category,
+          subject: subject.trim(),
+          message: message.trim(),
+        }),
       });
 
-      setIsSubmitting(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setTicketError(
+          data.error ||
+            data.message ||
+            (res.status === 429
+              ? 'Too many tickets submitted recently. Please wait a few minutes before retrying.'
+              : `Unable to submit ticket (HTTP ${res.status}).`)
+        );
+        return;
+      }
+
+      const created = addContactEnquiry({
+        id: data.ticket?.id,
+        fullName,
+        email: contactEmail,
+        phone: 'N/A',
+        category,
+        message: `Subject: ${subject.trim()}\n\n${message.trim()}`,
+        skipNetworkEmail: true,
+      });
+
       setSubmittedTicket(created);
       setSubject('');
       setEmail('');
       setMessage('');
-    }, 600);
+    } catch {
+      setTicketError('Network error while submitting ticket. Please check your connection and retry.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const FAQS = [
@@ -78,17 +114,17 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
   });
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 py-6 px-4 font-sans text-slate-100">
+    <div className={`max-w-5xl mx-auto space-y-8 py-6 px-4 font-sans ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Banner */}
       <div className={`p-8 rounded-3xl border shadow-xl ${
         isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-900'
       }`}>
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+          <div className="p-3 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-500">
             <LifeBuoy className="w-7 h-7" />
           </div>
           <div>
-            <span className="text-xs font-mono font-bold uppercase text-sky-400">Citizen Assistance Center</span>
+            <span className="text-xs font-mono font-bold uppercase text-sky-500">Citizen Assistance Center</span>
             <h1 className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Help & Support Portal</h1>
           </div>
         </div>
@@ -104,7 +140,11 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search help topics (e.g., tax calculator, complaint tracking, vault security)..."
-            className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+            className={`w-full pl-10 pr-4 py-3 border rounded-2xl text-xs focus:outline-none focus:border-sky-500 ${
+              isDark
+                ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-500'
+                : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+            }`}
           />
         </div>
       </div>
@@ -113,9 +153,9 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* FAQ Column (2 cols) */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h2 className={`text-lg font-black ${isDark ? 'text-white' : 'text-slate-900'} flex items-center gap-2`}>
-              <FileQuestion className="w-5 h-5 text-sky-400" />
+              <FileQuestion className="w-5 h-5 text-sky-500" />
               <span>Frequently Asked Questions</span>
             </h2>
 
@@ -128,7 +168,9 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
                   className={`px-2.5 py-1 rounded-lg capitalize font-bold transition-all ${
                     activeCategory === cat
                       ? 'bg-sky-500 text-slate-950 shadow-md'
-                      : 'bg-slate-800/80 text-slate-400 hover:text-white'
+                      : isDark
+                      ? 'bg-slate-800/80 text-slate-400 hover:text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
                   {cat}
@@ -164,23 +206,30 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
             <MessageSquare className="w-5 h-5 text-sky-400" />
             <h2 className={`text-base font-black ${isDark ? 'text-white' : 'text-slate-900'}`}>Request Support</h2>
           </div>
-          <p className="text-[11px] text-slate-400">
+          <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             Submit a query or report a problem directly to our technical support team.
           </p>
 
+          {ticketError && (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{ticketError}</span>
+            </div>
+          )}
+
           {submittedTicket && (
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-2">
+            <div className={`p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-2 ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span className="font-bold">Support Ticket Submitted Successfully!</span>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-950 border border-emerald-500/30 flex items-center justify-between font-mono">
-                <span className="text-[10px] text-slate-400">Unique Ticket Number:</span>
-                <span className="text-amber-400 font-black text-sm">{submittedTicket.id}</span>
+              <div className={`p-2.5 rounded-xl border border-emerald-500/30 flex items-center justify-between font-mono ${isDark ? 'bg-slate-950' : 'bg-white'}`}>
+                <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Unique Ticket Number:</span>
+                <span className="text-amber-500 font-black text-sm">{submittedTicket.id}</span>
               </div>
               <button
                 onClick={() => setSubmittedTicket(null)}
-                className="text-[10px] text-slate-400 underline hover:text-white pt-1 block"
+                className={`text-[10px] underline pt-1 block ${isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'}`}
               >
                 Submit another request
               </button>
@@ -189,11 +238,13 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
 
           <form onSubmit={handleSubmitTicket} className="space-y-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">Ticket Category</label>
+              <label className={`block text-[11px] font-bold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Ticket Category</label>
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as any)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-sky-500"
+                className={`w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-sky-500 ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                }`}
               >
                 <option value="question">Ask a Question</option>
                 <option value="problem">Report a Technical Problem</option>
@@ -203,36 +254,42 @@ export const SupportHelpView: React.FC<SupportHelpViewProps> = ({ currentLang, t
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">Subject</label>
+              <label className={`block text-[11px] font-bold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Subject</label>
               <input
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Brief summary of issue or question"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                className={`w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-sky-500 ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                }`}
                 required
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">Contact Email (Optional)</label>
+              <label className={`block text-[11px] font-bold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Contact Email (Optional)</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="yourmail@domain.com"
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                className={`w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-sky-500 ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                }`}
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-bold text-slate-300 mb-1">Detailed Message</label>
+              <label className={`block text-[11px] font-bold mb-1 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Detailed Message</label>
               <textarea
                 rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Describe your issue or question in detail..."
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-sky-500"
+                className={`w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-sky-500 ${
+                  isDark ? 'bg-slate-950 border-slate-800 text-white placeholder-slate-600' : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
+                }`}
                 required
               />
             </div>

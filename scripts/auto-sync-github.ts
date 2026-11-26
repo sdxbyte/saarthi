@@ -23,7 +23,7 @@ async function runAutoSync() {
     const repo = creds.repoName || 'saarthi';
     const branch = creds.branch || 'main';
 
-    let version = '1.4.7';
+    let version = '2.0.0';
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
       version = pkg.version || version;

@@ -1,8 +1,24 @@
 import React, { useState } from 'react';
-import { Search, User, Menu, X } from 'lucide-react';
+import {
+  Compass,
+  FolderLock,
+  Menu,
+  Moon,
+  Search,
+  Smartphone,
+  Sun,
+  User,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { UserProfile } from '../../types';
 import { useGlobalTime } from '../../context/GlobalTimeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useSyncAuth } from '../../context/SyncAuthContext';
+import { useOptionalLanguage } from '../../context/LanguageContext';
 import { PWAInstallButton } from '../common/PWAInstallButton';
+import { SyncStatusBadge } from '../common/SyncStatusBadge';
+import { ThemeModeSelector } from '../common/ThemeModeSelector';
 import { isNativeAndroidShell } from '../../utils/apiClient';
 import { openAppSyncModal } from '../common/AppUpdateChecker';
 
@@ -15,6 +31,7 @@ interface EditorialHeaderProps {
   userProfile?: UserProfile;
   onOpenAuthModal?: () => void;
   onOpenSajiloTray?: () => void;
+  onOpenConflicts?: () => void;
 }
 
 export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
@@ -25,181 +42,212 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
   setActiveTab,
   userProfile,
   onOpenAuthModal,
+  onOpenConflicts,
 }) => {
   const { timeState } = useGlobalTime();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const { syncStatus, pendingCount, conflicts, triggerManualSync } = useSyncAuth();
+  const { t } = useOptionalLanguage(currentLang);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
-  const navLinks = [
-    { id: 'home', labelEn: 'Home', labelNp: 'गृह' },
-    { id: 'explore', labelEn: 'Explore', labelNp: 'अन्वेषण' },
-    { id: 'finance', labelEn: 'Finance', labelNp: 'वित्त' },
-    { id: 'tools', labelEn: 'Tools', labelNp: 'औजार' },
-    { id: 'about', labelEn: 'About', labelNp: 'बारेमा' },
+  const secondaryRoutes = [
+    { id: 'tools', label: t.nav.tools, icon: Wrench },
+    { id: 'vault', label: t.nav.vault, icon: FolderLock },
+    { id: 'sajilo', label: t.nav.sajilo, icon: Compass },
   ];
 
-  const handleNavClick = (id: string) => {
-    setActiveTab(id);
-    setMobileMenuOpen(false);
-  };
-
-  // Determine active state for parent sections
-  const isLinkActive = (id: string) => {
-    if (id === 'home') return activeTab === 'home' || activeTab === 'dashboard';
-    if (id === 'explore') return activeTab === 'explore' || activeTab === 'modules';
-    if (id === 'finance') {
-      return ['finance', 'nepse', 'forex', 'gold', 'fuel', 'tax', 'ird', 'emi', 'receipt'].includes(activeTab);
+  const handleSyncClick = () => {
+    if (conflicts.length > 0 && onOpenConflicts) {
+      onOpenConflicts();
+      return;
     }
-    if (id === 'tools') {
-      return ['tools', 'calendar', 'bluebook', 'vault', 'sajilo', 'links', 'sitehub', 'public-apis', 'osint4all'].includes(activeTab);
-    }
-    if (id === 'about') {
-      return ['about', 'vision', 'roadmap', 'terms', 'privacy', 'contact', 'support', 'donate', 'account-deletion'].includes(activeTab);
-    }
-    return activeTab === id;
+    void triggerManualSync();
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-white/[0.08] bg-[#090A0F]/90 backdrop-blur-md pt-[env(safe-area-inset-top)]">
-      {/* Quiet Dual Date Meta Line (Master System Rule 2) */}
-      <div className="border-b border-white/[0.04] px-4 sm:px-8 py-1 text-[11px] text-zinc-400 font-mono flex items-center justify-between">
+    <>
+      {/* Dual BS/AD Date Bar (flows smoothly at top on mobile to preserve <=15% sticky viewport budget) */}
+      <div className="w-full bg-[#0B1F3A] text-slate-200 px-4 sm:px-6 lg:px-8 py-1.5 text-[11px] font-mono flex items-center justify-between gap-3 border-b border-[#102A4C]">
         <div className="flex items-center gap-2 overflow-hidden truncate">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block shrink-0" />
-          <span className="text-zinc-200">
+          <span className="font-semibold text-white whitespace-nowrap">
             {currentLang === 'ne' ? timeState.bsFormattedNp : timeState.bsFormattedEn}
           </span>
-          <span className="text-zinc-500">·</span>
-          <span className="text-zinc-400 hidden sm:inline">
+          <span aria-hidden="true" className="text-slate-400 hidden sm:inline">
+            ·
+          </span>
+          <span className="text-slate-300 hidden sm:inline whitespace-nowrap">
             {timeState.adDateFormatted} AD
           </span>
-          <span className="text-zinc-500 hidden sm:inline">·</span>
-          <span className="text-zinc-400 hidden md:inline">
-            Kathmandu (UTC +05:45)
+          <span aria-hidden="true" className="text-slate-400 hidden lg:inline">
+            ·
+          </span>
+          <span className="text-slate-300 hidden lg:inline whitespace-nowrap">
+            {t.header.kathmanduTz}
           </span>
         </div>
 
-        <div className="flex items-center gap-3 text-zinc-400 shrink-0">
-          <span className="tabular-nums text-zinc-200">{timeState.time12h}</span>
-          <span className="text-zinc-600">|</span>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <span className="tabular-nums text-white whitespace-nowrap">
+            {timeState.time12h}
+          </span>
+          <span aria-hidden="true" className="text-slate-500">
+            |
+          </span>
           <button
+            type="button"
             onClick={onToggleLang}
-            className="text-zinc-300 hover:text-white transition-colors cursor-pointer text-[10px] uppercase font-bold tracking-wider"
+            className="text-blue-200 hover:text-white transition-colors cursor-pointer text-[11px] font-semibold whitespace-nowrap shrink-0"
             title="Switch Language"
           >
-            {currentLang === 'en' ? 'नेपाली' : 'English'}
+            {t.header.languageToggle}
           </button>
         </div>
       </div>
 
-      {/* Primary 3-Zone Navigation Bar */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
-        {/* Zone 1: Single text element wordmark */}
-        <div className="flex items-center gap-2">
+      {/* Streamlined Sticky Utility Bar (56px mobile, 64px desktop) */}
+      <header className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0B1628]/95 backdrop-blur-md pt-[env(safe-area-inset-top)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-3">
+          {/* Mobile Brand Mark (Desktop brand lives in DesktopSidebar) */}
           <button
-            onClick={() => handleNavClick('home')}
-            className="text-left group cursor-pointer focus:outline-none"
+            type="button"
+            onClick={() => setActiveTab('home')}
+            className="md:hidden flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
           >
-            <span className="text-lg sm:text-xl font-bold tracking-tight text-white group-hover:text-zinc-200 transition-colors">
-              SAARTHI
+            <span className="w-8 h-8 rounded-lg bg-[#0B1F3A] dark:bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
+              S
+            </span>
+            <span className="text-base font-bold tracking-tight text-[#0B1F3A] dark:text-white">
+              {t.brand}
             </span>
           </button>
-        </div>
 
-        {/* Zone 2: Clean 5 text navigation links (No pills) */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
-          {navLinks.map((link) => {
-            const active = isLinkActive(link.id);
-            return (
-              <button
-                key={link.id}
-                onClick={() => handleNavClick(link.id)}
-                className={`relative py-1 transition-colors cursor-pointer text-sm ${
-                  active ? 'text-white font-semibold' : 'text-zinc-400 hover:text-zinc-100'
-                }`}
-              >
-                {currentLang === 'ne' ? link.labelNp : link.labelEn}
-                {active && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-white rounded-full" />
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Zone 3: 1-2 primary actions (Search, Account & Mobile toggle) */}
-        <div className="flex items-center gap-3">
-          {/* Quick Search Trigger (Cmd+K) */}
+          {/* Desktop Global Search Input Trigger */}
           <button
+            type="button"
             onClick={onOpenSearch}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-zinc-300 hover:text-white hover:border-white/20 transition-all text-xs cursor-pointer"
-            title="Quick Search (Cmd+K)"
+            className="hidden md:flex items-center justify-between gap-3 w-full max-w-md min-h-[40px] px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0F172A] text-slate-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-blue-600 hover:text-slate-700 dark:hover:text-slate-200 transition-colors text-xs cursor-pointer"
+            aria-label="Open Global Search"
           >
-            <Search className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="hidden sm:inline text-zinc-400">Search</span>
-            <kbd className="hidden sm:inline-block font-mono text-[10px] text-zinc-500 bg-black/40 px-1.5 py-0.5 rounded border border-white/10">
+            <span className="flex items-center gap-2 truncate">
+              <Search className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{t.header.searchPlaceholder}</span>
+            </span>
+            <kbd className="font-mono text-[10px] text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 shrink-0">
               ⌘K
             </kbd>
           </button>
 
-          {/* PWA Install Trigger (Only visible when installable and not standalone) */}
-          <PWAInstallButton />
+          {/* Right Utility Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+            <SyncStatusBadge
+              status={syncStatus}
+              pendingCount={pendingCount}
+              conflictCount={conflicts.length}
+              compact
+              onClick={handleSyncClick}
+            />
 
-          {/* User Account / Login Action */}
-          <button
-            onClick={onOpenAuthModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 hover:border-white/20 bg-transparent text-zinc-300 hover:text-white transition-colors cursor-pointer"
-            title={userProfile?.isLoggedIn ? `Account (${userProfile.name})` : 'Sign In'}
-          >
-            <User className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="hidden sm:inline">
-              {userProfile?.isLoggedIn ? userProfile.name.split(' ')[0] : 'Account'}
-            </span>
-          </button>
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              className="md:hidden min-h-[40px] min-w-[40px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              aria-label="Open Global Search"
+              title="Search (Cmd+K)"
+            >
+              <Search className="w-4 h-4" />
+            </button>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/[0.05] transition-colors cursor-pointer"
-            aria-label="Toggle navigation"
-          >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="md:hidden min-h-[40px] min-w-[40px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              aria-label={resolvedTheme === 'dark' ? t.theme.switchToLight : t.theme.switchToDark}
+            >
+              {resolvedTheme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-[#0B1F3A]" />
+              )}
+            </button>
+
+            <PWAInstallButton />
+
+            <button
+              type="button"
+              onClick={onOpenAuthModal}
+              className="min-h-[40px] flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-[#0B1F3A] hover:bg-[#102A4C] dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              title={userProfile?.isLoggedIn ? `Account (${userProfile.name})` : t.header.signIn}
+            >
+              <User className="w-3.5 h-3.5 shrink-0" />
+              <span className="hidden sm:inline">
+                {userProfile?.isLoggedIn ? userProfile.name.split(' ')[0] : t.header.account}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMobileDrawerOpen((prev) => !prev)}
+              className="md:hidden min-h-[40px] min-w-[40px] rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              aria-label="Open utilities and appearance drawer"
+            >
+              {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Mobile Drawer Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/[0.06] bg-[#090A0F] px-4 py-4 space-y-3 max-h-[calc(100dvh-5.5rem)] overflow-y-auto animate-in fade-in duration-150">
-          <nav className="flex flex-col space-y-2">
-            {navLinks.map((link) => {
-              const active = isLinkActive(link.id);
-              return (
+        {/* Mobile Secondary Utilities & Appearance Drawer (Complements MobileBottomNav) */}
+        {mobileDrawerOpen && (
+          <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1628] px-4 py-4 space-y-4 max-h-[calc(100dvh-7.5rem)] overflow-y-auto">
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                {t.nav.quickAccess}
+              </span>
+              <div className="grid grid-cols-1 gap-1.5">
+                {secondaryRoutes.map((route) => {
+                  const Icon = route.icon;
+                  const active = activeTab === route.id;
+                  return (
+                    <button
+                      key={route.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(route.id);
+                        setMobileDrawerOpen(false);
+                      }}
+                      className={`min-h-[44px] px-3 rounded-xl flex items-center gap-3 text-sm text-left transition-colors cursor-pointer ${
+                        active
+                          ? 'bg-blue-50 dark:bg-blue-950/60 text-[#0B1F3A] dark:text-white font-semibold'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                      <span>{route.label}</span>
+                    </button>
+                  );
+                })}
                 <button
-                  key={link.id}
-                  onClick={() => handleNavClick(link.id)}
-                  className={`flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer text-left ${
-                    active ? 'bg-white/10 text-white font-semibold' : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-                  }`}
+                  type="button"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    openAppSyncModal();
+                  }}
+                  className="min-h-[44px] px-3 rounded-xl flex items-center gap-3 text-sm text-left text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-blue-200 dark:border-blue-900 cursor-pointer"
                 >
-                  <span>{currentLang === 'ne' ? link.labelNp : link.labelEn}</span>
-                  {active && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                  <Smartphone className="w-4 h-4 shrink-0" />
+                  <span>{isNativeAndroidShell() ? t.footer.apkSelfUpdate : t.footer.apkUpdate}</span>
                 </button>
-              );
-            })}
-            {isNativeAndroidShell() && (
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  openAppSyncModal();
-                }}
-                className="flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer text-left text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/20 mt-1"
-              >
-                <span>App Updates &amp; Server Sync</span>
-              </button>
-            )}
-          </nav>
-        </div>
-      )}
-    </header>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                {t.theme.label}
+              </span>
+              <ThemeModeSelector />
+            </div>
+          </div>
+        )}
+      </header>
+    </>
   );
 };

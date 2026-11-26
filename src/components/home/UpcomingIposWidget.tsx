@@ -173,7 +173,7 @@ export const UpcomingIposWidget: React.FC<UpcomingIposWidgetProps> = ({
     switch (status) {
       case 'OPEN':
         return (
-          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-black border border-emerald-500/40 flex items-center gap-1.5 shadow-sm animate-pulse">
+          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[11px] font-black border border-emerald-500/40 flex items-center gap-1.5 shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
             <span>OPEN NOW</span>
           </span>

@@ -1,0 +1,439 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -----------------------------------------------------------------------
+    // Global Hardened Helpers
+    // -----------------------------------------------------------------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isVerified() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'sudipadhikari8107@gmail.com'
+      );
+    }
+
+    function userProfileExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId)) ||
+        existsAfter(/databases/$(database)/documents/users/$(userId));
+    }
+
+    // -----------------------------------------------------------------------
+    // Entity Validation Blueprints (Anti-Update-Gap)
+    // -----------------------------------------------------------------------
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'email', 'displayName', 'role', 'preferredTheme',
+        'preferredLang', 'version', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'email', 'displayName', 'phone', 'nagarikId', 'photoUrl',
+        'role', 'preferredTheme', 'preferredLang', 'devanagariNumerals',
+        'migratedFromLocalAt', 'version', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 254 &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120 &&
+      (!('phone' in data) || (data.phone is string && data.phone.size() <= 32)) &&
+      (!('nagarikId' in data) || (data.nagarikId is string && data.nagarikId.size() <= 64)) &&
+      (!('photoUrl' in data) || (data.photoUrl is string && data.photoUrl.size() <= 512)) &&
+      data.role is string && data.role == 'citizen' &&
+      data.preferredTheme is string && data.preferredTheme in ['light', 'dark', 'system'] &&
+      data.preferredLang is string && data.preferredLang in ['en', 'ne'] &&
+      (!('devanagariNumerals' in data) || data.devanagariNumerals is bool) &&
+      (!('migratedFromLocalAt' in data) || (data.migratedFromLocalAt is string && data.migratedFromLocalAt.size() <= 64)) &&
+      data.version is int && data.version >= 1 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidVaultDoc(data, docId, userId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'title', 'documentType', 'docNumber', 'issueDate',
+        'issuer', 'version', 'deviceId', 'idempotencyKey', 'deleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerId', 'title', 'documentType', 'docNumber', 'issueDate',
+        'expiryDate', 'issuer', 'notes', 'version', 'deviceId', 'idempotencyKey',
+        'deleted', 'clientUpdatedAt', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id == docId && isValidId(data.id) &&
+      data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+      data.documentType is string && data.documentType in [
+        'Citizenship', 'Passport', 'Driving License', 'Bluebook', 'PAN Card', 'Academic', 'Other'
+      ] &&
+      data.docNumber is string && data.docNumber.size() >= 1 && data.docNumber.size() <= 80 &&
+      data.issueDate is string && data.issueDate.size() <= 32 &&
+      (!('expiryDate' in data) || (data.expiryDate is string && data.expiryDate.size() <= 32)) &&
+      data.issuer is string && data.issuer.size() <= 160 &&
+      (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000)) &&
+      data.version is int && data.version >= 1 &&
+      data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 64 &&
+      data.idempotencyKey is string && data.idempotencyKey.size() >= 1 && data.idempotencyKey.size() <= 128 &&
+      data.deleted is bool &&
+      (!('clientUpdatedAt' in data) || (data.clientUpdatedAt is string && data.clientUpdatedAt.size() <= 64)) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidKeeperItem(data, itemId, userId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'title', 'category', 'expiryDateAd', 'remindDaysBefore',
+        'version', 'deviceId', 'idempotencyKey', 'deleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerId', 'title', 'category', 'documentNumber', 'expiryDateAd',
+        'expiryDateBs', 'remindDaysBefore', 'notes', 'version', 'deviceId',
+        'idempotencyKey', 'deleted', 'clientUpdatedAt', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id == itemId && isValidId(data.id) &&
+      data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+      data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+      (!('documentNumber' in data) || (data.documentNumber is string && data.documentNumber.size() <= 80)) &&
+      data.expiryDateAd is string && data.expiryDateAd.size() <= 32 &&
+      (!('expiryDateBs' in data) || (data.expiryDateBs is string && data.expiryDateBs.size() <= 32)) &&
+      data.remindDaysBefore is int && data.remindDaysBefore >= 0 && data.remindDaysBefore <= 3650 &&
+      (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000)) &&
+      data.version is int && data.version >= 1 &&
+      data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 64 &&
+      data.idempotencyKey is string && data.idempotencyKey.size() >= 1 && data.idempotencyKey.size() <= 128 &&
+      data.deleted is bool &&
+      (!('clientUpdatedAt' in data) || (data.clientUpdatedAt is string && data.clientUpdatedAt.size() <= 64)) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidSavedItem(data, itemId, userId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'kind', 'targetId', 'title', 'pinned',
+        'version', 'deviceId', 'idempotencyKey', 'deleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerId', 'kind', 'targetId', 'title', 'subtitle', 'tags',
+        'pinned', 'version', 'deviceId', 'idempotencyKey', 'deleted', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id == itemId && isValidId(data.id) &&
+      data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 &&
+      data.kind is string && data.kind in ['shortcut', 'saved_service', 'watchlist', 'note'] &&
+      data.targetId is string && data.targetId.size() >= 1 && data.targetId.size() <= 128 &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 160 &&
+      (!('subtitle' in data) || (data.subtitle is string && data.subtitle.size() <= 240)) &&
+      (!('tags' in data) || (data.tags is list && data.tags.size() <= 10 && (data.tags.size() == 0 || data.tags[0] is string))) &&
+      data.pinned is bool &&
+      data.version is int && data.version >= 1 &&
+      data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 64 &&
+      data.idempotencyKey is string && data.idempotencyKey.size() >= 1 && data.idempotencyKey.size() <= 128 &&
+      data.deleted is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidDeviceSession(data, deviceId, userId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'platform', 'deviceLabel', 'appVersion',
+        'revoked', 'lastSyncState', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerId', 'platform', 'deviceLabel', 'appVersion',
+        'revoked', 'lastSyncState', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id == deviceId && isValidId(data.id) &&
+      data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 &&
+      data.platform is string && data.platform in ['web', 'pwa', 'android-apk'] &&
+      data.deviceLabel is string && data.deviceLabel.size() >= 1 && data.deviceLabel.size() <= 120 &&
+      data.appVersion is string && data.appVersion.size() >= 1 && data.appVersion.size() <= 32 &&
+      data.revoked is bool &&
+      data.lastSyncState is string && data.lastSyncState in ['synced', 'syncing', 'offline', 'pending', 'failed', 'conflict'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidSyncAudit(data, historyId, userId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'action', 'entityType', 'entityId',
+        'deviceId', 'adDate', 'bsDate', 'summary', 'createdAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerId', 'action', 'entityType', 'entityId',
+        'deviceId', 'adDate', 'bsDate', 'summary', 'createdAt'
+      ]) &&
+      data.id is string && data.id == historyId && isValidId(data.id) &&
+      data.ownerId is string && data.ownerId == userId && data.ownerId.size() <= 128 &&
+      data.action is string && data.action.size() >= 1 && data.action.size() <= 64 &&
+      data.entityType is string && data.entityType.size() >= 1 && data.entityType.size() <= 64 &&
+      data.entityId is string && data.entityId.size() >= 1 && data.entityId.size() <= 128 &&
+      data.deviceId is string && data.deviceId.size() >= 1 && data.deviceId.size() <= 64 &&
+      data.adDate is string && data.adDate.size() >= 8 && data.adDate.size() <= 32 &&
+      data.bsDate is string && data.bsDate.size() >= 8 && data.bsDate.size() <= 32 &&
+      data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 320 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidSupportTicket(data, ticketId) {
+      return data.keys().hasAll([
+        'id', 'ownerId', 'subject', 'message', 'category', 'status', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id', 'ownerId', 'subject', 'message', 'category', 'status', 'createdAt', 'updatedAt'
+      ]) &&
+      data.id is string && data.id == ticketId && isValidId(data.id) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.subject is string && data.subject.size() >= 3 && data.subject.size() <= 160 &&
+      data.message is string && data.message.size() >= 5 && data.message.size() <= 2000 &&
+      data.category is string && data.category in ['sync', 'finance', 'civic', 'bug', 'feedback'] &&
+      data.status is string && data.status in ['open', 'in_review', 'resolved', 'closed'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidReleaseNotice(data, noticeId) {
+      return data.keys().hasAll(['id', 'version', 'channel', 'summary', 'publishedAt']) &&
+      data.keys().hasOnly(['id', 'version', 'channel', 'summary', 'publishedAt']) &&
+      data.id is string && data.id == noticeId && isValidId(data.id) &&
+      data.version is string && data.version.size() >= 1 && data.version.size() <= 32 &&
+      data.channel is string && data.channel in ['web', 'android-apk', 'unified'] &&
+      data.summary is string && data.summary.size() >= 1 && data.summary.size() <= 500 &&
+      data.publishedAt is timestamp;
+    }
+
+    // -----------------------------------------------------------------------
+    // Collection Match Blocks
+    // -----------------------------------------------------------------------
+
+    // Connectivity probe used at client startup
+    match /test/connection {
+      allow get: if isSignedIn();
+      allow list, create, update, delete: if false;
+    }
+
+    // Admin lookup collection (read own status or by existing admin; client writes forbidden)
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if false;
+    }
+
+    // Public Release Notices (read by anyone signed-in or verified; written only by verified admins)
+    match /releaseNotices/{noticeId} {
+      allow get: if isValidId(noticeId) && isSignedIn();
+      allow list: if isSignedIn() && resource.data.version is string;
+      allow create: if isValidId(noticeId) && isAdmin() &&
+        isValidReleaseNotice(incoming(), noticeId) &&
+        incoming().publishedAt == request.time;
+      allow update: if isValidId(noticeId) && isAdmin() &&
+        isValidReleaseNotice(incoming(), noticeId) &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['summary', 'publishedAt']) &&
+        incoming().publishedAt == request.time;
+      allow delete: if isValidId(noticeId) && isAdmin();
+    }
+
+    // Support Tickets (owner or admin)
+    match /supportTickets/{ticketId} {
+      allow get: if isValidId(ticketId) && (
+        (isVerified() && existing().ownerId == request.auth.uid) || isAdmin()
+      );
+      allow list: if isVerified() && (
+        existing().ownerId == request.auth.uid || isAdmin()
+      );
+      allow create: if isValidId(ticketId) && isVerified() &&
+        isValidSupportTicket(incoming(), ticketId) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().status == 'open' &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(ticketId) && isVerified() &&
+        isValidSupportTicket(incoming(), ticketId) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            existing().ownerId == request.auth.uid &&
+            existing().status != 'closed' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['subject', 'message', 'status', 'updatedAt']) &&
+            incoming().status in ['open', 'closed']
+          )
+        );
+      allow delete: if isValidId(ticketId) && (
+        (isVerified() && existing().ownerId == request.auth.uid) || isAdmin()
+      );
+    }
+
+    // User Root Profile (strict owner/admin PII protection)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isVerified() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isValidId(userId) && isOwner(userId) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) && (isOwner(userId) || isAdmin()) &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() ||
+          (
+            isOwner(userId) &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'displayName', 'phone', 'nagarikId', 'photoUrl',
+              'preferredTheme', 'preferredLang', 'devanagariNumerals',
+              'migratedFromLocalAt', 'version', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(userId) && (isOwner(userId) || isAdmin());
+
+      // 1. Digital Document Vault Subcollection
+      match /vaultDocs/{docId} {
+        allow get: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+        allow list: if isVerified() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(docId) && isOwner(userId) &&
+          isValidVaultDoc(incoming(), docId, userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId);
+        allow update: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin()) &&
+          isValidVaultDoc(incoming(), docId, userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId) && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'documentType', 'docNumber', 'issueDate', 'expiryDate',
+                'issuer', 'notes', 'version', 'deviceId', 'idempotencyKey',
+                'deleted', 'clientUpdatedAt', 'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isValidId(userId) && isValidId(docId) && (isOwner(userId) || isAdmin());
+      }
+
+      // 2. Sajilo Expiry Keeper Items Subcollection
+      match /keeperItems/{itemId} {
+        allow get: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+        allow list: if isVerified() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(itemId) && isOwner(userId) &&
+          isValidKeeperItem(incoming(), itemId, userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId);
+        allow update: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin()) &&
+          isValidKeeperItem(incoming(), itemId, userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId) && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'title', 'category', 'documentNumber', 'expiryDateAd', 'expiryDateBs',
+                'remindDaysBefore', 'notes', 'version', 'deviceId', 'idempotencyKey',
+                'deleted', 'clientUpdatedAt', 'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+      }
+
+      // 3. Saved Items & Shortcuts Subcollection
+      match /savedItems/{itemId} {
+        allow get: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+        allow list: if isVerified() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(itemId) && isOwner(userId) &&
+          isValidSavedItem(incoming(), itemId, userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId);
+        allow update: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin()) &&
+          isValidSavedItem(incoming(), itemId, userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId) && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'kind', 'targetId', 'title', 'subtitle', 'tags', 'pinned',
+                'version', 'deviceId', 'idempotencyKey', 'deleted', 'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isValidId(userId) && isValidId(itemId) && (isOwner(userId) || isAdmin());
+      }
+
+      // 4. Linked Devices & Session Revocation
+      match /devices/{deviceId} {
+        allow get: if isValidId(userId) && isValidId(deviceId) && (isOwner(userId) || isAdmin());
+        allow list: if isVerified() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(deviceId) && isOwner(userId) &&
+          isValidDeviceSession(incoming(), deviceId, userId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId);
+        allow update: if isValidId(userId) && isValidId(deviceId) && (isOwner(userId) || isAdmin()) &&
+          isValidDeviceSession(incoming(), deviceId, userId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          userProfileExists(userId) && (
+            isAdmin() ||
+            (
+              isOwner(userId) &&
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'deviceLabel', 'appVersion', 'revoked', 'lastSyncState', 'updatedAt'
+              ])
+            )
+          );
+        allow delete: if isValidId(userId) && isValidId(deviceId) && (isOwner(userId) || isAdmin());
+      }
+
+      // 5. Append-Only Sync History (Immutable after Create)
+      match /syncHistory/{historyId} {
+        allow get: if isValidId(userId) && isValidId(historyId) && (isOwner(userId) || isAdmin());
+        allow list: if isVerified() && existing().ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(historyId) && isOwner(userId) &&
+          isValidSyncAudit(incoming(), historyId, userId) &&
+          incoming().createdAt == request.time &&
+          userProfileExists(userId);
+        allow update, delete: if false;
+      }
+    }
+  }
+}

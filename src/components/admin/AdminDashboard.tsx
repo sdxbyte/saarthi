@@ -30,16 +30,47 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentAdmin, onNavigateTab }) => {
   const [adminCount, setAdminCount] = useState<number>(1);
   const [pendingEnquiries, setPendingEnquiries] = useState<number>(0);
+  const [serverHealth, setServerHealth] = useState<{
+    status: string;
+    service?: string;
+    timestamp?: string;
+  } | null>(null);
+  const [healthLoading, setHealthLoading] = useState<boolean>(true);
+  const [healthError, setHealthError] = useState<boolean>(false);
 
   useEffect(() => {
+    let active = true;
     try {
       const delegated = getDelegatedAdmins();
       setAdminCount(1 + delegated.length);
       const enquiries = getContactEnquiries();
       setPendingEnquiries(enquiries.filter((e) => e.status === 'New').length);
-    } catch (e) {
+    } catch {
       // safe fallback
     }
+
+    fetch('/api/health')
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (!active) return;
+        setServerHealth(data);
+        setHealthError(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setServerHealth(null);
+        setHealthError(true);
+      })
+      .finally(() => {
+        if (active) setHealthLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -64,10 +95,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentAdmin, on
 
         <div className="flex items-center gap-3">
           <div className="px-3 py-2 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center gap-2.5 text-xs">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div
+              className={`w-2.5 h-2.5 rounded-full ${
+                healthLoading
+                  ? 'bg-amber-400'
+                  : serverHealth?.status === 'ok'
+                  ? 'bg-emerald-500'
+                  : 'bg-rose-500'
+              }`}
+            />
             <div>
-              <span className="text-slate-400 text-[10px] block">Cluster Uptime</span>
-              <span className="font-bold text-white">100% Operational</span>
+              <span className="text-slate-400 text-[10px] block">API Server Status</span>
+              <span className="font-bold text-white">
+                {healthLoading
+                  ? 'Checking...'
+                  : serverHealth?.status === 'ok'
+                  ? 'Backend Online'
+                  : 'Server Unreachable'}
+              </span>
             </div>
           </div>
           <button
@@ -123,10 +168,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentAdmin, on
 
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md flex items-center justify-between">
           <div>
-            <span className="text-xs font-medium text-slate-400">System Health</span>
-            <h3 className="text-2xl font-black text-emerald-400 mt-1">100%</h3>
-            <span className="text-[11px] text-emerald-400 flex items-center gap-1 mt-1">
-              <Activity className="w-3.5 h-3.5" /> Active Server Connection
+            <span className="text-xs font-medium text-slate-400">API Health Check</span>
+            <h3
+              className={`text-xl font-black mt-1 ${
+                healthLoading
+                  ? 'text-amber-300'
+                  : serverHealth?.status === 'ok'
+                  ? 'text-emerald-400'
+                  : 'text-rose-400'
+              }`}
+            >
+              {healthLoading ? 'Checking' : serverHealth?.status === 'ok' ? 'OK' : 'Offline'}
+            </h3>
+            <span className="text-[11px] text-slate-400 flex items-center gap-1 mt-1">
+              <Activity className="w-3.5 h-3.5 text-emerald-400" />
+              {serverHealth?.status === 'ok' ? 'Express Backend Reachable' : healthError ? '/api/health unreachable' : 'Verifying connection'}
             </span>
           </div>
           <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
@@ -230,48 +286,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentAdmin, on
           </div>
         </div>
 
-        {/* Live Cluster Resource Monitor */}
+        {/* Live Infrastructure & Sync Readiness Monitor */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-md">
           <h3 className="font-bold text-white text-sm flex items-center gap-2">
             <Server className="w-4 h-4 text-emerald-400" />
-            <span>Infrastructure Cluster Monitor</span>
+            <span>Infrastructure &amp; Sync Monitor</span>
           </h3>
 
           <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-400">CPU Compute Load</span>
-                <span className="text-emerald-400 font-bold">Normal (12%)</span>
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-400">
+                <span>Backend API (/api/health):</span>
+                <span className={`font-bold font-mono ${serverHealth?.status === 'ok' ? 'text-emerald-400' : 'text-amber-300'}`}>
+                  {healthLoading ? 'Checking...' : serverHealth?.status === 'ok' ? 'Reachable (ok)' : 'Unavailable'}
+                </span>
               </div>
-              <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '12%' }} />
+              <div className="flex justify-between text-slate-400 gap-2">
+                <span>Service Identity:</span>
+                <span className="text-white font-mono truncate">
+                  {serverHealth?.service || 'Not reported'}
+                </span>
+              </div>
+              <div className="flex justify-between text-slate-400 gap-2">
+                <span>Health Timestamp:</span>
+                <span className="text-slate-200 font-mono text-[11px] truncate">
+                  {serverHealth?.timestamp ? new Date(serverHealth.timestamp).toLocaleString() : 'Unavailable'}
+                </span>
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-slate-400">RAM Memory Footprint</span>
-                <span className="text-amber-400 font-bold">Optimal (38%)</span>
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-400">
+                <span>Cloud Sync Layer:</span>
+                <span className="text-white font-mono">Cloud Firestore</span>
               </div>
-              <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500 rounded-full" style={{ width: '38%' }} />
+              <div className="flex justify-between text-slate-400">
+                <span>Offline Persistence:</span>
+                <span className="text-emerald-400 font-mono">IndexedDB Outbox</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Browser Network:</span>
+                <span className="text-slate-200 font-mono">
+                  {typeof navigator !== 'undefined' && !navigator.onLine ? 'Offline' : 'Online'}
+                </span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
-              <div className="flex justify-between text-slate-400">
-                <span>Database Instance:</span>
-                <span className="text-white font-mono">Firestore Multi-Region</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Reverse Proxy:</span>
-                <span className="text-white font-mono">Nginx SSL Gateway</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Last Backup:</span>
-                <span className="text-emerald-400 font-bold">2026-07-31 22:00 BS</span>
-              </div>
-            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Detailed host CPU and memory metrics are managed by the hosting runtime and are not fabricated here.
+            </p>
           </div>
         </div>
       </div>

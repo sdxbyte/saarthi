@@ -12,6 +12,9 @@ import NepaliDate from 'nepali-date-converter';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import * as cheerio from 'cheerio';
+import { getApps as getAdminApps, getApp as getAdminApp, initializeApp as initAdminApp } from 'firebase-admin/app';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import {
   loadServerGitHubConfig,
   saveServerGitHubConfig,
@@ -517,6 +520,43 @@ app.post('/api/admin/logout', (req, res) => {
   revokeAdminSession(token);
   res.clearCookie(ADMIN_COOKIE_NAME, { path: '/' });
   return res.json({ success: true, message: 'Session terminated.' });
+});
+
+// Firebase ID Token Verification Helper (no IAM required per firebase-integration-rpc rules)
+function getFirebaseAdminAuthInstance() {
+  try {
+    const cfgPath = path.join(process.cwd(), 'firebase-applet-config.json');
+    if (!fs.existsSync(cfgPath)) return null;
+    const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf-8'));
+    if (!cfg?.projectId || cfg.projectId === 'remixed-project-id') return null;
+    const fbApp = getAdminApps().length ? getAdminApp() : initAdminApp({ projectId: cfg.projectId });
+    return getAdminAuth(fbApp);
+  } catch {
+    return null;
+  }
+}
+
+app.get('/api/auth/session-verify', async (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token) {
+    return res.status(401).json({ authenticated: false, error: 'Missing Bearer Firebase ID token' });
+  }
+  const adminAuth = getFirebaseAdminAuthInstance();
+  if (!adminAuth) {
+    return res.status(503).json({ authenticated: false, error: 'Firebase project configuration unavailable' });
+  }
+  try {
+    const decoded = await adminAuth.verifyIdToken(token);
+    return res.json({
+      authenticated: true,
+      uid: decoded.uid,
+      email: decoded.email || null,
+      name: decoded.name || null,
+    });
+  } catch (err: any) {
+    return res.status(401).json({ authenticated: false, error: 'Invalid or expired Firebase ID token' });
+  }
 });
 
 // Health Check
@@ -1442,32 +1482,84 @@ app.post('/api/government/analyze-notice', async (req, res) => {
   }
 });
 
-// Digital Receipt Scanner API
+// Digital Receipt Scanner API (Zero-Fabrication: parses explicit structured text lines or returns 501)
 app.post('/api/receipt/scan', async (req, res) => {
   try {
-    const { imageBase64 } = req.body;
+    const { imageBase64, rawText } = req.body || {};
 
-    if (!imageBase64) {
-      return res.status(400).json({ error: 'imageBase64 image data is required' });
+    if (!imageBase64 && !rawText) {
+      return res.status(400).json({
+        success: false,
+        error: 'Either structured rawText receipt lines or imageBase64 is required',
+      });
     }
 
-    const receipt = {
-      merchantName: 'BhatBhateni Supermarket & Departmental Store',
-      date: new Date().toISOString().slice(0, 10),
-      totalAmount: 1850,
-      currency: 'NPR',
-      taxAmount: 213,
-      category: 'Groceries',
-      items: [
-        { name: 'Organic Honey (500g)', price: 650 },
-        { name: 'Nepal Dairy Pure Ghee (1L)', price: 1200 },
-      ],
-      summaryNotes: 'Scanned digital tax invoice from Kathmandu store',
-    };
+    if (typeof rawText === 'string' && rawText.trim().length > 0) {
+      const lines = rawText
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
 
-    return res.json({ success: true, receipt });
+      let merchantName = 'Receipt Statement';
+      let date = new Date().toISOString().slice(0, 10);
+      let taxAmount = 0;
+      const items: Array<{ name: string; price: number }> = [];
+
+      for (const line of lines) {
+        const merchantMatch = line.match(/^merchant\s*:\s*(.+)$/i);
+        if (merchantMatch) {
+          merchantName = sanitizeTextInput(merchantMatch[1], 120);
+          continue;
+        }
+        const dateMatch = line.match(/^date\s*:\s*([0-9-]+)$/i);
+        if (dateMatch) {
+          date = dateMatch[1];
+          continue;
+        }
+        const vatMatch = line.match(/^(?:vat|tax)\s*[:=-]\s*(?:rs\.?|npr)?\s*([0-9]+(?:\.[0-9]+)?)$/i);
+        if (vatMatch) {
+          taxAmount = Number(vatMatch[1]) || 0;
+          continue;
+        }
+        const itemMatch = line.match(/^(.+?)\s*[-:]\s*(?:rs\.?|npr)?\s*([0-9]+(?:\.[0-9]+)?)$/i);
+        if (itemMatch) {
+          items.push({
+            name: sanitizeTextInput(itemMatch[1], 120),
+            price: Number(itemMatch[2]) || 0,
+          });
+        }
+      }
+
+      if (items.length === 0) {
+        return res.status(422).json({
+          success: false,
+          error: 'Could not extract itemized lines from rawText. Format lines as "Item Name - 250".',
+        });
+      }
+
+      const subtotal = items.reduce((s, it) => s + it.price, 0);
+      return res.json({
+        success: true,
+        receipt: {
+          merchantName,
+          date,
+          totalAmount: subtotal + taxAmount,
+          currency: 'NPR',
+          taxAmount,
+          category: 'General',
+          items,
+          summaryNotes: 'Parsed from user-supplied structured receipt text',
+        },
+      });
+    }
+
+    return res.status(501).json({
+      success: false,
+      code: 'OCR_SERVICE_NOT_CONFIGURED',
+      error: 'Automated image OCR is not configured on this server. Paste structured receipt text or use Manual Itemized Entry.',
+    });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to scan receipt', details: err.message });
+    return res.status(500).json({ success: false, error: 'Failed to process receipt', details: err.message });
   }
 });
 
@@ -2546,22 +2638,31 @@ app.post('/api/meroshare/applicable-issues', async (req, res) => {
 });
 
 app.post('/api/meroshare/auto-apply-batch', async (req, res) => {
-  const { requests } = req.body || {};
+  const { requests, meroshareToken } = req.body || {};
+  const headerToken = typeof req.headers['x-meroshare-token'] === 'string' ? req.headers['x-meroshare-token'].trim() : '';
+  const sessionToken = (typeof meroshareToken === 'string' ? meroshareToken.trim() : '') || headerToken;
+
+  if (!sessionToken) {
+    return res.status(401).json({
+      status: 'FAILED',
+      message: 'Authentic CDSC MeroShare session token is required. Sign in via /api/meroshare/login first.',
+    });
+  }
+
   if (!Array.isArray(requests) || requests.length === 0) {
     return res.status(400).json({ status: 'FAILED', message: 'No auto-apply account requests provided' });
   }
 
   const results = [];
   for (const item of requests as MeroshareApplyRequest[]) {
-    const resItem = await applyMeroshareIssue('Bearer_Session_Token', item);
+    const resItem = await applyMeroshareIssue(sessionToken, item);
     results.push(resItem);
 
     // Record permanent audit log for SAARTHI Rule 1
     recordAuditEvent(
       'FEATURE_ADDED' as any,
-      `Auto-applied IPO for BOID ${item.dematNumber} (${item.kitta} Kitta). Status: ${resItem.status}`,
+      `Submitted C-ASBA IPO request for BOID ${String(item.dematNumber || '').slice(0, 6)}*** (${item.kitta} Kitta). Status: ${resItem.status}`,
       {
-        dematNumber: item.dematNumber,
         companyShareId: item.companyShareId,
         kitta: item.kitta,
         status: resItem.status,
@@ -2573,7 +2674,7 @@ app.post('/api/meroshare/auto-apply-batch', async (req, res) => {
 
   return res.json({
     status: 'BATCH_COMPLETED',
-    totalApplied: results.filter((r) => r.status === 'SUCCESS' || r.status === 'SIMULATED_SUCCESS').length,
+    totalApplied: results.filter((r) => r.status === 'SUCCESS').length,
     totalFailed: results.filter((r) => r.status === 'FAILED').length,
     results,
   });
@@ -2788,50 +2889,80 @@ app.get('/api/live/earthquake', async (req, res) => {
   }
 });
 
-// 7. Live Kalimati Fruits & Vegetables Market Rates
+// 7. Live Kalimati Fruits & Vegetables Market Rates (Zero-Fabrication: attempts official fetch, else unavailable)
 app.get('/api/live/kalimati', async (req, res) => {
   const dates = getServerDualDate();
+  if (!process.env.VITEST) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const upstream = await fetch('https://kalimatimarket.gov.np/price', {
+        headers: { 'User-Agent': 'Mozilla/5.0 SAARTHI-CivicTech/2.0.0' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (upstream.ok) {
+        const html = await upstream.text();
+        const $ = cheerio.load(html);
+        const parsedRows: Array<Record<string, any>> = [];
+        $('table tbody tr').each((idx, el) => {
+          const cols = $(el).find('td').map((_, td) => $(td).text().trim()).get();
+          if (cols.length >= 4) {
+            const minPrice = Number(String(cols[2]).replace(/[^0-9.]/g, ''));
+            const maxPrice = Number(String(cols[3]).replace(/[^0-9.]/g, ''));
+            const avgPrice = Number(String(cols[4] || cols[3]).replace(/[^0-9.]/g, ''));
+            if (cols[0] && !Number.isNaN(minPrice) && !Number.isNaN(maxPrice) && maxPrice > 0) {
+              parsedRows.push({
+                id: `kv-live-${idx + 1}`,
+                commodity: cols[0],
+                commodityNp: cols[0],
+                category: 'vegetables',
+                unit: cols[1] || 'KG',
+                minPrice,
+                maxPrice,
+                avgPrice: !Number.isNaN(avgPrice) && avgPrice > 0 ? avgPrice : Math.round((minPrice + maxPrice) / 2),
+                trend: 'stable',
+              });
+            }
+          }
+        });
+        if (parsedRows.length > 0) {
+          return res.json({
+            apiId: 'kalimati-market',
+            dataSource: 'Kalimati Fruits & Vegetable Market Development Board (KFVMDB)',
+            sourceType: 'Official',
+            isLive: true,
+            isCached: false,
+            verificationStatus: 'VERIFIED_OFFICIAL',
+            lastUpdatedAd: dates.adDateStr,
+            lastUpdatedBs: dates.bsDateStr,
+            timeStr: dates.timeStr,
+            timestampIso: dates.timestampIso,
+            sourceUrl: 'https://kalimatimarket.gov.np/price',
+            data: parsedRows,
+            error: null,
+          });
+        }
+      }
+    } catch {
+      // Fall through cleanly to unavailable response below
+    }
+  }
+
   return res.json({
     apiId: 'kalimati-market',
     dataSource: 'Kalimati Fruits & Vegetable Market Development Board (KFVMDB)',
-    isLive: true,
+    sourceType: 'Official',
+    isLive: false,
     isCached: false,
+    verificationStatus: 'OFFICIAL_FEED_UNAVAILABLE',
     lastUpdatedAd: dates.adDateStr,
     lastUpdatedBs: dates.bsDateStr,
     timeStr: dates.timeStr,
     timestampIso: dates.timestampIso,
     sourceUrl: 'https://kalimatimarket.gov.np/price',
-    data: [
-      { id: 'kv-1', commodity: 'Tomato Big (Nepali)', commodityNp: 'गोलभेडा ठूलो (नेपाली)', category: 'vegetables', unit: 'KG', minPrice: 55, maxPrice: 65, avgPrice: 60, trend: 'stable' },
-      { id: 'kv-2', commodity: 'Tomato Small (Local)', commodityNp: 'गोलभेडा सानो (लोकल)', category: 'vegetables', unit: 'KG', minPrice: 35, maxPrice: 45, avgPrice: 40, trend: 'down' },
-      { id: 'kv-3', commodity: 'Potato Red', commodityNp: 'रातो आलु', category: 'vegetables', unit: 'KG', minPrice: 50, maxPrice: 58, avgPrice: 54, trend: 'up' },
-      { id: 'kv-4', commodity: 'Potato White', commodityNp: 'सेतो आलु', category: 'vegetables', unit: 'KG', minPrice: 42, maxPrice: 48, avgPrice: 45, trend: 'stable' },
-      { id: 'kv-5', commodity: 'Onion Dry (Indian)', commodityNp: 'प्याज सुकेको (भारतीय)', category: 'vegetables', unit: 'KG', minPrice: 85, maxPrice: 95, avgPrice: 90, trend: 'down' },
-      { id: 'kv-6', commodity: 'Carrot (Local)', commodityNp: 'गाजर (लोकल)', category: 'vegetables', unit: 'KG', minPrice: 90, maxPrice: 110, avgPrice: 100, trend: 'stable' },
-      { id: 'kv-7', commodity: 'Cabbage (Local)', commodityNp: 'बन्दा (लोकल)', category: 'vegetables', unit: 'KG', minPrice: 30, maxPrice: 40, avgPrice: 35, trend: 'down' },
-      { id: 'kv-8', commodity: 'Cauliflower (Local)', commodityNp: 'काउली (स्थानीय)', category: 'vegetables', unit: 'KG', minPrice: 75, maxPrice: 90, avgPrice: 82, trend: 'up' },
-      { id: 'kv-9', commodity: 'Radish White (Local)', commodityNp: 'सेतो मूला (लोकल)', category: 'vegetables', unit: 'KG', minPrice: 25, maxPrice: 35, avgPrice: 30, trend: 'stable' },
-      { id: 'kv-10', commodity: 'Brinjal Long', commodityNp: 'भन्टा लाम्चो', category: 'vegetables', unit: 'KG', minPrice: 40, maxPrice: 50, avgPrice: 45, trend: 'stable' },
-      { id: 'kv-11', commodity: 'Bitter Gourd (Tite Karela)', commodityNp: 'तीतो करेला', category: 'vegetables', unit: 'KG', minPrice: 65, maxPrice: 80, avgPrice: 72, trend: 'up' },
-      { id: 'kv-12', commodity: 'Bottle Gourd (Lauka)', commodityNp: 'लौका', category: 'vegetables', unit: 'KG', minPrice: 45, maxPrice: 55, avgPrice: 50, trend: 'stable' },
-      { id: 'kv-13', commodity: 'Okra (Bhindi)', commodityNp: 'भिण्डी', category: 'vegetables', unit: 'KG', minPrice: 60, maxPrice: 75, avgPrice: 68, trend: 'down' },
-      { id: 'kv-14', commodity: 'Spinach (Palungo)', commodityNp: 'पालुङ्गो साग', category: 'vegetables', unit: 'KG', minPrice: 80, maxPrice: 100, avgPrice: 90, trend: 'up' },
-      { id: 'kv-15', commodity: 'Mustard Greens (Rayo Saag)', commodityNp: 'रायोको साग', category: 'vegetables', unit: 'KG', minPrice: 40, maxPrice: 55, avgPrice: 48, trend: 'stable' },
-      { id: 'kv-16', commodity: 'Broccoli', commodityNp: 'ब्रोकाउली', category: 'vegetables', unit: 'KG', minPrice: 110, maxPrice: 140, avgPrice: 125, trend: 'down' },
-      { id: 'kv-17', commodity: 'Mushroom (Button)', commodityNp: 'डल्ले च्याउ', category: 'vegetables', unit: 'KG', minPrice: 280, maxPrice: 340, avgPrice: 310, trend: 'stable' },
-      { id: 'kv-18', commodity: 'Ginger (Aduwa)', commodityNp: 'अदुवा', category: 'spices', unit: 'KG', minPrice: 190, maxPrice: 230, avgPrice: 210, trend: 'stable' },
-      { id: 'kv-19', commodity: 'Garlic Dry (Chinese)', commodityNp: 'लसुन सुकेको (चिनियाँ)', category: 'spices', unit: 'KG', minPrice: 290, maxPrice: 330, avgPrice: 310, trend: 'up' },
-      { id: 'kv-20', commodity: 'Garlic Dry (Nepali)', commodityNp: 'लसुन सुकेको (नेपाली)', category: 'spices', unit: 'KG', minPrice: 240, maxPrice: 280, avgPrice: 260, trend: 'stable' },
-      { id: 'kv-21', commodity: 'Green Chilli', commodityNp: 'हरियो खुर्सानी', category: 'spices', unit: 'KG', minPrice: 75, maxPrice: 95, avgPrice: 85, trend: 'down' },
-      { id: 'kv-22', commodity: 'Lemon (Kagati)', commodityNp: 'कागती', category: 'fruits', unit: 'KG', minPrice: 140, maxPrice: 180, avgPrice: 160, trend: 'up' },
-      { id: 'kv-23', commodity: 'Apple (Jhumka)', commodityNp: 'स्याउ (झुम्का)', category: 'fruits', unit: 'KG', minPrice: 230, maxPrice: 270, avgPrice: 250, trend: 'stable' },
-      { id: 'kv-24', commodity: 'Banana (Malbhog)', commodityNp: 'केरा (मालभोग)', category: 'fruits', unit: 'Dozen', minPrice: 130, maxPrice: 160, avgPrice: 145, trend: 'stable' },
-      { id: 'kv-25', commodity: 'Pomegranate (Anaar)', commodityNp: 'अनार', category: 'fruits', unit: 'KG', minPrice: 320, maxPrice: 380, avgPrice: 350, trend: 'up' },
-      { id: 'kv-26', commodity: 'Orange (Nepali/Suntala)', commodityNp: 'सुन्तला (नेपाली)', category: 'fruits', unit: 'KG', minPrice: 120, maxPrice: 160, avgPrice: 140, trend: 'down' },
-      { id: 'kv-27', commodity: 'Fresh Fish (Rahu)', commodityNp: 'ताजा माछा (रहु)', category: 'fish', unit: 'KG', minPrice: 330, maxPrice: 380, avgPrice: 355, trend: 'stable' },
-      { id: 'kv-28', commodity: 'Coriander Green', commodityNp: 'हरियो धनियाँ', category: 'spices', unit: 'KG', minPrice: 90, maxPrice: 120, avgPrice: 105, trend: 'down' },
-    ],
-    error: null,
+    data: [],
+    error: 'Official data is currently unavailable.',
   });
 });
 
@@ -3332,24 +3463,62 @@ app.post('/api/live/notify-failure', verifyAdminAuth, async (req, res) => {
   }
 });
 
-// 14. Admin Source Health Registry & Live Monitor Endpoint (Rule 13)
-app.get('/api/live/sources/health', (req, res) => {
+// 14. Admin Source Health Registry & Live Probe Monitor Endpoint (Zero-Fabrication)
+app.get('/api/live/sources/health', async (req, res) => {
   const dates = getServerDualDate();
+  const targets = [
+    { id: 'forex-nrb', name: 'Nepal Rastra Bank (NRB)', tier: 'TIER_1_PRIMARY_OFFICIAL', url: 'https://www.nrb.org.np/api/forex/v1/rates?per_page=1&page=1' },
+    { id: 'nepse-market', name: 'Nepal Stock Exchange (NEPSE)', tier: 'TIER_1_PRIMARY_OFFICIAL', url: 'https://nepalstock.com.np' },
+    { id: 'cdsc-meroshare', name: 'CDS and Clearing Ltd. (CDSC)', tier: 'TIER_1_PRIMARY_OFFICIAL', url: 'https://webbackend.cdsc.com.np/api/meroShare/capital/' },
+    { id: 'metals-negosida', name: 'Gold & Silver Dealers Association (FENEGOSIDA)', tier: 'TIER_1_PRIMARY_OFFICIAL', url: 'https://www.fenegosida.org/' },
+    { id: 'fuel-noc', name: 'Nepal Oil Corporation (NOC)', tier: 'TIER_1_PRIMARY_OFFICIAL', url: 'https://noc.org.np/' },
+    { id: 'openmeteo', name: 'Open-Meteo Satellite Feed', tier: 'TIER_2_REPUTABLE_SECONDARY', url: 'https://api.open-meteo.com/v1/forecast?latitude=27.7172&longitude=85.324&current=temperature_2m' },
+    { id: 'usgs', name: 'USGS Seismic Hazard Network', tier: 'TIER_1_PRIMARY_OFFICIAL', url: 'https://earthquake.usgs.gov/fdsnws/event/1/count?format=geojson&limit=1' },
+  ];
+
+  const sources = await Promise.all(
+    targets.map(async (t) => {
+      if (process.env.VITEST) {
+        return { id: t.id, name: t.name, tier: t.tier, status: 'SKIPPED_TEST_ENV', httpStatus: null, responseTimeMs: 0, freshness: 'UNVERIFIED' };
+      }
+      const started = Date.now();
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 2500);
+        const r = await fetch(t.url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'SAARTHI-HealthProbe/2.0.0' } });
+        clearTimeout(timer);
+        const elapsed = Date.now() - started;
+        return {
+          id: t.id,
+          name: t.name,
+          tier: t.tier,
+          status: r.ok ? 'CONNECTED' : 'DEGRADED',
+          httpStatus: r.status,
+          responseTimeMs: elapsed,
+          freshness: r.ok ? 'LIVE_VERIFIED' : 'STALE',
+        };
+      } catch {
+        return {
+          id: t.id,
+          name: t.name,
+          tier: t.tier,
+          status: 'UNAVAILABLE',
+          httpStatus: null,
+          responseTimeMs: Date.now() - started,
+          freshness: 'OFFLINE',
+        };
+      }
+    })
+  );
+
+  const healthyCount = sources.filter((s) => s.status === 'CONNECTED').length;
   return res.json({
-    status: 'HEALTHY',
+    status: healthyCount === sources.length ? 'HEALTHY' : healthyCount > 0 ? 'DEGRADED' : 'UNVERIFIED',
     retrievedAtIso: dates.timestampIso,
     adDateStr: dates.adDateStr,
     bsDateStr: dates.bsDateStr,
     timeZone: 'Asia/Kathmandu',
-    sources: [
-      { id: 'forex-nrb', name: 'Nepal Rastra Bank (NRB)', tier: 'TIER_1_PRIMARY_OFFICIAL', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 140, freshness: 'FRESH' },
-      { id: 'nepse-market', name: 'Nepal Stock Exchange (NEPSE)', tier: 'TIER_1_PRIMARY_OFFICIAL', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 180, freshness: 'FRESH' },
-      { id: 'cdsc-meroshare', name: 'CDS and Clearing Ltd. (CDSC)', tier: 'TIER_1_PRIMARY_OFFICIAL', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 95, freshness: 'FRESH' },
-      { id: 'metals-negosida', name: 'Gold & Silver Dealers Association (FENEGOSIDA)', tier: 'TIER_1_PRIMARY_OFFICIAL', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 110, freshness: 'FRESH' },
-      { id: 'fuel-noc', name: 'Nepal Oil Corporation (NOC)', tier: 'TIER_1_PRIMARY_OFFICIAL', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 85, freshness: 'FRESH' },
-      { id: 'openmeteo', name: 'Open-Meteo Satellite Feed', tier: 'TIER_2_REPUTABLE_SECONDARY', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 290, freshness: 'FRESH' },
-      { id: 'usgs', name: 'USGS Seismic Hazard Network', tier: 'TIER_1_PRIMARY_OFFICIAL', status: 'CONNECTED', httpStatus: 200, responseTimeMs: 240, freshness: 'FRESH' },
-    ],
+    sources,
   });
 });
 
@@ -3459,7 +3628,7 @@ app.post('/api/public-apis/proxy', proxyLimiter, async (req, res) => {
       method: upperMethod,
       redirect: 'error',
       headers: {
-        'User-Agent': 'SAARTHI-CivicTech-PublicApis/1.9.1',
+        'User-Agent': 'SAARTHI-CivicTech-PublicApis/2.0.0',
         'Accept': 'application/json, text/plain, */*',
         ...sanitizedHeaders,
       },

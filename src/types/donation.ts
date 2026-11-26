@@ -115,45 +115,41 @@ export function getDonationConfig(): SupportDonationConfig {
     try {
       const parsed = JSON.parse(saved);
       if (parsed && typeof parsed === 'object') {
-        const bankObj = {
+        const bankObj: BankDonationMethod = {
           ...INITIAL_EMPTY_DONATION_CONFIG.bank,
           ...(parsed.bank || {}),
         };
-        if (!bankObj.bankName) bankObj.bankName = INITIAL_EMPTY_DONATION_CONFIG.bank.bankName;
-        if (!bankObj.accountHolderName) bankObj.accountHolderName = INITIAL_EMPTY_DONATION_CONFIG.bank.accountHolderName;
-        if (!bankObj.accountNumber) bankObj.accountNumber = INITIAL_EMPTY_DONATION_CONFIG.bank.accountNumber;
-        if (!bankObj.branchName) bankObj.branchName = INITIAL_EMPTY_DONATION_CONFIG.bank.branchName;
-        bankObj.enabled = true;
+        if (bankObj.enabled === undefined) bankObj.enabled = true;
 
-        const connectIpsObj = {
+        const connectIpsObj: ConnectIpsMethod = {
           ...INITIAL_EMPTY_DONATION_CONFIG.connectIps,
           ...(parsed.connectIps || {}),
         };
         if (connectIpsObj.qrImageDataUrl === '/connectips_qr.png') {
           connectIpsObj.qrImageDataUrl = '';
         }
-        if (!connectIpsObj.registeredName) connectIpsObj.registeredName = INITIAL_EMPTY_DONATION_CONFIG.connectIps.registeredName;
-        if (!connectIpsObj.userOrMemberId) connectIpsObj.userOrMemberId = INITIAL_EMPTY_DONATION_CONFIG.connectIps.userOrMemberId;
-        connectIpsObj.enabled = true;
+        if (connectIpsObj.enabled === undefined) connectIpsObj.enabled = true;
 
-        const walletsObj = {
+        const walletsObj: DigitalWalletMethod = {
           ...INITIAL_EMPTY_DONATION_CONFIG.wallets,
           ...(parsed.wallets || {}),
         };
-        if (!walletsObj.esewaNumber) walletsObj.esewaNumber = INITIAL_EMPTY_DONATION_CONFIG.wallets.esewaNumber;
-        if (!walletsObj.khaltiNumber) walletsObj.khaltiNumber = INITIAL_EMPTY_DONATION_CONFIG.wallets.khaltiNumber;
-        if (!walletsObj.moruNumber) walletsObj.moruNumber = INITIAL_EMPTY_DONATION_CONFIG.wallets.moruNumber;
-        walletsObj.enabled = true;
+        if (walletsObj.enabled === undefined) walletsObj.enabled = true;
 
         return {
           ...INITIAL_EMPTY_DONATION_CONFIG,
           ...parsed,
-          isPublished: true,
+          isPublished:
+            typeof parsed.isPublished === 'boolean'
+              ? parsed.isPublished
+              : INITIAL_EMPTY_DONATION_CONFIG.isPublished,
           bank: bankObj,
           smartQr: { ...INITIAL_EMPTY_DONATION_CONFIG.smartQr, ...(parsed.smartQr || {}) },
           connectIps: connectIpsObj,
           wallets: walletsObj,
-          auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs : INITIAL_EMPTY_DONATION_CONFIG.auditLogs,
+          auditLogs: Array.isArray(parsed.auditLogs)
+            ? parsed.auditLogs
+            : INITIAL_EMPTY_DONATION_CONFIG.auditLogs,
         };
       }
     } catch (e) {

@@ -37,35 +37,64 @@ export const SaarthiLogo: React.FC<SaarthiLogoProps> = ({
 
   // Size calculations
   let iconSize = 38;
+  let iconBoxClass = 'w-10 h-10';
+  let heroMaxHClass = 'max-h-44 max-w-full';
   let textSize = 'text-xl';
   let tagSize = 'text-[9px]';
 
   if (typeof size === 'number') {
     iconSize = size;
+    if (size <= 28) {
+      iconBoxClass = 'w-7 h-7';
+      heroMaxHClass = 'max-h-7 max-w-full';
+    } else if (size <= 36) {
+      iconBoxClass = 'w-9 h-9';
+      heroMaxHClass = 'max-h-9 max-w-full';
+    } else if (size <= 44) {
+      iconBoxClass = 'w-10 h-10';
+      heroMaxHClass = 'max-h-11 max-w-full';
+    } else if (size <= 56) {
+      iconBoxClass = 'w-14 h-14';
+      heroMaxHClass = 'max-h-14 max-w-full';
+    } else if (size <= 80) {
+      iconBoxClass = 'w-20 h-20';
+      heroMaxHClass = 'max-h-20 max-w-full';
+    } else if (size <= 120) {
+      iconBoxClass = 'w-24 h-24';
+      heroMaxHClass = 'max-h-28 max-w-full';
+    } else {
+      iconBoxClass = 'w-32 h-32';
+      heroMaxHClass = 'max-h-44 max-w-full';
+    }
   } else {
     switch (size) {
       case 'sm':
         iconSize = 28;
+        iconBoxClass = 'w-7 h-7';
         textSize = 'text-base sm:text-lg';
         tagSize = 'text-[8px]';
         break;
       case 'md':
         iconSize = 38;
+        iconBoxClass = 'w-10 h-10';
         textSize = 'text-lg sm:text-xl';
         tagSize = 'text-[9px]';
         break;
       case 'lg':
         iconSize = 52;
+        iconBoxClass = 'w-[52px] h-[52px]';
         textSize = 'text-xl sm:text-2xl';
         tagSize = 'text-[10px]';
         break;
       case 'xl':
         iconSize = 72;
+        iconBoxClass = 'w-[72px] h-[72px]';
         textSize = 'text-2xl sm:text-3xl';
         tagSize = 'text-xs';
         break;
       case '2xl':
         iconSize = 96;
+        iconBoxClass = 'w-24 h-24';
         textSize = 'text-3xl sm:text-4xl';
         tagSize = 'text-sm';
         break;
@@ -136,8 +165,7 @@ export const SaarthiLogo: React.FC<SaarthiLogoProps> = ({
 
   const LogoIconContainer = () => (
     <div
-      className="relative shrink-0 flex items-center justify-center transition-all duration-300 group-hover:scale-105 rounded-xl sm:rounded-2xl overflow-hidden shadow-xl bg-slate-950 border border-slate-800/80 ring-1 ring-amber-500/20"
-      style={{ width: iconSize, height: iconSize }}
+      className={`relative shrink-0 flex items-center justify-center transition-all duration-300 group-hover:scale-105 rounded-xl sm:rounded-2xl overflow-hidden shadow-xl bg-slate-950 border border-slate-800/80 ring-1 ring-amber-500/20 ${iconBoxClass}`}
     >
       <LogoImage />
     </div>
@@ -158,8 +186,7 @@ export const SaarthiLogo: React.FC<SaarthiLogoProps> = ({
               onError={handleImageError}
               referrerPolicy="no-referrer"
               loading="eager"
-              className="max-w-full h-auto object-contain rounded-xl sm:rounded-2xl"
-              style={{ maxHeight: typeof size === 'number' ? size : 180, maxWidth: '100%' }}
+              className={`h-auto object-contain rounded-xl sm:rounded-2xl ${heroMaxHClass}`}
             />
           ) : (
             <SvgEmblem width={typeof size === 'number' ? size : 140} height={typeof size === 'number' ? size : 140} />

@@ -1,159 +1,155 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-  Calendar as CalendarIcon,
-  CalendarDays,
-  MoonStar,
+  AlertTriangle,
   ArrowRightLeft,
-  Sparkles,
-  Sun,
-  Moon,
-  Clock,
-  Heart,
-  Home,
-  Baby,
-  Bookmark,
   Award,
+  Baby,
+  BellPlus,
+  Bookmark,
+  Calendar as CalendarIcon,
+  CalendarCheck,
+  CalendarDays,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Printer,
-  Info,
-  CheckCircle2,
-  AlertTriangle,
-  Compass,
-  Search,
-  Filter,
   Flame,
-  Star,
-  Users,
-  Building,
-  RefreshCw,
-  X,
+  Heart,
+  Home,
   Hourglass,
-  CalendarCheck,
-  Compass as CompassIcon,
+  MoonStar,
+  Printer,
+  Search,
+  Sparkles,
+  Sun,
+  X,
 } from 'lucide-react';
 import {
-  CalendarMonthData,
-  CalendarDayDetail,
-  SubhaMuhuratItem,
-  PublicHolidayItem,
-  generateBsMonthData,
-  getSubhaMuhurats,
-  getGovernmentHolidays,
-  convertBsToAdDetailed,
-  convertAdToBsDetailed,
-  calculateNepaliAge,
-  toNepaliDigits,
-  getAvailableBsYears,
-  getAvailableBsDecades,
-  BS_MONTHS_NP,
-  BS_MONTHS_EN,
-  BS_DAYS_NP,
-  BS_DAYS_SHORT_NP,
   BS_DAYS_EN,
+  BS_DAYS_NP,
+  BS_MONTHS_EN,
+  BS_MONTHS_NP,
+  CalendarDayDetail,
+  CalendarMonthData,
+  PublicHolidayItem,
+  SubhaMuhuratItem,
+  calculateNepaliAge,
+  convertAdToBsDetailed,
+  convertBsToAdDetailed,
+  generateBsMonthData,
+  getAvailableBsDecades,
+  getGovernmentHolidays,
+  getSubhaMuhurats,
+  toNepaliDigits,
 } from '../../services/nepaliCalendarService';
-import { getLiveClockData, getBsDateFromAdDate } from '../../utils/bsAdConverter';
+import { getBsDateFromAdDate, getLiveClockData } from '../../utils/bsAdConverter';
+import { useSyncAuth } from '../../context/SyncAuthContext';
+import { Card } from '../ui';
 
 interface CalendarBsAdViewProps {
   currentLang: 'en' | 'ne';
 }
 
 export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang }) => {
+  const isNe = currentLang === 'ne';
   const liveClock = getLiveClockData(new Date());
   const liveBs = getBsDateFromAdDate(new Date());
+  const { upsertKeeperItem } = useSyncAuth();
 
-  // Active Main Sub-Tab
-  const [activeTab, setActiveTab] = useState<'calendar' | 'muhurats' | 'holidays' | 'panchanga' | 'converter' | 'festivals'>('calendar');
+  const [activeTab, setActiveTab] = useState<
+    'calendar' | 'muhurats' | 'holidays' | 'panchanga' | 'converter' | 'festivals'
+  >('calendar');
 
-  // Calendar Month View State (Default to current active BS year and month)
-  const [selectedYear, setSelectedYear] = useState<number>(liveBs.year); // e.g. 2083
-  const [selectedMonth, setSelectedMonth] = useState<number>(liveBs.monthIndex + 1); // 1-12
-
-  // Day Detail Modal State
+  const [selectedYear, setSelectedYear] = useState<number>(liveBs.year);
+  const [selectedMonth, setSelectedMonth] = useState<number>(liveBs.monthIndex + 1);
   const [selectedDayDetail, setSelectedDayDetail] = useState<CalendarDayDetail | null>(null);
+  const [reminderTitleInput, setReminderTitleInput] = useState('');
+  const [reminderSavedBanner, setReminderSavedBanner] = useState(false);
 
-  // Muhurat Filter State
-  const [muhuratFilter, setMuhuratFilter] = useState<'ALL' | 'MARRIAGE' | 'BRATABANDHA' | 'GRIHA_PRAVESH' | 'PASNI'>('ALL');
-
-  // Holiday Filter State
-  const [holidayCategory, setHolidayCategory] = useState<'ALL' | 'National' | 'Festival' | 'Women' | 'Regional' | 'Special'>('ALL');
+  const [muhuratFilter, setMuhuratFilter] = useState<
+    'ALL' | 'MARRIAGE' | 'BRATABANDHA' | 'GRIHA_PRAVESH' | 'PASNI'
+  >('ALL');
+  const [holidayCategory, setHolidayCategory] = useState<
+    'ALL' | 'National' | 'Festival' | 'Women' | 'Regional' | 'Special'
+  >('ALL');
   const [holidaySearchQuery, setHolidaySearchQuery] = useState<string>('');
 
-  // Converter States
   const [convBsYear, setConvBsYear] = useState<number>(liveBs.year);
   const [convBsMonth, setConvBsMonth] = useState<number>(liveBs.monthIndex + 1);
   const [convBsDay, setConvBsDay] = useState<number>(liveBs.day);
-  const [convAdDateInput, setConvAdDateInput] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [convAdDateInput, setConvAdDateInput] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
 
-  // Age Calculator States
   const [birthYear, setBirthYear] = useState<number>(2055);
   const [birthMonth, setBirthMonth] = useState<number>(5);
   const [birthDay, setBirthDay] = useState<number>(15);
 
-  // Date Difference Calculator States
-  const [diffFromYear, setDiffFromYear] = useState<number>(2083);
+  const [diffFromYear, setDiffFromYear] = useState<number>(liveBs.year);
   const [diffFromMonth, setDiffFromMonth] = useState<number>(1);
   const [diffFromDay, setDiffFromDay] = useState<number>(1);
-  const [diffToYear, setDiffToYear] = useState<number>(2083);
-  const [diffToMonth, setDiffToMonth] = useState<number>(selectedMonth);
+  const [diffToYear, setDiffToYear] = useState<number>(liveBs.year);
+  const [diffToMonth, setDiffToMonth] = useState<number>(liveBs.monthIndex + 1);
   const [diffToDay, setDiffToDay] = useState<number>(liveBs.day);
 
-  // Panchanga Selected Date
-  const [panchangaDateBs, setPanchangaDateBs] = useState<{ year: number; month: number; day: number }>({
+  const [panchangaDateBs, setPanchangaDateBs] = useState<{
+    year: number;
+    month: number;
+    day: number;
+  }>({
     year: liveBs.year,
     month: liveBs.monthIndex + 1,
     day: liveBs.day,
   });
 
-  // Fetch month data based on selection
-  const monthData: CalendarMonthData = useMemo(() => {
-    return generateBsMonthData(selectedYear, selectedMonth);
-  }, [selectedYear, selectedMonth]);
+  const monthData: CalendarMonthData = useMemo(
+    () => generateBsMonthData(selectedYear, selectedMonth),
+    [selectedYear, selectedMonth]
+  );
 
-  // Available BS Years (1970 to 2105 BS - 136 years)
-  const availableYears = useMemo(() => getAvailableBsYears(), []);
   const availableDecades = useMemo(() => getAvailableBsDecades(), []);
-
-  // Muhurats list for selected year
-  const allMuhurats: SubhaMuhuratItem[] = useMemo(() => {
-    return getSubhaMuhurats(selectedYear);
-  }, [selectedYear]);
+  const allMuhurats: SubhaMuhuratItem[] = useMemo(
+    () => getSubhaMuhurats(selectedYear),
+    [selectedYear]
+  );
 
   const filteredMuhurats = useMemo(() => {
     if (muhuratFilter === 'ALL') return allMuhurats;
     return allMuhurats.filter((m) => m.type === muhuratFilter);
   }, [allMuhurats, muhuratFilter]);
 
-  // Government Holidays list for selected year
-  const allHolidays: PublicHolidayItem[] = useMemo(() => {
-    return getGovernmentHolidays(selectedYear);
-  }, [selectedYear]);
+  const allHolidays: PublicHolidayItem[] = useMemo(
+    () => getGovernmentHolidays(selectedYear),
+    [selectedYear]
+  );
 
   const filteredHolidays = useMemo(() => {
     return allHolidays.filter((h) => {
       const matchCat = holidayCategory === 'ALL' || h.category === holidayCategory;
+      const q = holidaySearchQuery.toLowerCase();
       const matchSearch =
-        !holidaySearchQuery ||
-        h.nameNp.toLowerCase().includes(holidaySearchQuery.toLowerCase()) ||
-        h.nameEn.toLowerCase().includes(holidaySearchQuery.toLowerCase()) ||
-        h.descriptionNp.toLowerCase().includes(holidaySearchQuery.toLowerCase()) ||
-        h.bsDate.toLowerCase().includes(holidaySearchQuery.toLowerCase());
+        !q ||
+        h.nameNp.toLowerCase().includes(q) ||
+        h.nameEn.toLowerCase().includes(q) ||
+        h.descriptionNp.toLowerCase().includes(q) ||
+        h.bsDate.toLowerCase().includes(q);
       return matchCat && matchSearch;
     });
   }, [allHolidays, holidayCategory, holidaySearchQuery]);
 
-  // Computed Converted Values
-  const bsToAdResult = useMemo(() => {
-    return convertBsToAdDetailed(convBsYear, convBsMonth, convBsDay);
-  }, [convBsYear, convBsMonth, convBsDay]);
+  const bsToAdResult = useMemo(
+    () => convertBsToAdDetailed(convBsYear, convBsMonth, convBsDay),
+    [convBsYear, convBsMonth, convBsDay]
+  );
 
-  const adToBsResult = useMemo(() => {
-    return convertAdToBsDetailed(convAdDateInput);
-  }, [convAdDateInput]);
+  const adToBsResult = useMemo(
+    () => convertAdToBsDetailed(convAdDateInput),
+    [convAdDateInput]
+  );
 
-  const ageResult = useMemo(() => {
-    return calculateNepaliAge(birthYear, birthMonth, birthDay);
-  }, [birthYear, birthMonth, birthDay]);
+  const ageResult = useMemo(
+    () => calculateNepaliAge(birthYear, birthMonth, birthDay),
+    [birthYear, birthMonth, birthDay]
+  );
 
   const dateDiffResult = useMemo(() => {
     const fromAd = convertBsToAdDetailed(diffFromYear, diffFromMonth, diffFromDay);
@@ -161,24 +157,18 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
     const d1 = new Date(fromAd.adDateIso).getTime();
     const d2 = new Date(toAd.adDateIso).getTime();
     const diffDays = Math.round(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-    const weeks = Math.floor(diffDays / 7);
-    const remDays = diffDays % 7;
     return {
       diffDays,
-      weeks,
-      remDays,
-      fromFormatted: fromAd.bsDateNp,
-      toFormatted: toAd.bsDateNp,
+      weeks: Math.floor(diffDays / 7),
+      remDays: diffDays % 7,
     };
   }, [diffFromYear, diffFromMonth, diffFromDay, diffToYear, diffToMonth, diffToDay]);
 
-  // Panchanga detail for selected Panchanga date
   const selectedPanchangaDay = useMemo(() => {
     const mData = generateBsMonthData(panchangaDateBs.year, panchangaDateBs.month);
     return mData.days.find((d) => d.bsDay === panchangaDateBs.day) || mData.days[0];
   }, [panchangaDateBs]);
 
-  // Handlers for month navigation
   const handlePrevMonth = () => {
     if (selectedMonth === 1) {
       setSelectedYear((prev) => prev - 1);
@@ -202,195 +192,180 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
     setSelectedMonth(liveBs.monthIndex + 1);
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleSaveDayReminder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedDayDetail) return;
+    const title =
+      reminderTitleInput.trim() ||
+      selectedDayDetail.festivalNp ||
+      `${selectedDayDetail.bsYear}-${selectedDayDetail.bsMonth}-${selectedDayDetail.bsDay} BS Event`;
+    const nowIso = new Date().toISOString();
+    await upsertKeeperItem({
+      id: `cal-${selectedDayDetail.bsYear}-${selectedDayDetail.bsMonth}-${selectedDayDetail.bsDay}-${Date.now().toString(36)}`,
+      title,
+      category: 'custom',
+      expiryDateAd: selectedDayDetail.adDateStr,
+      expiryDateBs: `${selectedDayDetail.bsYear}-${String(selectedDayDetail.bsMonth).padStart(2, '0')}-${String(selectedDayDetail.bsDay).padStart(2, '0')}`,
+      remindDaysBefore: 7,
+      notes: `Tithi: ${selectedDayDetail.tithiNp}`,
+      createdAt: nowIso.slice(0, 10),
+      updatedAt: nowIso,
+    });
+    setReminderTitleInput('');
+    setReminderSavedBanner(true);
+    setTimeout(() => setReminderSavedBanner(false), 3000);
   };
+
+  const selectCls =
+    'bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-blue-500';
+  const inputCls =
+    'w-full bg-white dark:bg-[#0B1220] border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono text-xs focus:outline-none focus:border-blue-500';
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Top Banner Ribbon */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-red-950/60 via-slate-900 to-slate-950 border border-red-900/40 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      {/* Navy Editorial Hero Header */}
+      <div className="p-5 sm:p-7 rounded-2xl bg-[#0B1F3A] text-white border border-[#1E3A5F] shadow-sm space-y-5">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
           <div className="space-y-2">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-600/30">
-                <CalendarDays className="w-7 h-7" />
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-600/30 border border-blue-400/30 text-blue-200 shrink-0">
+                <CalendarDays className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
-                  <span>{currentLang === 'ne' ? `नेपाली आधिकारिक पात्रो (वि.सं. ${toNepaliDigits(selectedYear)})` : `Nepali Official Calendar (B.S. ${selectedYear})`}</span>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">
-                    136 Years (1970–2105 BS)
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight flex flex-wrap items-center gap-2">
+                  <span>
+                    {isNe
+                      ? `नेपाली आधिकारिक पात्रो (वि.सं. ${toNepaliDigits(selectedYear)})`
+                      : `Nepali Official Calendar (${selectedYear} BS)`}
+                  </span>
+                  <span className="text-xs font-mono font-normal text-blue-200">
+                    1970–2105 BS
                   </span>
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-300">
-                  {currentLang === 'ne'
-                    ? 'नेपाल पञ्चाङ्ग निर्णायक विकास समिति तथा गृह मन्त्रालयको राजपत्रित सार्वजनिक बिदा, शुभ मुहूर्त र दैनिक पञ्चाङ्ग (वि.सं. १९७० देखि २१०५ सम्म)'
-                    : 'Panchanga Nirnayak Samiti astronomical calendar, gazetted public holidays & Subha Muhurats (1970–2105 BS)'}
+                <p className="text-xs sm:text-sm text-blue-100/90 mt-1">
+                  {isNe
+                    ? 'नेपाल पञ्चाङ्ग निर्णायक समिति र गृह मन्त्रालयको राजपत्रित सार्वजनिक बिदा, शुभ मुहूर्त तथा दैनिक पञ्चाङ्ग'
+                    : 'Panchanga calendar, gazetted public holidays, Subha Muhurats & 136-year BS/AD converter'}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Live Clock & Dual Date Badge */}
-          <div className="flex flex-wrap items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl shadow-inner">
-            <div className="text-right">
-              <div className="text-sm font-extrabold text-red-400 font-mono">
+          {/* Live Dual Clock & Actions */}
+          <div className="flex flex-wrap items-center gap-3 bg-[#102A4C] border border-blue-800/60 p-3 rounded-xl">
+            <div className="text-left sm:text-right">
+              <div className="text-sm font-semibold text-white font-mono">
                 {liveClock.bsDateNp}
               </div>
-              <div className="text-[11px] text-slate-400">
-                {liveClock.adDateStr} • {liveClock.gmtOffsetStr}
+              <div className="text-[11px] text-blue-200 font-mono">
+                {liveClock.adDateStr} · {liveClock.gmtOffsetStr}
               </div>
             </div>
-            <div className="h-8 w-px bg-slate-800 hidden sm:block" />
+            <div className="h-7 w-px bg-blue-800 hidden sm:block" />
             <button
+              type="button"
               onClick={handleToday}
-              className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all shadow-md shadow-red-600/20 flex items-center gap-1.5"
+              className="min-h-[38px] px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <CalendarCheck className="w-3.5 h-3.5" />
-              <span>{currentLang === 'ne' ? 'आज (Today)' : 'Today'}</span>
+              <span>{isNe ? 'आज' : 'Today'}</span>
             </button>
             <button
-              onClick={handlePrint}
-              className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all text-xs flex items-center justify-center border border-slate-700"
-              title="Print Calendar Sheet"
+              type="button"
+              onClick={() => window.print()}
+              className="min-h-[38px] min-w-[38px] p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center justify-center cursor-pointer"
+              title="Print Calendar"
+              aria-label="Print Calendar"
             >
               <Printer className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Sub-Navigation Navigation Pills */}
-        <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-slate-800/80">
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'calendar'
-                ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <CalendarIcon className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'मासिक पात्रो' : 'Monthly Calendar'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('muhurats')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'muhurats'
-                ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
-                : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Sparkles className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'शुभ मुहूर्त तथा लगन' : 'Subha Muhurats'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('holidays')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'holidays'
-                ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
-                : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Award className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'सार्वजनिक बिदाहरू' : 'Government Holidays'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('panchanga')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'panchanga'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
-                : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <MoonStar className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'दैनिक पञ्चाङ्ग' : 'Daily Panchanga'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('converter')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'converter'
-                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <ArrowRightLeft className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'मिति रूपान्तरण र उमेर' : 'Date Converter & Age'}</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('festivals')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-              activeTab === 'festivals'
-                ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/30'
-                : 'bg-slate-900/70 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }`}
-          >
-            <Flame className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'वार्षिक चाडपर्व गाइड' : 'Yearly Festivals'}</span>
-          </button>
+        {/* Sub-Navigation Bar */}
+        <div className="flex flex-wrap gap-2 pt-4 border-t border-white/15">
+          {[
+            { id: 'calendar', icon: CalendarIcon, label: isNe ? 'मासिक पात्रो' : 'Monthly Calendar' },
+            { id: 'muhurats', icon: Sparkles, label: isNe ? 'शुभ मुहूर्त' : 'Subha Muhurats' },
+            { id: 'holidays', icon: Award, label: isNe ? 'सार्वजनिक बिदा' : 'Government Holidays' },
+            { id: 'panchanga', icon: MoonStar, label: isNe ? 'दैनिक पञ्चाङ्ग' : 'Daily Panchanga' },
+            { id: 'converter', icon: ArrowRightLeft, label: isNe ? 'मिति रूपान्तरण र उमेर' : 'Date Converter & Age' },
+            { id: 'festivals', icon: Flame, label: isNe ? 'वार्षिक चाडपर्व' : 'Yearly Festivals' },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer ${
+                  active
+                    ? 'bg-white text-[#0B1F3A] shadow-sm'
+                    : 'bg-white/10 hover:bg-white/20 text-blue-100'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* TAB 1: MONTHLY CALENDAR GRID VIEW */}
-      {/* ========================================================================= */}
+      {/* TAB 1: MONTHLY CALENDAR */}
       {activeTab === 'calendar' && (
         <div className="space-y-6">
-          {/* Month & Year Selector Control Bar */}
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 shadow-md flex flex-wrap items-center justify-between gap-4">
+          <Card className="p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl p-1">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 rounded-xl p-1">
                 <button
+                  type="button"
                   onClick={handlePrevMonth}
-                  className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all"
-                  title="Previous Month"
+                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                  aria-label="Previous Month"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  <ChevronLeft className="w-4 h-4" />
                 </button>
                 <div className="px-3 text-center">
-                  <div className="text-lg font-black text-white flex items-center gap-2">
+                  <div className="text-base sm:text-lg font-bold text-[#0B1F3A] dark:text-white flex items-center gap-2">
                     <span>{monthData.bsMonthNameNp}</span>
-                    <span className="text-red-400 font-mono">{toNepaliDigits(monthData.bsYear)}</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-mono">
+                      {toNepaliDigits(monthData.bsYear)}
+                    </span>
                   </div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     {monthData.bsMonthNameEn} ({monthData.adMonthRange})
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={handleNextMonth}
-                  className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-all"
-                  title="Next Month"
+                  className="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                  aria-label="Next Month"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Season / Ritu Badge */}
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-amber-300">
-                <Sun className="w-4 h-4 text-amber-400" />
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs font-medium text-[#0B1F3A] dark:text-blue-200">
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
                 <span>{monthData.rituNp}</span>
               </div>
             </div>
 
-            {/* Quick Dropdown Selectors */}
             <div className="flex items-center gap-2">
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500 max-h-60"
+                className={selectCls}
+                aria-label="Select BS Year"
               >
                 {availableDecades.map((dec) => (
-                  <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)} को दशक (${dec.labelEn})`}>
+                  <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)} (${dec.labelEn})`}>
                     {dec.years.map((y) => (
                       <option key={y} value={y}>
-                        वि.सं. {toNepaliDigits(y)} ({y} BS)
+                        वि.सं. {toNepaliDigits(y)} ({y})
                       </option>
                     ))}
                   </optgroup>
@@ -400,7 +375,8 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-red-500"
+                className={selectCls}
+                aria-label="Select BS Month"
               >
                 {BS_MONTHS_NP.map((m, idx) => (
                   <option key={idx} value={idx + 1}>
@@ -409,39 +385,38 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                 ))}
               </select>
             </div>
-          </div>
+          </Card>
 
-          {/* Calendar Grid */}
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 border-b border-slate-800 bg-slate-950/80 text-center">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] text-center">
               {BS_DAYS_NP.map((dayName, idx) => {
                 const isSat = idx === 6;
                 return (
                   <div
                     key={idx}
-                    className={`py-3 px-1 text-xs font-bold ${
-                      isSat ? 'text-rose-400 bg-rose-950/20' : 'text-slate-300'
+                    className={`py-3 px-1 text-xs font-semibold ${
+                      isSat
+                        ? 'text-rose-600 dark:text-rose-400 bg-rose-50/70 dark:bg-rose-950/20'
+                        : 'text-[#0B1F3A] dark:text-slate-200'
                     }`}
                   >
                     <div>{dayName}</div>
-                    <div className="text-[10px] text-slate-500 font-normal">{BS_DAYS_EN[idx]}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
+                      {BS_DAYS_EN[idx]}
+                    </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* Month Day Cells */}
-            <div className="grid grid-cols-7 auto-rows-fr bg-slate-900/50">
-              {/* Empty padding cells before first day */}
+            <div className="grid grid-cols-7 auto-rows-fr">
               {Array.from({ length: monthData.startDayOfWeek }).map((_, idx) => (
                 <div
                   key={`empty-${idx}`}
-                  className="min-h-[90px] sm:min-h-[110px] border-b border-r border-slate-800/40 bg-slate-950/30 opacity-40"
+                  className="min-h-[86px] sm:min-h-[110px] border-b border-r border-slate-200/70 dark:border-slate-800/60 bg-slate-50/70 dark:bg-[#0B1220]/40"
                 />
               ))}
 
-              {/* Actual Month Days */}
               {monthData.days.map((day) => {
                 const isToday =
                   day.bsYear === liveBs.year &&
@@ -451,139 +426,239 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                 const isHoliday = day.isHoliday;
 
                 return (
-                  <div
+                  <button
                     key={day.bsDay}
+                    type="button"
                     onClick={() => setSelectedDayDetail(day)}
-                    className={`min-h-[90px] sm:min-h-[115px] p-2 border-b border-r border-slate-800/50 cursor-pointer transition-all hover:bg-slate-800/60 relative group flex flex-col justify-between ${
+                    className={`min-h-[86px] sm:min-h-[112px] p-2 border-b border-r border-slate-200/80 dark:border-slate-800/70 cursor-pointer transition-colors text-left flex flex-col justify-between hover:bg-blue-50/60 dark:hover:bg-slate-800/60 relative ${
                       isToday
-                        ? 'bg-red-950/30 ring-2 ring-red-500 z-10'
+                        ? 'bg-blue-50 dark:bg-blue-950/40 ring-2 ring-inset ring-blue-600 dark:ring-blue-400 z-10'
                         : isHoliday
-                        ? 'bg-rose-950/15'
-                        : 'bg-slate-900/40'
+                        ? 'bg-rose-50/50 dark:bg-rose-950/15'
+                        : ''
                     }`}
                   >
-                    {/* Top Row: BS Day & AD Day */}
-                    <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-start justify-between gap-1 w-full">
                       <span
-                        className={`text-base sm:text-xl font-black font-mono leading-none ${
-                          isHoliday || isSat ? 'text-rose-400' : 'text-white'
+                        className={`text-base sm:text-xl font-bold font-mono leading-none ${
+                          isHoliday || isSat
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : 'text-[#0B1F3A] dark:text-white'
                         }`}
                       >
                         {toNepaliDigits(day.bsDay)}
                       </span>
-                      <span className="text-[10px] font-mono text-slate-400">
+                      <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                         {day.adDay} {day.adMonth}
                       </span>
                     </div>
 
-                    {/* Middle: Tithi */}
                     <div className="mt-1">
-                      <div className="text-[10px] sm:text-[11px] font-medium text-slate-400 truncate">
+                      <div className="text-[10px] sm:text-[11px] font-medium text-slate-600 dark:text-slate-400 truncate">
                         {day.tithiNp}
                       </div>
                     </div>
 
-                    {/* Bottom: Festival or Holiday Badge */}
-                    <div className="mt-auto space-y-0.5">
+                    <div className="mt-auto space-y-0.5 w-full">
                       {day.festivalNp && (
                         <div
-                          className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded leading-tight line-clamp-2 ${
+                          className={`text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded leading-tight line-clamp-2 ${
                             day.isHoliday
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                              : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                              ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'
+                              : 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300'
                           }`}
                         >
                           {day.festivalNp}
                         </div>
                       )}
 
-                      {/* Ekadashi / Purnima / Aunsi Indicator */}
-                      {(day.isEkadashi || day.isPurnima || day.isAunsi) && !day.festivalNp && (
-                        <div className="text-[9px] px-1 py-0.2 rounded bg-purple-500/20 text-purple-300 font-semibold truncate">
-                          {day.tithiNp}
-                        </div>
-                      )}
-
-                      {/* Today Badge */}
                       {isToday && (
-                        <div className="text-[8px] sm:text-[9px] font-extrabold uppercase px-1 py-0.5 rounded bg-red-600 text-white text-center">
-                          आज (Today)
+                        <div className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-blue-600 text-white text-center">
+                          {isNe ? 'आज' : 'Today'}
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Month Summary Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-red-500/10 text-red-400">
+            <Card className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                 <CalendarDays className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-xs text-slate-400">कुल दिन संख्या (Total Days)</div>
-                <div className="text-base font-bold text-white">{toNepaliDigits(monthData.totalDays)} दिन ({monthData.totalDays} Days)</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isNe ? 'कुल दिन संख्या' : 'Total Days'}
+                </div>
+                <div className="text-base font-bold text-[#0B1F3A] dark:text-white font-mono">
+                  {toNepaliDigits(monthData.totalDays)} दिन ({monthData.totalDays})
+                </div>
               </div>
-            </div>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-rose-500/10 text-rose-400">
+            <Card className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
                 <Award className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-xs text-slate-400">सार्वजनिक बिदाहरू (Holidays)</div>
-                <div className="text-base font-bold text-rose-400">
-                  {toNepaliDigits(monthData.days.filter((d) => d.isHoliday).length)} बिदा दिनहरू (शनिबार सहित)
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isNe ? 'सार्वजनिक बिदा (शनिबार सहित)' : 'Holidays (incl. Sat)'}
+                </div>
+                <div className="text-base font-bold text-rose-600 dark:text-rose-400 font-mono">
+                  {toNepaliDigits(monthData.days.filter((d) => d.isHoliday).length)} दिन
                 </div>
               </div>
-            </div>
+            </Card>
 
-            <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
+            <Card className="p-4 flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400">
                 <Flame className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-xs text-slate-400">चाडपर्व तथा विशेष दिनहरू</div>
-                <div className="text-base font-bold text-amber-400">
-                  {toNepaliDigits(monthData.days.filter((d) => d.festivalNp).length)} वटा चाडपर्व / उत्सव
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {isNe ? 'चाडपर्व तथा विशेष दिन' : 'Festivals & Observances'}
+                </div>
+                <div className="text-base font-bold text-amber-600 dark:text-amber-400 font-mono">
+                  {toNepaliDigits(monthData.days.filter((d) => d.festivalNp).length)} वटा
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 2: SUBHA MUHURATS (विवाह, ब्रतबन्ध, गृहप्रवेश, पास्नी) */}
-      {/* ========================================================================= */}
+      {/* TAB 2: SUBHA MUHURATS */}
       {activeTab === 'muhurats' && (
-        <div className="space-y-6">
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-400" />
-                <span>{currentLang === 'ne' ? `शुभ मुहूर्त तथा लगन सूची (वि.सं. ${toNepaliDigits(selectedYear)})` : `Auspicious Muhurats (B.S. ${selectedYear})`}</span>
+        <div className="space-y-5">
+          <Card className="p-5 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <span>
+                  {isNe
+                    ? `शुभ मुहूर्त तथा लगन सूची (वि.सं. ${toNepaliDigits(selectedYear)})`
+                    : `Auspicious Muhurats (${selectedYear} BS)`}
+                </span>
               </h2>
-              <p className="text-xs text-slate-400">
-                {currentLang === 'ne'
-                  ? 'विवाह, ब्रतबन्ध, गृह प्रवेश तथा पास्नीका वैदिक ज्योतिष अनुसारका शुभ साइतहरू'
-                  : 'Authentic Vedic astrological Muhurat timings for Vivaha, Bratabandha, and Griha Pravesh'}
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                {isNe
+                  ? 'विवाह, ब्रतबन्ध, गृह प्रवेश तथा पास्नीका शुभ साइतहरू'
+                  : 'Vedic Muhurat timings for Vivaha, Bratabandha, Griha Pravesh & Pasni'}
               </p>
             </div>
 
-            {/* Year Selector for Muhurats */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 font-semibold">{currentLang === 'ne' ? 'वर्ष:' : 'Year:'}</span>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className={selectCls}
+            >
+              {availableDecades.map((dec) => (
+                <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)}`}>
+                  {dec.years.map((y) => (
+                    <option key={y} value={y}>
+                      वि.सं. {toNepaliDigits(y)} ({y})
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+
+            <div className="flex flex-wrap gap-2 w-full pt-3 border-t border-slate-200 dark:border-slate-800">
+              {[
+                { id: 'ALL', label: `सबै साइत (${allMuhurats.length})`, icon: Sparkles },
+                { id: 'MARRIAGE', label: 'विवाह लगन', icon: Heart },
+                { id: 'BRATABANDHA', label: 'ब्रतबन्ध', icon: Bookmark },
+                { id: 'GRIHA_PRAVESH', label: 'गृह प्रवेश', icon: Home },
+                { id: 'PASNI', label: 'पास्नी', icon: Baby },
+              ].map((btn) => {
+                const Icon = btn.icon;
+                const active = muhuratFilter === btn.id;
+                return (
+                  <button
+                    key={btn.id}
+                    type="button"
+                    onClick={() => setMuhuratFilter(btn.id as any)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer ${
+                      active
+                        ? 'bg-[#0B1F3A] dark:bg-blue-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{btn.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredMuhurats.map((m) => (
+              <Card key={m.id} className="p-5 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-blue-600 dark:text-blue-400">{m.typeNameNp}</span>
+                  <span className="font-mono text-slate-500 dark:text-slate-400">{m.dayNameNp}</span>
+                </div>
+                <div>
+                  <div className="text-base font-bold text-[#0B1F3A] dark:text-white">
+                    वि.सं. {toNepaliDigits(m.bsYear)} {m.bsMonthNameNp} {toNepaliDigits(m.bsDay)}
+                  </div>
+                  <div className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    A.D. {m.adDateStr}
+                  </div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">तिथि / नक्षत्र:</span>
+                    <span className="font-semibold text-[#0B1F3A] dark:text-slate-200">
+                      {m.tithiNp} · {m.nakshatraNp}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">शुभ समय:</span>
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      {m.timeWindowNp}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{m.descriptionNp}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: PUBLIC HOLIDAYS */}
+      {activeTab === 'holidays' && (
+        <div className="space-y-5">
+          <Card className="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                <Award className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                <span>
+                  {isNe
+                    ? `आधिकारिक सार्वजनिक बिदाहरू (वि.सं. ${toNepaliDigits(selectedYear)})`
+                    : `Nepal Gazetted Public Holidays (${selectedYear} BS)`}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                {isNe
+                  ? 'नेपाल राजपत्र अनुसार राष्ट्रिय, चाडपर्व, प्रादेशिक तथा महिला बिदाहरू'
+                  : 'Official Ministry of Home Affairs gazetted holiday calendar'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-amber-500"
+                className={selectCls}
               >
                 {availableDecades.map((dec) => (
-                  <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)} दशक`}>
+                  <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)}`}>
                     {dec.years.map((y) => (
                       <option key={y} value={y}>
                         वि.सं. {toNepaliDigits(y)} ({y})
@@ -592,204 +667,37 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                   </optgroup>
                 ))}
               </select>
-            </div>
 
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-2 w-full pt-2 border-t border-slate-800/80">
-              <button
-                onClick={() => setMuhuratFilter('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  muhuratFilter === 'ALL'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                सबै साइत ({allMuhurats.length})
-              </button>
-              <button
-                onClick={() => setMuhuratFilter('MARRIAGE')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
-                  muhuratFilter === 'MARRIAGE'
-                    ? 'bg-rose-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Heart className="w-3.5 h-3.5" />
-                <span>विवाह लगन</span>
-              </button>
-              <button
-                onClick={() => setMuhuratFilter('BRATABANDHA')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
-                  muhuratFilter === 'BRATABANDHA'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Bookmark className="w-3.5 h-3.5" />
-                <span>ब्रतबन्ध लगन</span>
-              </button>
-              <button
-                onClick={() => setMuhuratFilter('GRIHA_PRAVESH')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
-                  muhuratFilter === 'GRIHA_PRAVESH'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Home className="w-3.5 h-3.5" />
-                <span>गृह प्रवेश</span>
-              </button>
-              <button
-                onClick={() => setMuhuratFilter('PASNI')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
-                  muhuratFilter === 'PASNI'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                <Baby className="w-3.5 h-3.5" />
-                <span>पास्नी / अन्नप्राशन</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Muhurat Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMuhurats.map((m) => {
-              const isMarriage = m.type === 'MARRIAGE';
-              const isBratabandha = m.type === 'BRATABANDHA';
-              const isGriha = m.type === 'GRIHA_PRAVESH';
-              const isPasni = m.type === 'PASNI';
-
-              const badgeColor = isMarriage
-                ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
-                : isBratabandha
-                ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-                : isGriha
-                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                : 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-
-              const icon = isMarriage ? (
-                <Heart className="w-4 h-4 text-rose-400" />
-              ) : isBratabandha ? (
-                <Bookmark className="w-4 h-4 text-purple-400" />
-              ) : isGriha ? (
-                <Home className="w-4 h-4 text-emerald-400" />
-              ) : (
-                <Baby className="w-4 h-4 text-blue-400" />
-              );
-
-              return (
-                <div
-                  key={m.id}
-                  className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 shadow-md transition-all space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border flex items-center gap-1.5 ${badgeColor}`}>
-                      {icon}
-                      <span>{m.typeNameNp}</span>
-                    </span>
-                    <span className="text-xs text-slate-400 font-mono">{m.dayNameNp}</span>
-                  </div>
-
-                  <div>
-                    <div className="text-lg font-black text-white">
-                      वि.सं. {toNepaliDigits(m.bsYear)} {m.bsMonthNameNp} {toNepaliDigits(m.bsDay)}
-                    </div>
-                    <div className="text-xs text-slate-400 font-mono">
-                      A.D. {m.adDateStr}
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-1.5">
-                    <div className="flex justify-between text-slate-300">
-                      <span className="text-slate-400">तिथि / नक्षत्र:</span>
-                      <span className="font-semibold text-amber-300">{m.tithiNp} • {m.nakshatraNp}</span>
-                    </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span className="text-slate-400">शुभ समय:</span>
-                      <span className="font-semibold text-emerald-400">{m.timeWindowNp}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-400">{m.descriptionNp}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 3: GOVERNMENT PUBLIC HOLIDAYS (सार्वजनिक बिदाहरू) */}
-      {/* ========================================================================= */}
-      {activeTab === 'holidays' && (
-        <div className="space-y-6">
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <Award className="w-5 h-5 text-rose-500" />
-                <span>{currentLang === 'ne' ? `नेपाल सरकारका आधिकारिक सार्वजनिक बिदाहरू (वि.सं. ${toNepaliDigits(selectedYear)})` : `Nepal Gazetted Public Holidays (${selectedYear} BS)`}</span>
-              </h2>
-              <p className="text-xs text-slate-400">
-                {currentLang === 'ne'
-                  ? 'नेपाल राजपत्रमा प्रकाशित राष्ट्रिय, चाडपर्व, प्रादेशिक तथा महिला बिदाहरू'
-                  : 'Official Ministry of Home Affairs gazetted holiday calendar'}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              {/* Year Selector for Holidays */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 font-semibold">{currentLang === 'ne' ? 'वर्ष:' : 'Year:'}</span>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-rose-500"
-                >
-                  {availableDecades.map((dec) => (
-                    <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)} दशक`}>
-                      {dec.years.map((y) => (
-                        <option key={y} value={y}>
-                          वि.सं. {toNepaliDigits(y)} ({y})
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </div>
-
-              {/* Search Box */}
-              <div className="relative flex-1 md:w-60">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <div className="relative flex-1 md:w-56">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   value={holidaySearchQuery}
                   onChange={(e) => setHolidaySearchQuery(e.target.value)}
-                  placeholder={currentLang === 'ne' ? 'बिदा वा चाडपर्व खोज्नुहोस्...' : 'Search holiday...'}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
+                  placeholder={isNe ? 'बिदा खोज्नुहोस्...' : 'Search holiday...'}
+                  className={`${inputCls} pl-8 py-2`}
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Category Filter Pills */}
           <div className="flex flex-wrap gap-2">
             {[
-              { id: 'ALL', label: 'सबै बिदाहरू' },
-              { id: 'National', label: 'राष्ट्रिय बिदा' },
-              { id: 'Festival', label: 'चाडपर्व बिदा' },
-              { id: 'Women', label: 'महिला बिदा' },
-              { id: 'Regional', label: 'उपत्यका / प्रादेशिक' },
-              { id: 'Special', label: 'समुदाय विशेष (ल्होसार आदि)' },
+              { id: 'ALL', label: isNe ? 'सबै' : 'All' },
+              { id: 'National', label: isNe ? 'राष्ट्रिय' : 'National' },
+              { id: 'Festival', label: isNe ? 'चाडपर्व' : 'Festival' },
+              { id: 'Women', label: isNe ? 'महिला' : 'Women' },
+              { id: 'Regional', label: isNe ? 'प्रादेशिक' : 'Regional' },
+              { id: 'Special', label: isNe ? 'समुदाय विशेष' : 'Special' },
             ].map((cat) => (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => setHolidayCategory(cat.id as any)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold cursor-pointer ${
                   holidayCategory === cat.id
-                    ? 'bg-rose-600 text-white shadow-md'
-                    : 'bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800'
+                    ? 'bg-[#0B1F3A] dark:bg-blue-600 text-white'
+                    : 'bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300'
                 }`}
               >
                 {cat.label}
@@ -797,76 +705,66 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
             ))}
           </div>
 
-          {/* Holidays Table / List */}
           <div className="space-y-3">
             {filteredHolidays.map((h) => (
-              <div
+              <Card
                 key={h.id}
-                className="p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold text-white">{h.nameNp}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        h.category === 'National'
-                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                          : h.category === 'Women'
-                          ? 'bg-pink-500/20 text-pink-300 border border-pink-500/30'
-                          : h.category === 'Regional'
-                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                          : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                      }`}
-                    >
-                      {h.category}
+                    <span className="text-sm sm:text-base font-semibold text-[#0B1F3A] dark:text-white">
+                      {h.nameNp}
+                    </span>
+                    <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400">
+                      · {h.category}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-400">{h.descriptionNp}</div>
-                  <div className="text-[11px] text-slate-500 font-mono">लागू हुने क्षेत्र: {h.applicableToNp}</div>
+                  <div className="text-xs text-slate-600 dark:text-slate-400">{h.descriptionNp}</div>
+                  <div className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                    {h.applicableToNp}
+                  </div>
                 </div>
-
-                <div className="sm:text-right shrink-0 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                  <div className="text-sm font-black text-rose-400 font-mono">{h.bsDate}</div>
-                  <div className="text-xs text-slate-400">
+                <div className="sm:text-right shrink-0 bg-slate-50 dark:bg-[#0B1220] px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <div className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">
+                    {h.bsDate}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {h.adDate} ({h.dayOfWeekNp})
                   </div>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 4: DAILY PANCHANGA (दैनिक पञ्चाङ्ग तथा कुण्डली) */}
-      {/* ========================================================================= */}
+      {/* TAB 4: PANCHANGA */}
       {activeTab === 'panchanga' && (
-        <div className="space-y-6">
-          {/* Panchanga Date Selector Bar */}
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-5">
+          <Card className="p-5 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <MoonStar className="w-5 h-5 text-purple-400" />
-                <span>{currentLang === 'ne' ? 'दैनिक पञ्चाङ्ग तथा साइत विवरण' : 'Daily Panchanga & Astrological Guide'}</span>
+              <h2 className="text-lg font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                <MoonStar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <span>{isNe ? 'दैनिक पञ्चाङ्ग विवरण' : 'Daily Panchanga & Timing Guide'}</span>
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {currentLang === 'ne'
-                  ? 'तिथि, नक्षत्र, योग, करण, सूर्योदय/सूर्यास्त, चन्द्र राशि र राहु काल'
-                  : 'Authentic 5-limb Vedic Panchanga calculation for Kathmandu / Nepal'}
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                {isNe
+                  ? 'तिथि, नक्षत्र, योग, करण, सूर्योदय/सूर्यास्त र राहु काल'
+                  : '5-limb Panchanga timings computed for Kathmandu, Nepal'}
               </p>
             </div>
 
-            {/* Panchanga Date Selectors */}
             <div className="flex flex-wrap items-center gap-2">
               <select
                 value={panchangaDateBs.year}
                 onChange={(e) =>
                   setPanchangaDateBs((prev) => ({ ...prev, year: Number(e.target.value) }))
                 }
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-purple-500"
+                className={selectCls}
               >
                 {availableDecades.map((dec) => (
-                  <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)} दशक`}>
+                  <optgroup key={dec.decade} label={`वि.सं. ${toNepaliDigits(dec.decade)}`}>
                     {dec.years.map((y) => (
                       <option key={y} value={y}>
                         वि.सं. {toNepaliDigits(y)}
@@ -881,7 +779,7 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                 onChange={(e) =>
                   setPanchangaDateBs((prev) => ({ ...prev, month: Number(e.target.value) }))
                 }
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-purple-500"
+                className={selectCls}
               >
                 {BS_MONTHS_NP.map((m, idx) => (
                   <option key={idx} value={idx + 1}>
@@ -895,7 +793,7 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                 onChange={(e) =>
                   setPanchangaDateBs((prev) => ({ ...prev, day: Number(e.target.value) }))
                 }
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-purple-500"
+                className={selectCls}
               >
                 {Array.from({ length: 32 }).map((_, idx) => (
                   <option key={idx + 1} value={idx + 1}>
@@ -904,161 +802,162 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                 ))}
               </select>
             </div>
-          </div>
+          </Card>
 
-          {/* Panchanga Display Card */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
+          <Card className="p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-2">
               <div>
-                <div className="text-2xl font-black text-white">
-                  वि.सं. {toNepaliDigits(selectedPanchangaDay.bsYear)} {BS_MONTHS_NP[selectedPanchangaDay.bsMonth - 1]} {toNepaliDigits(selectedPanchangaDay.bsDay)}
+                <div className="text-xl sm:text-2xl font-bold text-[#0B1F3A] dark:text-white">
+                  वि.सं. {toNepaliDigits(selectedPanchangaDay.bsYear)}{' '}
+                  {BS_MONTHS_NP[selectedPanchangaDay.bsMonth - 1]}{' '}
+                  {toNepaliDigits(selectedPanchangaDay.bsDay)}
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  {selectedPanchangaDay.adDateFormatted} ({selectedPanchangaDay.dayNameNp} / {selectedPanchangaDay.dayNameEn})
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {selectedPanchangaDay.adDateFormatted} ({selectedPanchangaDay.dayNameNp} /{' '}
+                  {selectedPanchangaDay.dayNameEn})
                 </div>
               </div>
-
               {selectedPanchangaDay.festivalNp && (
-                <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                <div className="px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-semibold">
                   {selectedPanchangaDay.festivalNp}
                 </div>
               )}
             </div>
 
-            {/* 5 Limbs Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <span className="text-[10px] text-slate-400 block font-semibold uppercase">१. तिथि (Tithi)</span>
-                <div className="text-base font-bold text-white">{selectedPanchangaDay.tithiNp}</div>
-                <div className="text-[11px] text-purple-400">{selectedPanchangaDay.pakshaNp}</div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <span className="text-[10px] text-slate-400 block font-semibold uppercase">२. नक्षत्र (Nakshatra)</span>
-                <div className="text-base font-bold text-white">{selectedPanchangaDay.nakshatraNp}</div>
-                <div className="text-[11px] text-slate-400">चरण अनुसार शुभ फल</div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <span className="text-[10px] text-slate-400 block font-semibold uppercase">३. योग (Yoga)</span>
-                <div className="text-base font-bold text-white">{selectedPanchangaDay.yogaNp}</div>
-                <div className="text-[11px] text-emerald-400">शुभ योग</div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <span className="text-[10px] text-slate-400 block font-semibold uppercase">४. करण (Karana)</span>
-                <div className="text-base font-bold text-white">{selectedPanchangaDay.karanaNp}</div>
-                <div className="text-[11px] text-slate-400">स्थिर / चर करण</div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-                <span className="text-[10px] text-slate-400 block font-semibold uppercase">५. राशि (Signs)</span>
-                <div className="text-sm font-bold text-white">चन्द्र: {selectedPanchangaDay.chandrarashiNp.split(' ')[0]}</div>
-                <div className="text-[11px] text-amber-400">सूर्य: {selectedPanchangaDay.suryarashiNp.split(' ')[0]}</div>
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {[
+                { label: '१. तिथि', val: selectedPanchangaDay.tithiNp, sub: selectedPanchangaDay.pakshaNp },
+                { label: '२. नक्षत्र', val: selectedPanchangaDay.nakshatraNp, sub: 'नक्षत्र चरण' },
+                { label: '३. योग', val: selectedPanchangaDay.yogaNp, sub: 'दैनिक योग' },
+                { label: '४. करण', val: selectedPanchangaDay.karanaNp, sub: 'दैनिक करण' },
+                {
+                  label: '५. राशि',
+                  val: `चन्द्र: ${selectedPanchangaDay.chandrarashiNp.split(' ')[0]}`,
+                  sub: `सूर्य: ${selectedPanchangaDay.suryarashiNp.split(' ')[0]}`,
+                },
+              ].map((limb) => (
+                <div
+                  key={limb.label}
+                  className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-1"
+                >
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                    {limb.label}
+                  </span>
+                  <div className="text-sm font-bold text-[#0B1F3A] dark:text-white">{limb.val}</div>
+                  <div className="text-[11px] text-blue-600 dark:text-blue-400">{limb.sub}</div>
+                </div>
+              ))}
             </div>
 
-            {/* Sun, Moon & Forbidden Timings */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Sun & Moon Times */}
-              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-                <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <Sun className="w-4 h-4 text-amber-400" />
-                  <span>सूर्योदय तथा सूर्यास्त (काठमाडौं)</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                <div className="font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  <span>सूर्योदय / सूर्यास्त</span>
                 </div>
-                <div className="space-y-2 text-xs text-slate-300">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">सूर्योदय:</span>
-                    <span className="font-mono font-bold text-amber-400">{selectedPanchangaDay.sunriseTime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">सूर्यास्त:</span>
-                    <span className="font-mono font-bold text-rose-400">{selectedPanchangaDay.sunsetTime}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">चन्द्रोदय:</span>
-                    <span className="font-mono text-slate-300">{selectedPanchangaDay.moonriseTime}</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">सूर्योदय:</span>
+                  <span className="font-mono font-semibold text-[#0B1F3A] dark:text-white">
+                    {selectedPanchangaDay.sunriseTime}
+                  </span>
                 </div>
-              </div>
-
-              {/* Auspicious Muhurats */}
-              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-                <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <span>शुभ समय (Auspicious Muhurats)</span>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">सूर्यास्त:</span>
+                  <span className="font-mono font-semibold text-[#0B1F3A] dark:text-white">
+                    {selectedPanchangaDay.sunsetTime}
+                  </span>
                 </div>
-                <div className="space-y-2 text-xs text-slate-300">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">अभिजीत मुहूर्त:</span>
-                    <span className="font-mono font-bold text-emerald-400">{selectedPanchangaDay.abhijitMuhurat}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">ब्रह्म मुहूर्त:</span>
-                    <span className="font-mono text-purple-300">{selectedPanchangaDay.brahmaMuhurat}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">अमृत काल:</span>
-                    <span className="font-mono text-emerald-300">{selectedPanchangaDay.amritKaal}</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">चन्द्रोदय:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {selectedPanchangaDay.moonriseTime}
+                  </span>
                 </div>
               </div>
 
-              {/* Forbidden & Inauspicious Times */}
-              <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
-                <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-400" />
-                  <span>वर्जित समय तथा दिशाशूल</span>
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                <div className="font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>शुभ समय</span>
                 </div>
-                <div className="space-y-2 text-xs text-slate-300">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">राहु काल (अशुभ):</span>
-                    <span className="font-mono font-bold text-rose-400">{selectedPanchangaDay.rahuKaal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">यमघण्ट काल:</span>
-                    <span className="font-mono text-slate-400">{selectedPanchangaDay.yamaghantaKaal}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">दिशाशूल (यात्रा वर्जित):</span>
-                    <span className="font-bold text-amber-300">{selectedPanchangaDay.dishashoolNp}</span>
-                  </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">अभिजीत मुहूर्त:</span>
+                  <span className="font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                    {selectedPanchangaDay.abhijitMuhurat}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">ब्रह्म मुहूर्त:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {selectedPanchangaDay.brahmaMuhurat}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">अमृत काल:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {selectedPanchangaDay.amritKaal}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                <div className="font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-500" />
+                  <span>वर्जित समय</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">राहु काल:</span>
+                  <span className="font-mono font-semibold text-rose-600 dark:text-rose-400">
+                    {selectedPanchangaDay.rahuKaal}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">यमघण्ट काल:</span>
+                  <span className="font-mono text-slate-700 dark:text-slate-300">
+                    {selectedPanchangaDay.yamaghantaKaal}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">दिशाशूल:</span>
+                  <span className="font-semibold text-amber-700 dark:text-amber-300">
+                    {selectedPanchangaDay.dishashoolNp}
+                  </span>
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 5: BS ↔ AD CONVERTER & NEPALI AGE CALCULATOR */}
-      {/* ========================================================================= */}
+      {/* TAB 5: BS <-> AD CONVERTER & AGE CALCULATOR */}
       {activeTab === 'converter' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 1. BS to AD Converter */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-md space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-                <ArrowRightLeft className="w-5 h-5 text-red-400" />
-                <span>१. वि.सं. (BS) बाट ई.सं. (AD) रूपान्तरण</span>
+            <Card className="p-6 space-y-4">
+              <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <ArrowRightLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>{isNe ? '१. वि.सं. (BS) बाट ई.सं. (AD)' : '1. Bikram Sambat (BS) to AD'}</span>
               </h3>
-
               <div className="grid grid-cols-3 gap-3 text-xs">
                 <div>
-                  <label className="text-[11px] text-slate-400 mb-1 block">वि.सं. वर्ष (BS Year)</label>
+                  <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">
+                    {isNe ? 'वर्ष' : 'BS Year'}
+                  </label>
                   <input
                     type="number"
                     value={convBsYear}
                     onChange={(e) => setConvBsYear(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs"
+                    className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-400 mb-1 block">महिना (Month)</label>
+                  <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">
+                    {isNe ? 'महिना' : 'Month'}
+                  </label>
                   <select
                     value={convBsMonth}
                     onChange={(e) => setConvBsMonth(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white text-xs"
+                    className={inputCls}
                   >
                     {BS_MONTHS_NP.map((m, idx) => (
                       <option key={idx} value={idx + 1}>
@@ -1068,77 +967,87 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-400 mb-1 block">गते (Day)</label>
+                  <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">
+                    {isNe ? 'गते' : 'Day'}
+                  </label>
                   <input
                     type="number"
                     min={1}
                     max={32}
                     value={convBsDay}
                     onChange={(e) => setConvBsDay(Number(e.target.value))}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs"
+                    className={inputCls}
                   />
                 </div>
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <div className="text-[11px] text-slate-400">रूपान्तरित अङ्ग्रेजी मिति (Converted AD Date):</div>
-                <div className="text-lg font-black text-emerald-400 font-mono">{bsToAdResult.adDateFormatted}</div>
-                <div className="text-xs text-slate-300">
-                  {bsToAdResult.dayOfWeekNp} ({bsToAdResult.dayOfWeekEn}) • ISO: {bsToAdResult.adDateIso}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-1">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isNe ? 'रूपान्तरित अङ्ग्रेजी मिति:' : 'Converted AD Date:'}
+                </div>
+                <div className="text-lg font-bold text-blue-600 dark:text-blue-400 font-mono">
+                  {bsToAdResult.adDateFormatted}
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-300">
+                  {bsToAdResult.dayOfWeekNp} ({bsToAdResult.dayOfWeekEn}) · ISO: {bsToAdResult.adDateIso}
                 </div>
               </div>
-            </div>
+            </Card>
 
-            {/* 2. AD to BS Converter */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-md space-y-4">
-              <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-                <ArrowRightLeft className="w-5 h-5 text-amber-400" />
-                <span>२. ई.सं. (AD) बाट वि.सं. (BS) रूपान्तरण</span>
+            <Card className="p-6 space-y-4">
+              <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <ArrowRightLeft className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>{isNe ? '२. ई.सं. (AD) बाट वि.सं. (BS)' : '2. Gregorian (AD) to BS'}</span>
               </h3>
-
               <div>
-                <label className="text-[11px] text-slate-400 mb-1 block">अङ्ग्रेजी मिति छान्नुहोस् (Select English Date)</label>
+                <label className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 block">
+                  {isNe ? 'अङ्ग्रेजी मिति छान्नुहोस्' : 'Select AD Date'}
+                </label>
                 <input
                   type="date"
                   value={convAdDateInput}
                   onChange={(e) => setConvAdDateInput(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs"
+                  className={inputCls}
                 />
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <div className="text-[11px] text-slate-400">रूपान्तरित नेपाली मिति (Converted BS Date):</div>
-                <div className="text-lg font-black text-red-400">{adToBsResult.bsDateNp}</div>
-                <div className="text-xs text-slate-300">
-                  {adToBsResult.dayOfWeekNp} ({adToBsResult.dayOfWeekEn}) • {adToBsResult.bsDateEn}
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-1">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isNe ? 'रूपान्तरित नेपाली मिति:' : 'Converted BS Date:'}
+                </div>
+                <div className="text-lg font-bold text-[#0B1F3A] dark:text-white">
+                  {adToBsResult.bsDateNp}
+                </div>
+                <div className="text-xs text-slate-600 dark:text-slate-300 font-mono">
+                  {adToBsResult.dayOfWeekNp} ({adToBsResult.dayOfWeekEn}) · {adToBsResult.bsDateEn}
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* 3. Exact Nepali Age Calculator */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-xl space-y-5">
-            <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Hourglass className="w-5 h-5 text-purple-400" />
-              <span>३. आधिकारिक नेपाली उमेर क्याल्कुलेटर (Nepali Age Calculator)</span>
+          <Card className="p-6 space-y-4">
+            <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+              <Hourglass className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>{isNe ? '३. नेपाली उमेर क्याल्कुलेटर' : '3. Nepali Age Calculator'}</span>
             </h3>
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">जन्म वि.सं. वर्ष (Birth BS Year)</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                  {isNe ? 'जन्म वर्ष (BS)' : 'Birth BS Year'}
+                </label>
                 <input
                   type="number"
                   value={birthYear}
                   onChange={(e) => setBirthYear(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs"
+                  className={inputCls}
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">जन्म महिना (Birth Month)</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                  {isNe ? 'जन्म महिना' : 'Birth Month'}
+                </label>
                 <select
                   value={birthMonth}
                   onChange={(e) => setBirthMonth(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white text-xs"
+                  className={inputCls}
                 >
                   {BS_MONTHS_NP.map((m, idx) => (
                     <option key={idx} value={idx + 1}>
@@ -1148,65 +1057,77 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                 </select>
               </div>
               <div>
-                <label className="text-xs text-slate-400 mb-1 block">जन्म गते (Birth Day)</label>
+                <label className="text-xs text-slate-500 dark:text-slate-400 mb-1 block">
+                  {isNe ? 'जन्म गते' : 'Birth Day'}
+                </label>
                 <input
                   type="number"
                   min={1}
                   max={32}
                   value={birthDay}
                   onChange={(e) => setBirthDay(Number(e.target.value))}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-mono text-xs"
+                  className={inputCls}
                 />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                <div className="text-[11px] text-slate-400">हालको यकिन उमेर (Current Age):</div>
-                <div className="text-lg font-black text-purple-400 mt-1">{ageResult.ageStringNp}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{ageResult.ageStringEn}</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isNe ? 'यकिन उमेर' : 'Current Age'}
+                </div>
+                <div className="text-base font-bold text-blue-600 dark:text-blue-400 mt-1">
+                  {ageResult.ageStringNp}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  {ageResult.ageStringEn}
+                </div>
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                <div className="text-[11px] text-slate-400">कुल बाँचिएको दिन (Total Days Lived):</div>
-                <div className="text-lg font-black text-white font-mono mt-1">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isNe ? 'कुल दिन' : 'Total Days'}
+                </div>
+                <div className="text-base font-bold text-[#0B1F3A] dark:text-white font-mono mt-1">
                   ~{toNepaliDigits(ageResult.approxTotalDays)} दिन
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5">Approx {ageResult.approxTotalDays} Days</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Approx {ageResult.approxTotalDays} Days
+                </div>
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                <div className="text-[11px] text-slate-400">आगामी जन्मोत्सव (Next Birthday):</div>
-                <div className="text-sm font-bold text-amber-400 mt-1">{ageResult.nextBirthdayBs}</div>
-                <div className="text-xs text-slate-400 mt-0.5">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {isNe ? 'आगामी जन्मदिन' : 'Next Birthday'}
+                </div>
+                <div className="text-sm font-bold text-[#0B1F3A] dark:text-white mt-1">
+                  {ageResult.nextBirthdayBs}
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {ageResult.nextBirthdayAd} ({ageResult.nextBirthdayDayOfWeek})
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* 4. Date Difference Calculator */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-md space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <CalendarCheck className="w-5 h-5 text-emerald-400" />
-              <span>४. दुई मिति बिचको अन्तर (Date Difference Calculator)</span>
+          <Card className="p-6 space-y-4">
+            <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+              <CalendarCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>{isNe ? '४. दुई मिति बिचको अन्तर' : '4. BS Date Difference Calculator'}</span>
             </h3>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                <span className="text-xs font-bold text-slate-300">सुरुको मिति (From Date):</span>
-                <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-2">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {isNe ? 'सुरुको मिति (BS)' : 'From Date (BS)'}
+                </span>
+                <div className="grid grid-cols-3 gap-2">
                   <input
                     type="number"
                     value={diffFromYear}
                     onChange={(e) => setDiffFromYear(Number(e.target.value))}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-mono"
-                    placeholder="Year"
+                    className={inputCls}
                   />
                   <select
                     value={diffFromMonth}
                     onChange={(e) => setDiffFromMonth(Number(e.target.value))}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs"
+                    className={inputCls}
                   >
                     {BS_MONTHS_NP.map((m, idx) => (
                       <option key={idx} value={idx + 1}>
@@ -1218,26 +1139,25 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                     type="number"
                     value={diffFromDay}
                     onChange={(e) => setDiffFromDay(Number(e.target.value))}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-mono"
-                    placeholder="Day"
+                    className={inputCls}
                   />
                 </div>
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                <span className="text-xs font-bold text-slate-300">अन्तिम मिति (To Date):</span>
-                <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 space-y-2">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  {isNe ? 'अन्तिम मिति (BS)' : 'To Date (BS)'}
+                </span>
+                <div className="grid grid-cols-3 gap-2">
                   <input
                     type="number"
                     value={diffToYear}
                     onChange={(e) => setDiffToYear(Number(e.target.value))}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-mono"
-                    placeholder="Year"
+                    className={inputCls}
                   />
                   <select
                     value={diffToMonth}
                     onChange={(e) => setDiffToMonth(Number(e.target.value))}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white text-xs"
+                    className={inputCls}
                   >
                     {BS_MONTHS_NP.map((m, idx) => (
                       <option key={idx} value={idx + 1}>
@@ -1249,235 +1169,199 @@ export const CalendarBsAdView: React.FC<CalendarBsAdViewProps> = ({ currentLang 
                     type="number"
                     value={diffToDay}
                     onChange={(e) => setDiffToDay(Number(e.target.value))}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-mono"
-                    placeholder="Day"
+                    className={inputCls}
                   />
                 </div>
               </div>
             </div>
-
-            <div className="p-4 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-xs flex flex-wrap items-center justify-between gap-2">
-              <div>
-                कुल अन्तर: <span className="font-bold text-base text-emerald-400">{toNepaliDigits(dateDiffResult.diffDays)} दिन</span> ({dateDiffResult.diffDays} Days)
-              </div>
-              <div>
-                (~{toNepaliDigits(dateDiffResult.weeks)} हप्ता र {toNepaliDigits(dateDiffResult.remDays)} दिन)
-              </div>
+            <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 text-xs flex flex-wrap items-center justify-between gap-2 text-[#0B1F3A] dark:text-blue-200 font-semibold">
+              <span>
+                {isNe ? 'कुल अन्तर:' : 'Total Difference:'}{' '}
+                <strong className="font-mono text-base">{dateDiffResult.diffDays} Days</strong> (
+                {toNepaliDigits(dateDiffResult.diffDays)} दिन)
+              </span>
+              <span className="font-mono">
+                {dateDiffResult.weeks}w {dateDiffResult.remDays}d
+              </span>
             </div>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* TAB 6: YEARLY FESTIVALS DIRECTORY (वार्षिक मुख्य चाडपर्वहरू) */}
-      {/* ========================================================================= */}
+      {/* TAB 6: FESTIVALS */}
       {activeTab === 'festivals' && (
-        <div className="space-y-6">
-          <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-500" />
-              <span>{currentLang === 'ne' ? 'नेपालका प्रमुख वार्षिक चाडपर्व निर्देशिका (२०८३)' : 'Major Yearly Festivals Directory 2083'}</span>
+        <div className="space-y-5">
+          <Card className="p-5">
+            <h2 className="text-lg font-semibold text-[#0B1F3A] dark:text-white flex items-center gap-2">
+              <Flame className="w-5 h-5 text-amber-500" />
+              <span>
+                {isNe ? 'प्रमुख वार्षिक चाडपर्व निर्देशिका (२०८३)' : 'Major Yearly Festivals Guide (2083 BS)'}
+              </span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {currentLang === 'ne'
-                ? 'बडा दशैं, तिहार, छठ, हरितालिका तीज, महाशिवरात्रि, ल्होसार, बुद्ध जयन्ती र होलीको सम्पूर्ण विवरण'
-                : 'Comprehensive cultural guide and authentic dates for national & regional festivals'}
-            </p>
-          </div>
+          </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
               {
                 title: 'बडा दशैं (विजयादशमी)',
                 titleEn: 'Bada Dashain (Vijaya Dashami)',
-                bsDate: '२०८३ असोज १७ (घटस्थापना) देखि असोज २६ (टीका) सम्म',
-                adDate: '3 Oct - 12 Oct 2026',
-                holidayStatus: '६ दिन राष्ट्रिय सार्वजनिक बिदा',
-                desc: 'नेपालीहरूको सबैभन्दा ठूलो राष्ट्रिय चाड। दुर्गा भवानीको उपासना, घटस्थापनामा जमरा राख्ने, फूलपाती, महाअष्टमी कालरात्रि, महानवमी र विजयादशमीमा मान्यजनबाट रातो टीका र जमरा लगाई आशीर्वाद ग्रहण गरिन्छ।',
+                bsDate: '२०८३ असोज १७ – असोज २६',
+                adDate: '3 Oct – 12 Oct 2026',
+                holidayStatus: 'National Holiday',
+                desc: 'नेपालको प्रमुख राष्ट्रिय पर्व — घटस्थापना, फूलपाती, महाअष्टमी, महानवमी र विजयादशमी।',
               },
               {
-                title: 'तिहार तथा दीपावली (यमपञ्चक)',
-                titleEn: 'Tihar & Deepawali (Yamapanchak)',
-                bsDate: '२०८३ कार्तिक १५ (काग तिहार) देखि कार्तिक १९ (भाइटीका)',
-                adDate: '31 Oct - 4 Nov 2026',
-                holidayStatus: '४ दिन राष्ट्रिय सार्वजनिक बिदा',
-                desc: 'उज्यालो र प्रकाशको चाड। काग, कुकुर, गाई, गोवर्धन, म्ह पूजा (नेपाल संवत् नयाँ वर्ष) र दिदीबहिनीले दाजुभाइलाई सप्तरङ्गी टीका र मखमली माला लगाई भाइटीका मनाइन्छ।',
+                title: 'तिहार तथा दीपावली',
+                titleEn: 'Tihar & Deepawali',
+                bsDate: '२०८३ कार्तिक १५ – कार्तिक १९',
+                adDate: '31 Oct – 4 Nov 2026',
+                holidayStatus: 'National Holiday',
+                desc: 'काग तिहार, कुकुर तिहार, लक्ष्मी पूजा, गोवर्धन/म्ह पूजा र भाइटीका।',
               },
               {
                 title: 'छठ महापर्व',
-                titleEn: 'Chhath Mahaparva',
-                bsDate: '२०८३ कार्तिक २३ (सँझिया अर्घ्य) र कार्तिक २४ (बिहानी अर्घ्य)',
-                adDate: '8 Nov - 9 Nov 2026',
-                holidayStatus: 'सार्वजनिक बिदा',
-                desc: 'शुद्धि, स्वच्छता र निष्ठाको महापर्व। अस्ताउँदो र उदाउँदो सूर्यदेव तथा छठी मातालाई ठेकुवा, भुसुवा, फलफूल र अर्घ्य दिएर आरोग्य तथा समृद्धिको कामना गरिन्छ।',
+                titleEn: 'Chhath Parva',
+                bsDate: '२०८३ कार्तिक २३ – २४',
+                adDate: '8 Nov – 9 Nov 2026',
+                holidayStatus: 'Public Holiday',
+                desc: 'सूर्यदेव तथा छठी माताको उपासना र अर्घ्य समर्पणको पवित्र पर्व।',
               },
               {
-                title: 'हरितालिका तीज तथा ऋषि पञ्चमी',
-                titleEn: 'Haritalika Teej & Rishi Panchami',
-                bsDate: '२०८३ भदौ १८ (तीज) र भदौ २० (ऋषि पञ्चमी)',
-                adDate: '3 Sep - 5 Sep 2026',
-                holidayStatus: 'महिला कर्मचारी बिदा',
-                desc: 'नेपाली नारीहरूको महान चाड। अघिल्लो रात दर खाने, दिनभर निराहार व्रत बस्ने, भगवान् शिव-पार्वतीको आराधना गर्ने र रातो पहिरनमा तीज गीतमा रम्ने परम्परा छ।',
-              },
-              {
-                title: 'महाशिवरात्रि तथा नेपाली सेना दिवस',
-                titleEn: 'Maha Shivaratri & Army Day',
-                bsDate: '२०८३ फागुन १३ गते',
+                title: 'महाशिवरात्रि',
+                titleEn: 'Maha Shivaratri',
+                bsDate: '२०८३ फागुन १३',
                 adDate: '25 Feb 2027',
-                holidayStatus: 'राष्ट्रिय सार्वजनिक बिदा',
-                desc: 'भगवान् पशुपतिनाथ मन्दिर लगायत देशभरका शिवालयमा लाखौं भक्तजनको घुइँचो लाग्ने पवित्र दिन। बेलपत्र, धतुरो, दुध र जलले भगवान् शिवको अभिषेक गरिन्छ।',
-              },
-              {
-                title: 'फागु पूर्णिमा (होली पर्व)',
-                titleEn: 'Holi (Festival of Colours)',
-                bsDate: '२०८३ फागुन २९ (पहाड) र फागुन ३० (तराई)',
-                adDate: '13 Mar - 14 Mar 2027',
-                holidayStatus: 'सार्वजनिक बिदा (पहाड र तराई छुट्टाछुट्टै)',
-                desc: 'वसन्त ऋतुको आगमनसँगै आपसी सद्भाव, भ्रातृत्व र उमंगका साथ रङ्ग, अबीर र पानी खेलेर मनाइने रंगहरूको महान पर्व।',
-              },
-              {
-                title: 'ल्होसार पर्वहरू (तमु, सोनाम र ग्याल्पो)',
-                titleEn: 'Lhosar Festivals (Tamu, Sonam, Gyalpo)',
-                bsDate: 'पुस १५ (तमु), माघ १५ (सोनाम), फागुन १५ (ग्याल्पो)',
-                adDate: 'Dec 2026 - Feb 2027',
-                holidayStatus: 'सम्बन्धित समुदाय तथा राष्ट्रिय बिदा',
-                desc: 'गुरुङ, तामाङ र शेर्पा हिमाली समुदायका नयाँ वर्षका महान उत्सवहरू। परम्परागत भेषभूषा, स्याब्रु/स्यालो नृत्य, गुथुक परिकार र लामा पूजाआजा गरिन्छ।',
-              },
-              {
-                title: 'माघे संक्रान्ति तथा माघी पर्व',
-                titleEn: 'Maghe Sankranti & Maghi Festival',
-                bsDate: '२०८३ माघ १ गते (मकर संक्रान्ति)',
-                adDate: '15 Jan 2027',
-                holidayStatus: 'राष्ट्रिय सार्वजनिक बिदा',
-                desc: 'सूर्य धनु राशिबाट मकर राशिमा प्रवेश गर्ने दिन। घिउ, चाकु, तरुल, तिलको लड्डु, खिचडी खाने र थारु समुदायमा नयाँ वर्ष (माघी) को रूपमा भव्यताका साथ मनाइन्छ।',
+                holidayStatus: 'National Holiday',
+                desc: 'पशुपतिनाथ लगायत देशभरका शिवालयमा मनाइने महापर्व।',
               },
             ].map((f, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-3xl bg-slate-900 border border-slate-800 shadow-md space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="text-base font-bold text-white">{f.title}</h3>
-                      <div className="text-xs text-slate-400">{f.titleEn}</div>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
-                      {f.holidayStatus}
-                    </span>
+              <Card key={idx} className="p-5 space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white">{f.title}</h3>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">{f.titleEn}</div>
                   </div>
-
-                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-amber-400">
-                    {f.bsDate} <span className="text-slate-500">({f.adDate})</span>
-                  </div>
-
-                  <p className="text-xs text-slate-300 leading-relaxed">{f.desc}</p>
+                  <span className="text-[11px] font-mono text-blue-600 dark:text-blue-400 shrink-0">
+                    {f.holidayStatus}
+                  </span>
                 </div>
-              </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 text-xs font-mono text-[#0B1F3A] dark:text-slate-200">
+                  {f.bsDate} ({f.adDate})
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{f.desc}</p>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {/* ========================================================================= */}
-      {/* DAY DETAIL POPUP MODAL (दिनको विस्तृत विवरण) */}
-      {/* ========================================================================= */}
+      {/* DAY DETAIL MODAL + SYNCED REMINDER ACTION */}
       {selectedDayDetail && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90dvh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div>
-                <h3 className="text-xl font-black text-white">
-                  वि.सं. {toNepaliDigits(selectedDayDetail.bsYear)} {BS_MONTHS_NP[selectedDayDetail.bsMonth - 1]} {toNepaliDigits(selectedDayDetail.bsDay)}
+                <h3 className="text-lg font-bold text-[#0B1F3A] dark:text-white">
+                  वि.सं. {toNepaliDigits(selectedDayDetail.bsYear)}{' '}
+                  {BS_MONTHS_NP[selectedDayDetail.bsMonth - 1]}{' '}
+                  {toNepaliDigits(selectedDayDetail.bsDay)}
                 </h3>
-                <p className="text-xs text-slate-400">
-                  {selectedDayDetail.adDateFormatted} ({selectedDayDetail.dayNameNp} / {selectedDayDetail.dayNameEn})
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {selectedDayDetail.adDateFormatted} ({selectedDayDetail.dayNameNp} /{' '}
+                  {selectedDayDetail.dayNameEn})
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedDayDetail(null)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all"
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                aria-label="Close day detail"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Festival / Holiday Alert */}
             {selectedDayDetail.festivalNp && (
               <div
-                className={`p-3 rounded-xl border text-xs font-bold ${
+                className={`p-3 rounded-xl border text-xs font-semibold ${
                   selectedDayDetail.isHoliday
-                    ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
-                    : 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                    ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300'
+                    : 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300'
                 }`}
               >
-                🚩 {selectedDayDetail.festivalNp}
+                {selectedDayDetail.festivalNp}
                 {selectedDayDetail.holidayReasonNp && (
-                  <div className="text-[11px] font-normal text-slate-300 mt-0.5">
+                  <div className="text-[11px] font-normal mt-0.5 opacity-90">
                     {selectedDayDetail.holidayReasonNp}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Panchanga Breakdown */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">तिथि:</span>
-                <span className="font-bold text-white text-sm">{selectedDayDetail.tithiNp}</span>
-                <span className="text-[10px] text-purple-400 block">{selectedDayDetail.pakshaNp}</span>
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-500 block">तिथि:</span>
+                <span className="font-semibold text-[#0B1F3A] dark:text-white">
+                  {selectedDayDetail.tithiNp}
+                </span>
               </div>
-
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">नक्षत्र:</span>
-                <span className="font-bold text-white text-sm">{selectedDayDetail.nakshatraNp}</span>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-500 block">नक्षत्र:</span>
+                <span className="font-semibold text-[#0B1F3A] dark:text-white">
+                  {selectedDayDetail.nakshatraNp}
+                </span>
               </div>
-
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">योग:</span>
-                <span className="font-bold text-white text-sm">{selectedDayDetail.yogaNp}</span>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-500 block">सूर्योदय / सूर्यास्त:</span>
+                <span className="font-mono text-[#0B1F3A] dark:text-white">
+                  {selectedDayDetail.sunriseTime} / {selectedDayDetail.sunsetTime}
+                </span>
               </div>
-
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">करण:</span>
-                <span className="font-bold text-white text-sm">{selectedDayDetail.karanaNp}</span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">चन्द्र राशि:</span>
-                <span className="font-bold text-amber-300 text-xs">{selectedDayDetail.chandrarashiNp}</span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block">दिशाशूल (वर्जित दिशा):</span>
-                <span className="font-bold text-rose-300 text-xs">{selectedDayDetail.dishashoolNp}</span>
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800">
+                <span className="text-[10px] text-slate-500 block">राहु काल:</span>
+                <span className="font-mono text-rose-600 dark:text-rose-400">
+                  {selectedDayDetail.rahuKaal}
+                </span>
               </div>
             </div>
 
-            {/* Sun, Moon & Rahu Timings */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-300">
-                <span className="text-slate-400">सूर्योदय / सूर्यास्त:</span>
-                <span className="font-mono text-amber-400">{selectedDayDetail.sunriseTime} / {selectedDayDetail.sunsetTime}</span>
+            {/* Save Synced Reminder Form */}
+            <form
+              onSubmit={(e) => void handleSaveDayReminder(e)}
+              className="p-3.5 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 space-y-2.5"
+            >
+              <label className="text-xs font-semibold text-[#0B1F3A] dark:text-blue-200 flex items-center gap-1.5">
+                <BellPlus className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>{isNe ? 'यस मितिका लागि रिमाइन्डर सुरक्षित गर्नुहोस्' : 'Add Synced Personal Reminder'}</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={reminderTitleInput}
+                  onChange={(e) => setReminderTitleInput(e.target.value)}
+                  placeholder={
+                    isNe ? 'रिमाइन्डर शीर्षक लेख्नुहोस्...' : 'e.g. Bluebook renewal / Family event'
+                  }
+                  className={inputCls}
+                />
+                <button
+                  type="submit"
+                  className="px-3.5 py-2 rounded-xl bg-[#0B1F3A] dark:bg-blue-600 hover:bg-[#132f57] text-white text-xs font-semibold whitespace-nowrap cursor-pointer"
+                >
+                  {isNe ? 'सुरक्षित' : 'Save'}
+                </button>
               </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-slate-400">अभिजीत मुहूर्त:</span>
-                <span className="font-mono text-emerald-400 font-bold">{selectedDayDetail.abhijitMuhurat}</span>
-              </div>
-              <div className="flex justify-between text-slate-300">
-                <span className="text-slate-400">राहु काल (अशुभ):</span>
-                <span className="font-mono text-rose-400 font-bold">{selectedDayDetail.rahuKaal}</span>
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                onClick={() => setSelectedDayDetail(null)}
-                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-all"
-              >
-                बन्द गर्नुहोस् (Close)
-              </button>
-            </div>
+              {reminderSavedBanner && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>
+                    {isNe
+                      ? 'रिमाइन्डर तपाईँको सिङ्क सूचीमा सुरक्षित भयो।'
+                      : 'Saved to your offline + cloud-synced reminders.'}
+                  </span>
+                </p>
+              )}
+            </form>
           </div>
         </div>
       )}

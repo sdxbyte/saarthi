@@ -4,6 +4,7 @@ import { BarChart3, TrendingUp, Download, PieChart, Calendar, DollarSign, FileTe
 export const AnalyticsReportsView: React.FC = () => {
   const [selectedProvince, setSelectedProvince] = useState('All Nepal');
   const [dateRange, setDateRange] = useState('This Fiscal Year 2082/83');
+  const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   const provinceStats = [
     { province: 'Bagmati Province', revenue: 'N/A', applications: 0, growth: '0.0%' },
@@ -14,6 +15,29 @@ export const AnalyticsReportsView: React.FC = () => {
     { province: 'Sudurpashchim', revenue: 'N/A', applications: 0, growth: '0.0%' },
     { province: 'Karnali Province', revenue: 'N/A', applications: 0, growth: '0.0%' },
   ];
+
+  const handleExportCsv = () => {
+    const headers = ['Date Range', 'Province', 'Applications', 'Revenue (NPR)', 'YoY Growth', 'Status'];
+    const rows = provinceStats.map((stat) => [
+      `"${dateRange.replace(/"/g, '""')}"`,
+      `"${stat.province.replace(/"/g, '""')}"`,
+      String(stat.applications),
+      `"${stat.revenue}"`,
+      `"${stat.growth}"`,
+      '"Pending Gateway Config"',
+    ]);
+    const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `saarthi_fiscal_report_${Date.now()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setExportNotice(`Exported CSV report for ${dateRange}.`);
+  };
 
   return (
     <div className="space-y-6">
@@ -28,14 +52,28 @@ export const AnalyticsReportsView: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => alert('Generating Platform Financial Audit Report PDF...')}
+            type="button"
+            onClick={handleExportCsv}
             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-indigo-950/50 transition-all"
           >
             <Download className="w-4 h-4" />
-            <span>Export Fiscal Report (PDF/CSV)</span>
+            <span>Export Fiscal Report (CSV)</span>
           </button>
         </div>
       </div>
+
+      {exportNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-950/70 border border-emerald-800 text-emerald-200 text-xs flex items-center justify-between gap-3">
+          <span>{exportNotice}</span>
+          <button
+            type="button"
+            onClick={() => setExportNotice(null)}
+            className="text-emerald-300 hover:text-white font-semibold"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

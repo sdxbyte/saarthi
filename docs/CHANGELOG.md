@@ -2,6 +2,47 @@
 
 All notable changes to the SAARTHI project are documented in this file.
 
+## [2.0.0] - 2026-11-25 A.D. / २०८३-०८-०९ B.S.
+
+### Title
+SAARTHI v2.0.0 Unified Cross-Platform Account, Offline/Online Cloud Sync, Hybrid Material Design 3 & Android APK Release
+
+### Added
+- **Unified Account Center (`/account`) & Cross-Device Sync**: Added `AccountView` and `SyncAuthContext` synchronizing citizen documents, keeper reminders, saved items, and device sessions across Web, PWA, and Android APK via verified Firebase Auth + Cloud Firestore.
+- **Resilient Offline-First Sync Engine (`/src/services/offlineDb.ts`, `/src/services/syncEngine.ts`)**: Persistent IndexedDB (`saarthi_offline_v2`) with object-store auto-repair, native transaction fallback recovery, deduplicated mutation outbox, idempotency replay protection, and 3-way conflict resolution.
+- **Hybrid Light/Dark Material Design 3 Refresh**: Unified Navy (`#0B1F3A`) & Blue (`#2563EB`) visual tokens, accessible light/dark legibility, and consistent mobile/desktop navigation.
+- **Full Regression Suite (`/tests/`)**: Expanded Vitest verification across 6 test files (44 passing tests) covering account device revocation, IndexedDB native transaction resilience, Rule 16 authentic data fallbacks, and Firestore security rules.
+
+### Updated
+- **Admin Operations & Release Engine**: Repaired admin sub-tab routing (`reports`, `announcements`, `donation-audit`), removed blocking `alert()`/`confirm()` dialogs, eliminated static server health numbers in favor of live `/api/health`, and synchronized `v2.0.0` metadata across Web, PWA, and Android APK CI workflows.
+- **Rule 16 Authentic Data Compliance**: Removed static fallback prices/rates across Sajilo Bazar and Public APIs Hub, returning explicit unavailable notices when upstream official sources are unreachable.
+
+### Fixed
+- Fixed native `IDBDatabase.transaction` exceptions in restricted/iframe browser contexts with automatic object-store validation, DB repair, and seamless in-memory fallback.
+- Fixed support form ticket creation routing (`/api/support/tickets`), light-mode contrast across public/admin pages, and TypeScript strict check errors.
+
+---
+
+## [1.9.1] - 2026-11-22 A.D. / २०८३-०८-०६ B.S.
+
+### Title
+SAARTHI Cross-Platform Redesign, Unified Cloud Sync, Security Hardening & Offline Engine Upgrade
+
+### Added
+- **Unified Firebase Auth & Firestore Cloud Layer**: Provisioned Firebase Authentication (Google Sign-In) and Cloud Firestore (`ai-studio-sarathi-54a6a23c-5552-499c-9038-48dd469ebf11`) with owner-isolated security rules (`firestore.rules`) validated by `@firebase/eslint-plugin-security-rules`.
+- **Offline-First Sync Engine (`/src/services/offlineDb.ts`, `/src/services/syncEngine.ts`)**: Persistent IndexedDB database (`saarthi_offline_v2`) with deduplicated mutation outbox, idempotency keys, version counters, field auto-merge, `ConflictResolutionModal`, and 6-state `SyncStatusBadge`.
+- **Safe Legacy Migration**: Pre-migration JSON backup (`saarthi_pre_migration_backup_v1`) written before migrating local records to Firestore.
+- **Hybrid Design System & Mobile Navigation**: Navy Blue (`#0B1F3A` / `#102A4C`) + Subtle Blue (`#2563EB` / `#3B82F6`) Material 3 + fintech UI, persistent Light/Dark themes (`ThemeContext`), and 5-tab `MobileBottomNav`.
+- **Automated Test & Docs Suite**: Added `firestore.rules.test.ts`, `offlineSyncEngine.test.ts`, and `uiAndTheme.test.tsx` (36 tests across 5 suites) plus full `/docs/*` operational manuals.
+
+### Fixed & Hardened
+- Fixed read-only `window.fetch` interception crash and Node `window.location` guard in `src/utils/apiClient.ts`.
+- Eliminated hardcoded/simulated API fallbacks across `/api/receipt/scan`, `/api/meroshare/auto-apply-batch`, `/api/live/kalimati`, and `/api/live/sources/health`.
+- Scrubbed plaintext GitHub token from `docs/github-credentials.json` and removed unconditional `git push --force` and automatic `postbuild` push hooks.
+- Lazy-loaded `jspdf` and split Vite vendor chunks (`vendor-react`, `vendor-firebase`, `vendor-dates`, `vendor-ui`, `vendor-pdf`).
+
+---
+
 ## [1.7.0] - 2026-09-18
 
 ### Title

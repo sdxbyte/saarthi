@@ -8,9 +8,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 const pkgVersion = (() => {
   try {
     const raw = fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8');
-    return JSON.parse(raw).version || '1.9.1';
+    return JSON.parse(raw).version || '2.0.0';
   } catch {
-    return '1.9.1';
+    return '2.0.0';
   }
 })();
 
@@ -139,7 +139,18 @@ export default defineConfig(() => {
     },
     build: {
       target: ['es2019', 'chrome87', 'edge88', 'firefox78', 'safari13'],
-      chunkSizeWarningLimit: 2500,
+      chunkSizeWarningLimit: 700,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+            'vendor-dates': ['nepali-date-converter', '@sbmdkl/nepali-date-converter', 'bikram-sambat'],
+            'vendor-ui': ['lucide-react', 'motion'],
+            'vendor-pdf': ['jspdf'],
+          },
+        },
+      },
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

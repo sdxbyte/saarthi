@@ -87,7 +87,7 @@ export function setStoredAutoUpdatePreference(enabled: boolean): void {
 
 export function getInstalledBuildMetadata() {
   const version =
-    typeof __SAARTHI_APP_VERSION__ !== 'undefined' ? __SAARTHI_APP_VERSION__ : '1.9.1';
+    typeof __SAARTHI_APP_VERSION__ !== 'undefined' ? __SAARTHI_APP_VERSION__ : '2.0.0';
   const buildNumber =
     Number.parseInt(
       typeof __SAARTHI_BUILD_NUMBER__ !== 'undefined' ? __SAARTHI_BUILD_NUMBER__ : '0',

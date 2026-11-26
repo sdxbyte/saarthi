@@ -74,84 +74,75 @@ export const SajiloView: React.FC<SajiloViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 pb-16">
-      {/* 1. Refined Obsidian Bento Header Banner */}
-      <div className="relative p-5 sm:p-6 rounded-2xl bg-[#0B0F17]/90 border border-slate-800 shadow-xl space-y-4 overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 relative z-10">
+      {/* Header Banner */}
+      <div className="relative p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <span className="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
                 {currentLang === 'ne' ? 'सजिलो दैनिक आवश्यकताहरू' : 'SAJILO DAILY ESSENTIALS'}
               </span>
-              <span className="text-[11px] font-mono text-slate-400">
-                BS 2083 • Powered by SAARTHI & Sajilo Core
+              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                SAARTHI Civic &amp; Utility Suite
               </span>
             </div>
 
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F3A] dark:text-white tracking-tight flex flex-wrap items-center gap-2">
               <span>{currentLang === 'ne' ? 'सजिलो (Sajilo)' : 'Sajilo'}</span>
-              <span className="text-slate-400 font-normal text-sm sm:text-base">
+              <span className="text-slate-500 dark:text-slate-400 font-normal text-sm sm:text-base">
                 — {currentLang === 'ne' ? 'नेपाली दैनिक जीवनका सम्पूर्ण आवश्यकताहरू' : 'Daily Life Essentials'}
               </span>
             </h1>
 
-            <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
               {currentLang === 'ne'
                 ? 'कालिमाटी तरकारी तथा फलफूल, सुनचाँदी, पेट्रोल, नेप्से, अनलाइन रेडियो, व्यक्तिगत किपर रिमाइन्डर, जग्गा क्षेत्रफल र आपतकालीन सेवाहरू एकै ठाउँमा।'
-                : 'Kalimati daily produce wholesale, Gold & Fuel rates, NEPSE stocks, Live FM radio, offline Keeper reminders, Land area calculators, and emergency hotlines.'}
+                : 'Kalimati daily produce wholesale, Gold & Fuel rates, NEPSE stocks, FM radio, offline Keeper reminders, Land area calculators, and emergency hotlines.'}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
-            {/* Toggle Devanagari numerals */}
             <button
+              type="button"
               onClick={onToggleDevanagariNumerals}
-              className="px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-mono text-slate-300 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="min-h-[38px] px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-mono text-[#0B1F3A] dark:text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
               title="Toggle Devanagari (१२३) or English (123) numbers"
             >
               <span>{devanagariNumerals ? 'अंक: १२३' : 'Digits: 123'}</span>
             </button>
 
-            {/* Quick Menu-Bar Popover Button */}
             {onOpenTrayModal && (
               <button
+                type="button"
                 onClick={onOpenTrayModal}
-                className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 font-semibold text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
-                title="Launch macOS / Windows style menu-bar tray popover"
+                className="min-h-[38px] px-3.5 py-1.5 rounded-xl bg-[#0B1F3A] hover:bg-[#132f57] dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Open Quick Tray popover"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>{currentLang === 'ne' ? 'ट्रे पपओभर (Quick Tray)' : 'Quick Tray'}</span>
+                <span>{currentLang === 'ne' ? 'द्रुत ट्रे (Quick Tray)' : 'Quick Tray'}</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Tab Navigation Segmented Bar with ai2.design Spring Glider */}
-        <div className="flex items-center gap-1 overflow-x-auto p-1.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md scrollbar-none">
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-1 overflow-x-auto p-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap cursor-pointer transition-colors"
+                className={`relative min-h-[36px] flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap cursor-pointer transition-colors ${
+                  isActive
+                    ? 'bg-[#0B1F3A] text-white dark:bg-blue-600 font-semibold shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-[#0B1F3A] dark:hover:text-white'
+                }`}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="sajiloTabGlider"
-                    className="absolute inset-0 bg-emerald-500/20 border border-emerald-500/40 rounded-lg shadow-xs"
-                    transition={{ type: 'spring', bounce: 0.2, duration: 0.35 }}
-                  />
-                )}
-                <span
-                  className={`relative z-10 flex items-center gap-1.5 transition-colors ${
-                    isActive ? 'text-emerald-300 font-semibold' : 'text-slate-400 hover:text-slate-200'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{currentLang === 'ne' ? tab.labelNp : tab.labelEn}</span>
-                </span>
+                <Icon className="w-3.5 h-3.5" />
+                <span>{currentLang === 'ne' ? tab.labelNp : tab.labelEn}</span>
               </button>
             );
           })}

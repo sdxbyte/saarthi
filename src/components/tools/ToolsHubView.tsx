@@ -1,15 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import {
-  CalendarDays,
-  Car,
-  Radio,
-  Lock,
-  Globe,
-  Film,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { CalendarBsAdView } from '../utilities/CalendarBsAdView';
 import { BluebookTaxView } from '../documents/BluebookTaxView';
 import { SajiloView } from '../sajilo/SajiloView';
@@ -32,7 +21,15 @@ interface ToolsHubViewProps {
   onOpenSajiloTray?: () => void;
 }
 
-type ToolTab = 'overview' | 'calendar' | 'bluebook' | 'sajilo' | 'vault' | 'public-apis' | 'sitehub' | 'osint4all';
+type ToolTab =
+  | 'overview'
+  | 'calendar'
+  | 'bluebook'
+  | 'sajilo'
+  | 'vault'
+  | 'public-apis'
+  | 'sitehub'
+  | 'osint4all';
 
 export const ToolsHubView: React.FC<ToolsHubViewProps> = ({
   currentLang,
@@ -46,10 +43,16 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({
   onOpenTrayModal,
   onOpenSajiloTray,
 }) => {
+  const isNe = currentLang === 'ne';
   const effectiveTrayModal = onOpenTrayModal || onOpenSajiloTray;
   const [currentTab, setCurrentTab] = useState<ToolTab>(() => {
     const raw = initialSection || activeSubSection;
-    if (raw && ['calendar', 'bluebook', 'sajilo', 'vault', 'public-apis', 'sitehub', 'apis', 'osint4all'].includes(raw)) {
+    if (
+      raw &&
+      ['calendar', 'bluebook', 'sajilo', 'vault', 'public-apis', 'sitehub', 'apis', 'osint4all'].includes(
+        raw
+      )
+    ) {
       return (raw === 'apis' ? 'public-apis' : raw) as ToolTab;
     }
     return 'overview';
@@ -57,61 +60,137 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({
 
   useEffect(() => {
     const raw = initialSection || activeSubSection;
-    if (raw && ['calendar', 'bluebook', 'sajilo', 'vault', 'public-apis', 'sitehub', 'apis', 'osint4all'].includes(raw)) {
+    if (
+      raw &&
+      ['calendar', 'bluebook', 'sajilo', 'vault', 'public-apis', 'sitehub', 'apis', 'osint4all'].includes(
+        raw
+      )
+    ) {
       setCurrentTab((raw === 'apis' ? 'public-apis' : raw) as ToolTab);
     }
   }, [initialSection, activeSubSection]);
 
   const handleTabChange = (tab: ToolTab) => {
     setCurrentTab(tab);
-    if (tab === 'overview') {
-      onNavigateTab('tools');
-    } else {
-      onNavigateTab(tab);
+    if (onNavigateTab) {
+      onNavigateTab(tab === 'overview' ? 'tools' : tab);
     }
   };
 
   const toolTabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'calendar', label: 'Calendar & Converter' },
-    { id: 'bluebook', label: 'Bluebook Vehicle Tax' },
-    { id: 'sajilo', label: 'Sajilo Daily' },
-    { id: 'vault', label: 'Document Vault' },
-    { id: 'public-apis', label: 'Public APIs' },
-    { id: 'sitehub', label: 'Media Directory' },
+    { id: 'overview', label: isNe ? 'सारांश' : 'Overview' },
+    { id: 'calendar', label: isNe ? 'पात्रो र मिति रूपान्तरण' : 'Calendar & Converter' },
+    { id: 'bluebook', label: isNe ? 'ब्लुबुक र सवारी कर' : 'Bluebook Vehicle Tax' },
+    { id: 'sajilo', label: isNe ? 'सजिलो दैनिक' : 'Sajilo Daily' },
+    { id: 'vault', label: isNe ? 'डिजिटल भल्ट' : 'Document Vault' },
+    { id: 'public-apis', label: isNe ? 'पब्लिक ए.पी.आई.' : 'Public APIs' },
+    { id: 'sitehub', label: isNe ? 'मिडिया निर्देशिका' : 'Media Directory' },
     { id: 'osint4all', label: 'OSINT4ALL' },
   ] as const;
 
+  const toolCards: Array<{
+    tab: ToolTab;
+    num: string;
+    category: string;
+    title: string;
+    desc: string;
+  }> = [
+    {
+      tab: 'calendar',
+      num: '01',
+      category: isNe ? 'पात्रो र तिथि' : 'Calendar & Tithi',
+      title: isNe ? 'विक्रम संवत् पात्रो र मिति रूपान्तरण' : 'Bikram Sambat Calendar & Date Converter',
+      desc: isNe
+        ? '१३६ वर्षको वि.सं./ई.सं. मिति रूपान्तरण, सार्वजनिक बिदा, तिथि र पञ्चाङ्ग।'
+        : 'Dual AD/BS date conversion (1970–2105 BS), official government public holidays, daily Tithi, and Panchanga.',
+    },
+    {
+      tab: 'bluebook',
+      num: '02',
+      category: isNe ? 'यातायात र लाइसेन्स' : 'Transport & License',
+      title: isNe ? 'ब्लुबुक सवारी कर र यातायात गाइड' : 'Bluebook Vehicle Tax & DoTM Trial',
+      desc: isNe
+        ? 'प्रदेश अनुसार दुई पाङ्ग्रे र चार पाङ्ग्रे सवारी कर, जरिवाना हिसाब र ७०-अङ्क ट्रायल गाइड।'
+        : 'Provincial road tax rates for two-wheelers and cars, penalty formulas, renewal deadlines, and 70-mark trial guides.',
+    },
+    {
+      tab: 'sajilo',
+      num: '03',
+      category: isNe ? 'दैनिक जीवन' : 'Daily Living',
+      title: isNe ? 'सजिलो दैनिक (कालिमाटी, रेडियो र नोट्स)' : 'Sajilo Essentials (Kalimati, Radio & Notes)',
+      desc: isNe
+        ? 'कालिमाटी तरकारी तथा फलफूल दर, नेपाली एफएम रेडियो र सिङ्क हुने रिमाइन्डर।'
+        : 'Kalimati wholesale produce rates, streaming Nepali FM stations, and cross-device synced reminders.',
+    },
+    {
+      tab: 'vault',
+      num: '04',
+      category: isNe ? 'व्यक्तिगत भल्ट' : 'Cloud & Offline Vault',
+      title: isNe ? 'नागरिक डिजिटल कागजात भल्ट' : 'Citizen Digital Document Vault',
+      desc: isNe
+        ? 'नागरिकता, राहदानी, प्यान र लाइसेन्स विवरण अफलाइन IndexedDB र क्लाउड सिङ्क सहित।'
+        : 'Offline-first IndexedDB and cloud-synced registry for Citizenship, Passport, PAN, and Driving License expiry tracking.',
+    },
+    {
+      tab: 'public-apis',
+      num: '05',
+      category: isNe ? 'विकासकर्ता औजार' : 'Open Developer Tools',
+      title: isNe ? 'पब्लिक ए.पी.आई. र स्यान्डबक्स' : 'Public APIs & Sandbox Workbench',
+      desc: isNe
+        ? 'सार्वजनिक रेस्ट ए.पी.आई. परीक्षण र खुला स्रोत औजारहरू।'
+        : 'Explore verified public APIs, inspect JSON endpoints, and use browser utilities.',
+    },
+    {
+      tab: 'sitehub',
+      num: '06',
+      category: isNe ? 'वेब निर्देशिका' : 'Web Directory',
+      title: isNe ? 'मिडिया र स्रोत निर्देशिका' : 'AllSiteHub Media & Resources Directory',
+      desc: isNe
+        ? 'स्रोत र प्रसारण पोर्टलहरूको व्यवस्थित सूची।'
+        : 'Curated index of streaming platforms, broadcasts, and open web repositories.',
+    },
+    {
+      tab: 'osint4all',
+      num: '07',
+      category: isNe ? 'अनुसन्धान र सुरक्षा' : 'OSINT & Research',
+      title: isNe ? 'OSINT4ALL अनुसन्धान निर्देशिका' : 'OSINT4ALL Intelligence Directory',
+      desc: isNe
+        ? 'डी.एन.एस., प्रमाणीकरण र खुला स्रोत अनुसन्धान उपकरण।'
+        : 'Open-source intelligence toolkit across DNS, verification, and public surface lookup.',
+    },
+  ];
+
   return (
-    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 space-y-8 animate-fadeIn font-sans">
-      {/* Editorial Header */}
-      <div className="space-y-4 border-b border-zinc-800/80 pb-6">
+    <div className="max-w-6xl mx-auto w-full px-4 sm:px-8 py-6 sm:py-8 space-y-8 font-sans">
+      {/* Header */}
+      <div className="space-y-4 border-b border-slate-200 dark:border-slate-800 pb-6">
         <div className="space-y-2">
-          <span className="text-xs uppercase tracking-wider text-zinc-400 font-mono block">
-            Offline-First Utilities
+          <span className="text-xs uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono font-semibold block">
+            {isNe ? 'अफलाइन-प्रथम औजारहरू' : 'Offline-First Utilities'}
           </span>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white font-sans">
-            {currentLang === 'ne' ? 'दैनिक औजार तथा उपयोगिता' : 'Tools & Utilities'}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-[#0B1F3A] dark:text-white">
+            {isNe ? 'दैनिक औजार तथा उपयोगिता' : 'Tools & Utilities'}
           </h1>
-          <p className="text-sm sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
-            {currentLang === 'ne'
-              ? 'नेपाली क्यालेन्डर, सवारी कर क्याल्कुलेटर, सुरक्षित डिजिटल भल्ट, प्रत्यक्ष एफएम रेडियो र दैनिक बजार दर।'
-              : 'Fast, client-side digital utilities designed for daily life, transport compliance, and productivity in Nepal.'}
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+            {isNe
+              ? 'नेपाली पात्रो, सवारी कर क्यालकुलेटर, सुरक्षित डिजिटल भल्ट, प्रत्यक्ष एफएम रेडियो र दैनिक औजारहरू।'
+              : 'Fast, client-side digital utilities designed for daily life, transport compliance, and personal records in Nepal.'}
           </p>
         </div>
 
         {/* Sub-Navigation Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {toolTabs.map((tab) => {
             const isActive = currentTab === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => handleTabChange(tab.id as ToolTab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                className={`min-h-[40px] px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                   isActive
-                    ? 'bg-white text-zinc-950 font-semibold shadow-sm'
-                    : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                    ? 'bg-[#0B1F3A] dark:bg-blue-600 text-white shadow-sm'
+                    : 'bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-blue-400 dark:hover:border-blue-600'
                 }`}
               >
                 {tab.label}
@@ -123,127 +202,30 @@ export const ToolsHubView: React.FC<ToolsHubViewProps> = ({
 
       {/* Overview Hub Screen */}
       {currentTab === 'overview' && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Tool 1: Calendar & Converter */}
-            <div
-              onClick={() => handleTabChange('calendar')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {toolCards.map((card) => (
+            <button
+              key={card.tab}
+              type="button"
+              onClick={() => handleTabChange(card.tab)}
+              className="p-6 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer group text-left space-y-3"
             >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>01. Calendar & Tithi</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
+              <div className="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
+                <span>
+                  {card.num}. {card.category}
+                </span>
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                  {isNe ? 'खोल्नुहोस् →' : 'Launch →'}
+                </span>
               </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                Bikram Sambat Calendar & Date Converter
+              <h3 className="text-lg font-semibold text-[#0B1F3A] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                {card.title}
               </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Dual AD/BS date conversion, official government public holidays, daily Tithi, and Panchanga timings.
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                {card.desc}
               </p>
-            </div>
-
-            {/* Tool 2: Bluebook Vehicle Tax */}
-            <div
-              onClick={() => handleTabChange('bluebook')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>02. Transport & License</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                Bluebook Vehicle Tax & DoTM Trial
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Provincial road tax rates for two-wheelers and cars, penalty formulas, renewal deadlines, and 70-mark trial guides.
-              </p>
-            </div>
-
-            {/* Tool 3: Sajilo Essentials */}
-            <div
-              onClick={() => handleTabChange('sajilo')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>03. Daily Living</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                Sajilo Essentials (Kalimati, Radio & Notes)
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Daily Kalimati wholesale vegetable & fruit rates, streaming Nepali FM stations, and scratchpad note keeper.
-              </p>
-            </div>
-
-            {/* Tool 4: Document Vault */}
-            <div
-              onClick={() => handleTabChange('vault')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>04. Private Security</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                Encrypted Citizen Document Vault
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                AES-256 client-side encrypted storage for Citizenship, e-Passport, PAN, and certificates. 100% private to your device.
-              </p>
-            </div>
-
-            {/* Tool 5: Public APIs Hub */}
-            <div
-              onClick={() => handleTabChange('public-apis')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>05. Open Developer Tools</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                Public APIs & Sandbox Workbench
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Explore verified public APIs, test REST endpoints with CORS bypass, and utilize live micro utilities.
-              </p>
-            </div>
-
-            {/* Tool 6: Media Directory */}
-            <div
-              onClick={() => handleTabChange('sitehub')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>06. Web Directory</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                AllSiteHub Media & Resources Directory
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Curated index of streaming platforms, anime, sports broadcasts, and open web repositories inspired by allsitehub.site.
-              </p>
-            </div>
-
-            {/* Tool 7: OSINT4ALL Directory */}
-            <div
-              onClick={() => handleTabChange('osint4all')}
-              className="p-6 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer group space-y-3"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-zinc-400">
-                <span>07. OSINT & Research</span>
-                <span className="text-zinc-400 group-hover:text-white transition-colors">Launch →</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white group-hover:text-zinc-200 transition-colors">
-                OSINT4ALL Intelligence Directory
-              </h3>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
-                Open-source intelligence toolkit modeled after osint4all.com: DNS, Shodan, breach lookup, geolocation, and verification.
-              </p>
-            </div>
-          </div>
+            </button>
+          ))}
         </div>
       )}
 

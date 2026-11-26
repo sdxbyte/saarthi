@@ -52,16 +52,10 @@ export const BENTO_GRID_CONFIG: Record<string, BentoSpanConfig> = {
     span: '2x2',
     colSpan: 'sm:col-span-2 lg:col-span-2',
     rowSpan: 'row-span-2',
-    accentGlow: 'from-emerald-500/20 via-emerald-950/10 to-transparent',
+    accentGlow: 'from-blue-500/15 via-blue-950/10 to-transparent',
     badgeText: 'BENTO 2x2',
-    borderHover: 'hover:border-emerald-500/60',
+    borderHover: 'hover:border-blue-500/60',
     highlightText: 'PRIMARY CAPITAL SUITE',
-    metricPreview: {
-      label: 'NEPSE Index Live',
-      value: '2,748.15',
-      subtext: '+1.42% • Turnover NPR 6.82B • SEBON Verified',
-      trend: 'up',
-    },
     features: ['Live Stock Tickers', 'Meroshare IPO Filings', 'Portfolio WACC Calc', 'Audited Statements'],
     isHero: true,
   },
@@ -69,16 +63,10 @@ export const BENTO_GRID_CONFIG: Record<string, BentoSpanConfig> = {
     span: '2x2',
     colSpan: 'sm:col-span-2 lg:col-span-2',
     rowSpan: 'row-span-2',
-    accentGlow: 'from-emerald-500/20 via-emerald-950/10 to-transparent',
+    accentGlow: 'from-blue-500/15 via-blue-950/10 to-transparent',
     badgeText: 'BENTO 2x2',
-    borderHover: 'hover:border-emerald-500/60',
+    borderHover: 'hover:border-blue-500/60',
     highlightText: 'PRIMARY CAPITAL SUITE',
-    metricPreview: {
-      label: 'NEPSE Index Live',
-      value: '2,748.15',
-      subtext: '+1.42% • Turnover NPR 6.82B • SEBON Verified',
-      trend: 'up',
-    },
     features: ['Live Stock Tickers', 'Meroshare IPO Filings', 'Portfolio WACC Calc', 'Audited Statements'],
     isHero: true,
   },
@@ -86,16 +74,10 @@ export const BENTO_GRID_CONFIG: Record<string, BentoSpanConfig> = {
     span: '2x1',
     colSpan: 'sm:col-span-2 lg:col-span-2',
     rowSpan: 'row-span-1',
-    accentGlow: 'from-cyan-500/20 via-cyan-950/10 to-transparent',
+    accentGlow: 'from-blue-500/15 via-blue-950/10 to-transparent',
     badgeText: 'BENTO 2x1',
-    borderHover: 'hover:border-cyan-500/60',
+    borderHover: 'hover:border-blue-500/60',
     highlightText: 'OFFICIAL NRB FEEDS',
-    metricPreview: {
-      label: 'NRB Forex Reference',
-      value: 'USD = NPR 134.85',
-      subtext: 'Gold NPR 1,68,500/tola • NOC Fuel Rates',
-      trend: 'neutral',
-    },
     features: ['NRB Daily Fixing', 'FENEGOSIDA Bullion', 'NOC Fuel Slabs', 'Bank SWIFT Codes'],
   },
   'tax-calculator': {
@@ -359,16 +341,10 @@ export const BENTO_GRID_CONFIG: Record<string, BentoSpanConfig> = {
     span: '2x1',
     colSpan: 'sm:col-span-2 lg:col-span-2',
     rowSpan: 'row-span-1',
-    accentGlow: 'from-cyan-500/20 via-cyan-950/10 to-transparent',
+    accentGlow: 'from-blue-500/15 via-blue-950/10 to-transparent',
     badgeText: 'BENTO 2x1',
-    borderHover: 'hover:border-cyan-500/60',
+    borderHover: 'hover:border-blue-500/60',
     highlightText: 'OFFICIAL NRB FEEDS',
-    metricPreview: {
-      label: 'NRB Forex Reference',
-      value: 'USD = NPR 134.85',
-      subtext: 'Gold NPR 1,68,500/tola • NOC Fuel Rates',
-      trend: 'neutral',
-    },
     features: ['NRB Daily Fixing', 'FENEGOSIDA Bullion', 'NOC Fuel Slabs', 'Bank SWIFT Codes'],
   },
   'tax': {
@@ -606,25 +582,21 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
       {/* =========================================================================
           BENTO HEADER CONSOLE WITH TELEMETRY STRIP
           ========================================================================= */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 dark:text-red-400 shrink-0">
+          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 shrink-0">
             <LayoutGrid className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white tracking-tight">
-                {currentLang === 'ne' ? 'सारथी एकीकृत बेन्टो कन्सोल' : 'Civic Service Bento Grid'}
+              <h2 className="font-bold text-lg sm:text-xl text-[#0B1F3A] dark:text-white tracking-tight">
+                {currentLang === 'ne' ? 'सारथी सेवा कन्सोल' : 'Civic Service Grid'}
               </h2>
-              <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                ai2.design dense blocks
-              </span>
             </div>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
               {currentLang === 'ne'
-                ? 'सरकारी सेवा, नेप्से सेयर बजार, कर, डिजिटल भल्ट र दैनिक औजारहरूको एकीकृत बेन्टो प्रणाली'
-                : 'Adaptive 2x2, 2x1, and 1x1 structural bento blocks with real-time telemetry and instant shortcuts'}
+                ? 'सरकारी सेवा, नेप्से सेयर बजार, कर, डिजिटल भल्ट र दैनिक औजारहरू'
+                : 'Unified civic services, verified financial feeds, and everyday utilities'}
             </p>
           </div>
         </div>
@@ -764,12 +736,12 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
                 {/* Title & Description */}
                 <div>
                   <h3
-                    className={`font-display font-black tracking-tight transition-colors ${
+                    className={`font-semibold tracking-tight transition-colors ${
                       is2x2
-                        ? 'text-xl sm:text-2xl text-white group-hover:text-emerald-300'
+                        ? 'text-xl sm:text-2xl text-[#0B1F3A] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
                         : is2x1
-                        ? 'text-base sm:text-lg text-white group-hover:text-red-300'
-                        : 'text-sm font-bold text-white group-hover:text-red-300'
+                        ? 'text-base sm:text-lg text-[#0B1F3A] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                        : 'text-sm font-bold text-[#0B1F3A] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
                     }`}
                   >
                     {currentLang === 'ne' ? module.titleNp : module.title}
@@ -784,7 +756,7 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
                   </p>
                 </div>
 
-                {/* Bento Metric Preview Block (For 2x2 and 2x1 Spans) */}
+                {/* Metric Preview Block */}
                 {config.metricPreview && (
                   <div
                     className={`p-3 rounded-xl border mt-3 transition-colors ${
@@ -794,18 +766,13 @@ export const ModuleGrid: React.FC<ModuleGridProps> = React.memo(({ currentLang, 
                     }`}
                   >
                     <div className="flex items-center justify-between text-[11px] font-mono">
-                      <span className="text-slate-400 font-medium">{config.metricPreview.label}</span>
-                      {config.metricPreview.trend === 'up' && (
-                        <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-0.5">
-                          <Activity className="w-3 h-3" /> LIVE
-                        </span>
-                      )}
+                      <span className="text-slate-500 dark:text-slate-400 font-medium">{config.metricPreview.label}</span>
                     </div>
-                    <div className="text-base sm:text-lg font-black font-mono text-white mt-0.5">
+                    <div className="text-base sm:text-lg font-bold font-mono text-[#0B1F3A] dark:text-white mt-0.5">
                       {config.metricPreview.value}
                     </div>
                     {config.metricPreview.subtext && (
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                         {config.metricPreview.subtext}
                       </div>
                     )}

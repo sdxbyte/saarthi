@@ -29,6 +29,7 @@ import {
   importKeeperJson,
 } from '../../utils/sajiloKeeperStore';
 import { convertAdToBs } from '../../utils/bsAdConverter';
+import { useSyncAuth } from '../../context/SyncAuthContext';
 
 interface SajiloKeeperTabProps {
   currentLang: 'en' | 'ne';
@@ -36,6 +37,7 @@ interface SajiloKeeperTabProps {
 }
 
 export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, devanagariNumerals }) => {
+  const { keeperItems: syncedKeeperItems, upsertKeeperItem, deleteKeeperItem: deleteSyncedKeeperItem } = useSyncAuth();
   const [items, setItems] = useState<KeeperItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -50,13 +52,19 @@ export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, d
   const [formExpiryDateAd, setFormExpiryDateAd] = useState('');
   const [formRemindDays, setFormRemindDays] = useState(30);
   const [formNotes, setFormNotes] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [statusNotice, setStatusNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     reloadItems();
-  }, []);
+  }, [syncedKeeperItems]);
 
   const reloadItems = () => {
-    setItems(getKeeperItems());
+    const local = getKeeperItems();
+    const mergedMap = new Map<string, KeeperItem>();
+    for (const item of local) mergedMap.set(item.id, item);
+    for (const item of syncedKeeperItems) mergedMap.set(item.id, item);
+    setItems(Array.from(mergedMap.values()));
   };
 
   const handleOpenAdd = () => {
@@ -81,11 +89,11 @@ export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, d
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formExpiryDateAd) return;
 
-    saveKeeperItem({
+    const saved = saveKeeperItem({
       ...(editingItem ? { id: editingItem.id } : {}),
       title: formTitle.trim(),
       category: formCategory,
@@ -96,15 +104,20 @@ export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, d
       notes: formNotes.trim() || undefined,
     });
 
+    await upsertKeeperItem(saved);
     setIsModalOpen(false);
     reloadItems();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm(currentLang === 'ne' ? 'के तपाई यो रिमाइन्डर हटाउन निश्चित हुनुहुन्छ?' : 'Are you sure you want to delete this reminder?')) {
-      deleteKeeperItem(id);
-      reloadItems();
-    }
+  const handleConfirmDelete = async (id: string) => {
+    deleteKeeperItem(id);
+    await deleteSyncedKeeperItem(id);
+    setConfirmDeleteId(null);
+    setStatusNotice({
+      type: 'success',
+      text: currentLang === 'ne' ? 'रिमाइन्डर हटाइयो।' : 'Reminder deleted.',
+    });
+    reloadItems();
   };
 
   const handleExport = () => {
@@ -126,9 +139,15 @@ export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, d
       const content = event.target?.result as string;
       if (content && importKeeperJson(content)) {
         reloadItems();
-        alert(currentLang === 'ne' ? 'किपर डाटा सफलतापूर्वक आयात गरियो!' : 'Keeper data imported successfully!');
+        setStatusNotice({
+          type: 'success',
+          text: currentLang === 'ne' ? 'किपर डाटा सफलतापूर्वक आयात गरियो!' : 'Keeper data imported successfully!',
+        });
       } else {
-        alert(currentLang === 'ne' ? 'आयात गर्न सकिएन, फाइल ढाँचा मिलेन।' : 'Failed to import. Invalid JSON format.');
+        setStatusNotice({
+          type: 'error',
+          text: currentLang === 'ne' ? 'आयात गर्न सकिएन, फाइल ढाँचा मिलेन।' : 'Failed to import. Invalid JSON format.',
+        });
       }
     };
     reader.readAsText(file);
@@ -209,6 +228,26 @@ export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, d
           </button>
         </div>
       </div>
+
+      {statusNotice && (
+        <div
+          className={`flex items-center justify-between gap-3 p-3 rounded-xl border text-xs font-mono ${
+            statusNotice.type === 'success'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-red-500/10 border-red-500/30 text-red-300'
+          }`}
+        >
+          <span>{statusNotice.text}</span>
+          <button
+            type="button"
+            onClick={() => setStatusNotice(null)}
+            className="text-current opacity-80 hover:opacity-100"
+            aria-label="Dismiss notice"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -330,20 +369,43 @@ export const SajiloKeeperTab: React.FC<SajiloKeeperTabProps> = ({ currentLang, d
                 <div className="flex items-center justify-between pt-2 border-t border-[#262a31]/60 text-[10px] font-mono text-[#8b909b]">
                   <span>Alert before: {formatDigits(item.remindDaysBefore || 30)} days</span>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleOpenEdit(item)}
-                      className="p-1 rounded text-[#8b909b] hover:text-[#00e599] hover:bg-[#262a31] transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1 rounded text-[#8b909b] hover:text-red-400 hover:bg-[#262a31] transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {confirmDeleteId === item.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmDelete(item.id)}
+                          className="px-2 py-0.5 rounded bg-red-600 text-white font-bold hover:bg-red-500 transition-colors"
+                        >
+                          {currentLang === 'ne' ? 'हटाउनुहोस्' : 'Confirm'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-0.5 rounded bg-[#262a31] text-[#edeef0] hover:bg-[#313640] transition-colors"
+                        >
+                          {currentLang === 'ne' ? 'रद्द' : 'Cancel'}
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEdit(item)}
+                          className="p-1 rounded text-[#8b909b] hover:text-[#00e599] hover:bg-[#262a31] transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(item.id)}
+                          className="p-1 rounded text-[#8b909b] hover:text-red-400 hover:bg-[#262a31] transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

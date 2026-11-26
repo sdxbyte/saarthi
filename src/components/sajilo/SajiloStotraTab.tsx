@@ -243,11 +243,16 @@ export const SajiloStotraTab: React.FC<SajiloStotraTabProps> = ({ currentLang, d
             </button>
 
             {/* Progress Bar */}
-            <div className="w-full max-w-xs mt-6 bg-[#0d0e12] rounded-full h-2.5 overflow-hidden border border-[#262a31]">
-              <div
-                className="bg-[#f59e0b] h-full transition-all duration-300"
-                style={{ width: `${(japaCount / 108) * 100}%` }}
-              />
+            <div
+              className="w-full max-w-xs mt-6 bg-slate-200 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-300 dark:border-slate-700"
+              role="progressbar"
+              aria-valuenow={japaCount}
+              aria-valuemin={0}
+              aria-valuemax={108}
+            >
+              <svg viewBox="0 0 108 10" preserveAspectRatio="none" className="w-full h-full block">
+                <rect x="0" y="0" width={Math.max(0, Math.min(108, japaCount))} height="10" className="fill-amber-500 transition-all duration-300" />
+              </svg>
             </div>
           </div>
 

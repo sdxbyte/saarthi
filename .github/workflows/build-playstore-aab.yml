@@ -72,6 +72,13 @@ jobs:
           (yes || true) | "$SDKMANAGER" --sdk_root="$SDK_DIR" --licenses >/dev/null 2>&1 || true
           "$SDKMANAGER" --sdk_root="$SDK_DIR" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
+      - name: Resolve Platform Version from package.json
+        id: meta
+        run: |
+          PKG_VER=$(node -p "require('./package.json').version")
+          echo "version=$PKG_VER" >> "$GITHUB_OUTPUT"
+          echo "PKG_VER=$PKG_VER" >> "$GITHUB_ENV"
+
       - name: Generate Native Capacitor Android Project & Apply SAARTHI Assets
         env:
           RUN_NUM: ${{ github.run_number }}
@@ -85,15 +92,18 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             const { PNG } = require('pngjs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const parts = String(pkg.version || '2.0.0').split('.').map((n) => parseInt(n, 10) || 0);
+            const semverBase = (parts[0] || 0) * 10000 + (parts[1] || 0) * 100 + (parts[2] || 0);
 
             // 1. Increment versionCode on every GitHub push
             const gradlePath = 'android/app/build.gradle';
             let gradle = fs.readFileSync(gradlePath, 'utf8');
-            const vCode = 10901 + parseInt(process.env.RUN_NUM || '1', 10);
+            const vCode = semverBase + parseInt(process.env.RUN_NUM || '1', 10);
             gradle = gradle.replace(/versionCode\s+\d+/, 'versionCode ' + vCode);
-            gradle = gradle.replace(/versionName\s+\"[^\"]+\"/, 'versionName \"1.9.1\"');
+            gradle = gradle.replace(/versionName\s+\"[^\"]+\"/, 'versionName \"' + pkg.version + '\"');
             fs.writeFileSync(gradlePath, gradle, 'utf8');
-            console.log('Stamped Android versionCode=' + vCode + ', versionName=1.9.1');
+            console.log('Stamped Android versionCode=' + vCode + ', versionName=' + pkg.version);
 
             // 2. Render crisp SAARTHI launcher PNGs into android mipmap-* directories
             const srcBuf = fs.readFileSync('public/pwa-512x512.png');
@@ -155,6 +165,7 @@ jobs:
             KEY_PASS="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
             echo "Using persistent keystore (Play Store .aab + Public .apk enabled)."
           else
+            echo "::warning title=Ephemeral Android Signing Keystore::ANDROID_KEYSTORE_BASE64 secret is not configured. An ephemeral keystore is being generated, which prevents in-place APK upgrades over previously installed builds until persistent signing secrets are added."
             echo "playstore_mode=false" >> "$GITHUB_OUTPUT"
             ALIAS_VALUE="saarthi-github-apk"
             STORE_PASS="SaarthiApkKey${GITHUB_RUN_ID}"
@@ -189,7 +200,7 @@ jobs:
             echo "ERROR: Standalone release APK not produced."
             exit 1
           fi
-          cp "$APK_SRC" ../android-release/saarthi-v1.9.1.apk
+          cp "$APK_SRC" "../android-release/saarthi-v${PKG_VER}.apk"
           cp "$APK_SRC" ../android-release/saarthi-latest.apk
 
           if [ "${{ steps.keystore.outputs.playstore_mode }}" = "true" ]; then
@@ -200,7 +211,7 @@ jobs:
               -Pandroid.injected.signing.key.password="$SIGNING_KEY_PASS"
             AAB_SRC=$(find app/build/outputs/bundle/release -type f -name "*.aab" | head -n 1)
             if [ -n "$AAB_SRC" ]; then
-              cp "$AAB_SRC" ../android-release/saarthi-v1.9.1.aab
+              cp "$AAB_SRC" "../android-release/saarthi-v${PKG_VER}.aab"
             fi
           fi
 
@@ -209,7 +220,7 @@ jobs:
         with:
           name: saarthi-android-release
           path: |
-            android-release/saarthi-v1.9.1.apk
+            android-release/saarthi-v*.apk
             android-release/saarthi-latest.apk
             android-release/*.aab
           retention-days: 90
@@ -219,12 +230,12 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.9.1-android
-          name: 'SAARTHI v1.9.1 — Standalone Android APK'
+          tag_name: v${{ steps.meta.outputs.version }}-android
+          name: 'SAARTHI v${{ steps.meta.outputs.version }} — Standalone Android APK'
           make_latest: true
           fail_on_unmatched_files: false
           body: |
-            ## SAARTHI Standalone Android App (v1.9.1)
+            ## SAARTHI Standalone Android App (v${{ steps.meta.outputs.version }})
 
             Self-contained native Android APK with the full SAARTHI UI bundled offline and live API/data synced directly to `https://saarthi.dpdns.org`.
 
@@ -232,7 +243,7 @@ jobs:
             - **Package ID**: `com.sdxbyte.saarthi`
             - **CI Build #${{ github.run_number }}**
             - **Commit**: `${{ github.sha }}`
-            - **Version**: `1.9.1`
+            - **Version**: `${{ steps.meta.outputs.version }}`
 
             ### Compliance Links
             - **Privacy Policy**: https://saarthi.dpdns.org/privacy
@@ -240,7 +251,7 @@ jobs:
             - **Account Deletion**: https://saarthi.dpdns.org/account-deletion
           files: |
             android-release/saarthi-latest.apk
-            android-release/saarthi-v1.9.1.apk
+            android-release/saarthi-v${{ steps.meta.outputs.version }}.apk
             android-release/*.aab
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

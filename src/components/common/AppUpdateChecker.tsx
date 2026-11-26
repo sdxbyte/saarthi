@@ -226,10 +226,9 @@ export const AppUpdateChecker: React.FC = () => {
             <div className="space-y-1">
               {downloading && (
                 <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-400 transition-all duration-200"
-                    style={{ width: `${Math.max(4, downloadPercent)}%` }}
-                  />
+                  <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="w-full h-full block">
+                    <rect x="0" y="0" width={Math.max(4, Math.min(100, downloadPercent))} height="6" className="fill-emerald-400" />
+                  </svg>
                 </div>
               )}
               {installMessage && (
@@ -372,10 +371,9 @@ export const AppUpdateChecker: React.FC = () => {
                     <span className="font-mono">{downloadPercent}%</span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-400 transition-all duration-200"
-                      style={{ width: `${Math.max(4, downloadPercent)}%` }}
-                    />
+                    <svg viewBox="0 0 100 8" preserveAspectRatio="none" className="w-full h-full block">
+                      <rect x="0" y="0" width={Math.max(4, Math.min(100, downloadPercent))} height="8" className="fill-emerald-400" />
+                    </svg>
                   </div>
                 </div>
               )}

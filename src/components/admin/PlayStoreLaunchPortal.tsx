@@ -17,6 +17,7 @@ import {
   Trash2,
   FileText,
 } from 'lucide-react';
+import { CURRENT_VERSION_INFO } from '../../utils/versionEngine';
 
 interface PlayStoreLaunchPortalProps {
   currentLang: 'en' | 'ne';
@@ -90,7 +91,7 @@ bubblewrap build
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-[10px] font-bold uppercase tracking-wider">
-                  Google Play Readiness v1.9.1
+                  Google Play Readiness {CURRENT_VERSION_INFO.version}
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-mono text-[10px] font-bold uppercase">
                   Package: com.sdxbyte.saarthi

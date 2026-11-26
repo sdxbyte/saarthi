@@ -2,6 +2,57 @@
 
 All notable changes to the SAARTHI project are documented in this file.
 
+## [2.0.0] - 2026-11-25 A.D. / २०८३-०८-०९ B.S.
+
+### Title
+SAARTHI v2.0.0 Unified Cross-Platform Account, Offline/Online Cloud Sync, Hybrid Material Design 3 & Android APK Release
+
+### Added
+- **Unified Account Center (`/account`) & Cross-Device Sync**: Added `AccountView` and `SyncAuthContext` synchronizing citizen documents, keeper reminders, saved items, and device sessions across Web, PWA, and Android APK via verified Firebase Auth + Cloud Firestore.
+- **Resilient Offline-First Sync Engine (`/src/services/offlineDb.ts`, `/src/services/syncEngine.ts`)**: Persistent IndexedDB (`saarthi_offline_v2`) with object-store auto-repair, native transaction fallback recovery, deduplicated mutation outbox, idempotency replay protection, and 3-way conflict resolution.
+- **Hybrid Light/Dark Material Design 3 Refresh**: Unified Navy (`#0B1F3A`) & Blue (`#2563EB`) visual tokens, accessible light/dark legibility, and consistent mobile/desktop navigation.
+- **Full Regression Suite (`/tests/`)**: Expanded Vitest verification across 6 test files (44 passing tests) covering account device revocation, IndexedDB native transaction resilience, Rule 16 authentic data fallbacks, and Firestore security rules.
+
+### Updated
+- **Admin Operations & Release Engine**: Repaired admin sub-tab routing (`reports`, `announcements`, `donation-audit`), removed blocking `alert()`/`confirm()` dialogs, eliminated static server health numbers in favor of live `/api/health`, and synchronized `v2.0.0` metadata across Web, PWA, and Android APK CI workflows.
+- **Rule 16 Authentic Data Compliance**: Removed static fallback prices/rates across Sajilo Bazar and Public APIs Hub, returning explicit unavailable notices when upstream official sources are unreachable.
+
+### Fixed
+- Fixed native `IDBDatabase.transaction` exceptions in restricted/iframe browser contexts with automatic object-store validation, DB repair, and seamless in-memory fallback.
+- Fixed support form ticket creation routing (`/api/support/tickets`), light-mode contrast across public/admin pages, and TypeScript strict check errors.
+
+---
+
+## [1.9.1] - 2026-11-22 A.D. / २०८३-०८-०६ B.S.
+
+### Title
+SAARTHI Cross-Platform Redesign, Unified Cloud Sync, Security Hardening & Offline Engine Upgrade
+
+### Added
+- **Unified Firebase Auth & Firestore Cloud Layer**: Provisioned Firebase Authentication (Google Sign-In) and Cloud Firestore (`ai-studio-sarathi-54a6a23c-5552-499c-9038-48dd469ebf11`) with owner-isolated security rules (`firestore.rules`) validated by `@firebase/eslint-plugin-security-rules`.
+- **Offline-First Sync Engine (`/src/services/offlineDb.ts`, `/src/services/syncEngine.ts`)**: Persistent IndexedDB database (`saarthi_offline_v2`) with deduplicated mutation outbox, idempotency keys, version counters, non-overlapping field auto-merge, `ConflictResolutionModal`, and 6-state `SyncStatusBadge`.
+- **Safe Legacy Migration**: Pre-migration snapshot (`saarthi_pre_migration_backup_v1`) exported before migrating `localStorage` vault/keeper records to Firestore.
+- **Hybrid Design System & Mobile Navigation**: Material 3 + fintech visual system in Navy Blue (`#0B1F3A` / `#102A4C`) and Subtle Blue (`#2563EB` / `#3B82F6`), persistent Light/Dark theme switcher (`ThemeContext`), and 5-tab `MobileBottomNav` (`< 768px`).
+- **Automated Test Suites (`/tests/`)**: Added `firestore.rules.test.ts`, `offlineSyncEngine.test.ts`, and `uiAndTheme.test.tsx` (total 5 test files, 36 tests).
+- **Complete Technical Documentation Suite (`/docs/`)**: Added Architecture, Security, Deployment, Sync Engine, Android Updates, Backup/Restore, and Test Report manuals.
+
+### Updated
+- **Bundle Code Splitting**: Configured `manualChunks` in `vite.config.ts` (`vendor-react`, `vendor-firebase`, `vendor-dates`, `vendor-ui`, `vendor-pdf`) and lazy-loaded `jspdf` inside `src/utils/pdfExporter.ts`.
+- **CI/CD Workflows**: Added `npm test` and dynamic package version logging to `.github/workflows/deploy.yml`; added explicit ephemeral keystore warning annotation to `.github/workflows/build-playstore-aab.yml`.
+- **Document Vault & Sajilo Keeper**: Unified offline/cloud persistence under `SyncAuthContext` with clean empty defaults instead of pre-seeded dummy records.
+
+### Fixed
+- **Read-Only `window.fetch` Startup Crash & Node `window.location` Guard**: Fixed `src/utils/apiClient.ts` to check property descriptors cleanly and safely access `window.location?.protocol`.
+- **Zero-Fabrication Server Hardening (`src/serverApp.ts`)**: Removed simulated/hardcoded responses from `/api/receipt/scan`, `/api/meroshare/auto-apply-batch`, `/api/live/kalimati`, and `/api/live/sources/health`; removed `'Bearer_Mock_Auth_Token'` fallback in `meroshareAutoService.ts`.
+- **Rule 8 Donation Unpublished State (`src/types/donation.ts`)**: Fixed `getDonationConfig()` to respect explicit `isPublished: false` admin overrides while preserving verified owner channels when published.
+- **HMR Dev Startup**: Fixed `server.ts` Express middleware / Vite HMR setup on port 3000.
+
+### Removed
+- Scrubbed plaintext GitHub PAT from `docs/github-credentials.json` and moved `postbuild` auto-push to explicit `npm run sync:github`.
+- Deleted unreferenced legacy layout/footer components and `twa-manifest.json`.
+
+---
+
 ## [1.7.0] - 2026-09-18
 
 ### Title

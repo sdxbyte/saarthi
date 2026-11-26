@@ -1,7 +1,7 @@
 {
   "name": "saarthi",
   "private": true,
-  "version": "1.9.1",
+  "version": "2.0.0",
   "type": "module",
   "engines": {
     "node": "22.x"
@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs && esbuild src/serverApp.ts --bundle --platform=node --format=cjs --packages=external --outfile=dist/vercel-server.cjs",
-    "postbuild": "tsx scripts/auto-sync-github.ts",
+    "sync:github": "tsx scripts/auto-sync-github.ts",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -77,5 +77,10 @@
     "qs": ">=6.17.1",
     "source-map-js": ">=1.2.2",
     "@grpc/grpc-js": ">=1.13.6"
+  },
+  "devDependencies": {
+    "@firebase/eslint-plugin-security-rules": "^0.0.2",
+    "eslint": "^10.15.0",
+    "fake-indexeddb": "^6.2.8"
   }
 }

@@ -11,7 +11,7 @@ export const AboutView: React.FC<AboutViewProps> = ({ currentLang, onNavigateTab
   const isDark = theme === 'dark';
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12 py-6 px-4 font-sans text-slate-100">
+    <div className={`max-w-6xl mx-auto space-y-12 py-6 px-4 font-sans ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
       {/* Hero Banner */}
       <div className={`p-8 sm:p-12 rounded-3xl border shadow-2xl relative overflow-hidden ${
         isDark ? 'bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border-slate-800' : 'bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 border-slate-800'
@@ -129,7 +129,9 @@ export const AboutView: React.FC<AboutViewProps> = ({ currentLang, onNavigateTab
                 isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200 text-slate-900 shadow-md'
               }`}
             >
-              <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400">
+              <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center ${
+                isDark ? 'bg-slate-800 border-slate-700 text-amber-400' : 'bg-amber-50 border-amber-200 text-amber-600'
+              }`}>
                 <item.icon className="w-5 h-5" />
               </div>
               <h3 className={`text-base font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{item.title}</h3>
@@ -159,12 +161,17 @@ export const AboutView: React.FC<AboutViewProps> = ({ currentLang, onNavigateTab
             { label: 'Innovation', desc: 'Modern digital web standards' },
             { label: 'Citizen-Centered Design', desc: 'Intuitive and fast user flows' },
           ].map((val, i) => (
-            <div key={i} className="p-4 rounded-2xl bg-slate-950/50 border border-slate-800/80 space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-amber-400">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <div
+              key={i}
+              className={`p-4 rounded-2xl border space-y-1 ${
+                isDark ? 'bg-slate-950/50 border-slate-800/80' : 'bg-white border-slate-200 shadow-xs'
+              }`}
+            >
+              <div className={`flex items-center gap-1.5 font-bold ${isDark ? 'text-amber-400' : 'text-slate-900'}`}>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 <span>{val.label}</span>
               </div>
-              <p className="text-[11px] text-slate-400">{val.desc}</p>
+              <p className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{val.desc}</p>
             </div>
           ))}
         </div>

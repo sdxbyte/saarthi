@@ -50,10 +50,13 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({ theme, onNavigateTab }
           </p>
           <ul className={`list-disc list-inside text-xs space-y-1.5 pl-2 ${bodyText}`}>
             <li>
-              <strong>Issue Reports &amp; Support Tickets (<code className="font-mono">/api/support/tickets</code>):</strong> Full name, email address, optional phone number, category, and message submitted through the Contact / Report Issue or Account Deletion forms. Stored in SAARTHI&apos;s server database and dispatched to the platform administrator to resolve your request.
+              <strong>Optional Unified Account &amp; Cloud Sync (Firebase Authentication &amp; Cloud Firestore):</strong> If you choose to sign in via Email/Password or Google Sign-In on the web, PWA, or Android APK (<code className="font-mono">com.sdxbyte.saarthi</code>), your account profile, preferences, saved shortcuts, Sajilo Keeper document reminders, and device session list are synchronized under your private user ID (<code className="font-mono">users/&#123;uid&#125;</code>) with strict owner-only Firestore security rules.
             </li>
             <li>
-              <strong>Local Citizen Account &amp; Document Vault:</strong> Profile details and saved document metadata created in the optional Citizen Account modal are stored strictly locally on your device (<code className="font-mono">localStorage</code>) with salted SHA-256 credential hashing.
+              <strong>Offline Persistence (IndexedDB &amp; Local Storage):</strong> Offline edits and sync outbox queues are stored locally in IndexedDB and <code className="font-mono">localStorage</code> on your device so you can continue working without internet connectivity and sync automatically when reconnected.
+            </li>
+            <li>
+              <strong>Issue Reports &amp; Support Tickets (<code className="font-mono">/api/support/tickets</code>):</strong> Full name, email address, optional phone number, category, and message submitted through the Contact / Report Issue or Account Deletion forms. Stored in SAARTHI&apos;s server database and dispatched to the platform administrator to resolve your request.
             </li>
             <li>
               <strong>Server Diagnostics &amp; Security Logs:</strong> Transient server request metadata (IP address, route, status code, AD/BS timestamps) used solely for rate-limiting, abuse prevention, and immutable audit compliance.
@@ -87,10 +90,10 @@ export const PrivacyView: React.FC<PrivacyViewProps> = ({ theme, onNavigateTab }
         <section className={`space-y-2 border-t pt-4 ${sectionBorder}`}>
           <h2 className="text-lg font-bold text-emerald-500 flex items-center gap-2">
             <Server className="w-4 h-4" />
-            <span>4. Security, Encryption &amp; Retention</span>
+            <span>4. Security, Encryption &amp; Session Revocation</span>
           </h2>
           <p className={`text-xs leading-relaxed ${bodyText}`}>
-            All network traffic is enforced over HTTPS/TLS with HTTP Strict Transport Security (HSTS), Content Security Policy (CSP), and HttpOnly/SameSite session cookies for administrative access. Support tickets are retained only as long as necessary to resolve inquiries or comply with audit logs, unless deletion is requested.
+            All network traffic is enforced over HTTPS/TLS with HTTP Strict Transport Security (HSTS), Content Security Policy (CSP), Firebase Auth token verification, and remote device session revocation controls inside Account &amp; Cloud Sync. Support tickets and synced user records are retained only while your account remains active or until you export/delete your account.
           </p>
         </section>
 

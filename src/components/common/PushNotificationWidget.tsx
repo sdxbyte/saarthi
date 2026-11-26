@@ -291,7 +291,7 @@ export const PushNotificationWidget: React.FC<PushNotificationWidgetProps> = ({
             className="flex items-center gap-2 text-left flex-1"
           >
             <div className="relative">
-              <Bell className={`w-4 h-4 ${unreadCount > 0 ? 'text-amber-400 animate-pulse' : 'text-slate-400'}`} />
+              <Bell className={`w-4 h-4 ${unreadCount > 0 ? 'text-amber-400' : 'text-slate-400'}`} />
               {unreadCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 min-w-[14px] h-[14px] text-[9px] font-extrabold rounded-full bg-red-600 text-white flex items-center justify-center border border-slate-900 font-mono">
                   {unreadCount}
@@ -406,7 +406,7 @@ export const PushNotificationWidget: React.FC<PushNotificationWidgetProps> = ({
                       }`}
                     >
                       {!item.read && (
-                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500" />
                       )}
 
                       <div className="flex items-start gap-2">

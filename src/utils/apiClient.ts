@@ -16,8 +16,8 @@ export function isNativeAndroidShell(): boolean {
     // Ignore bridge lookup issues
   }
   if (import.meta.env.VITE_IS_NATIVE_APK === 'true') return true;
-  const proto = window.location.protocol;
-  const host = window.location.hostname;
+  const proto = window.location?.protocol || '';
+  const host = window.location?.hostname || '';
   if (proto === 'capacitor:') return true;
   if (proto === 'https:' && host === 'localhost') return true;
   return false;

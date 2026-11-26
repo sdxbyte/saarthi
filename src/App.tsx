@@ -1,28 +1,41 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { EditorialHeader } from './components/layout/EditorialHeader';
 import { EditorialFooter } from './components/layout/EditorialFooter';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
+import { DesktopSidebar } from './components/layout/DesktopSidebar';
 import { DetailViewWrapper } from './components/layout/DetailViewWrapper';
-import { GlobalSearchModal } from './components/search/GlobalSearchModal';
 import { BENTO_GRID_CONFIG } from './components/dashboard/ModuleGrid';
 export { BENTO_GRID_CONFIG };
 
-import { AuthLoginModal } from './components/auth/AuthLoginModal';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { OfflineIndicator } from './components/common/OfflineIndicator';
-import { AppUpdateChecker } from './components/common/AppUpdateChecker';
-import { UserProfile, AdminUser } from './types';
-import { AdminLayout } from './components/admin/AdminLayout';
-import { AdminLoginModal } from './components/admin/AdminLoginModal';
-import { ProtectedRoute } from './components/admin/ProtectedRoute';
-import { getActiveCitizenSession, setActiveCitizenSession } from './utils/citizenAuthStore';
+import { ConflictResolutionModal } from './components/common/ConflictResolutionModal';
+import { AdminUser } from './types';
 import { logoutAdminAsync } from './utils/superAdminAuth';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
+import { SyncAuthProvider, useSyncAuth } from './context/SyncAuthContext';
+import { RadioAudioProvider } from './context/RadioAudioContext';
+import { RadioMiniPlayer } from './components/sajilo/RadioMiniPlayer';
+import { getTabFromPath, syncUrlWithTab, AppTabRoute } from './utils/routingEngine';
+import { recordRecentModule } from './services/dashboardPrefsService';
+
+// Lazy-loaded Modals & Heavy Shells (reduces initial bundle weight)
+const GlobalSearchModal = lazy(() => import('./components/search/GlobalSearchModal').then(m => ({ default: m.GlobalSearchModal })));
+const AuthLoginModal = lazy(() => import('./components/auth/AuthLoginModal').then(m => ({ default: m.AuthLoginModal })));
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout').then(m => ({ default: m.AdminLayout })));
+const AdminLoginModal = lazy(() => import('./components/admin/AdminLoginModal').then(m => ({ default: m.AdminLoginModal })));
+const ProtectedRoute = lazy(() => import('./components/admin/ProtectedRoute').then(m => ({ default: m.ProtectedRoute })));
+const SajiloTrayPopover = lazy(() => import('./components/sajilo/SajiloTrayPopover').then(m => ({ default: m.SajiloTrayPopover })));
+const AppUpdateChecker = lazy(() => import('./components/common/AppUpdateChecker').then(m => ({ default: m.AppUpdateChecker })));
 
 // Editorial Primary Views
 const EditorialHomeView = lazy(() => import('./components/home/EditorialHomeView').then(m => ({ default: m.EditorialHomeView })));
 const ExploreIndexView = lazy(() => import('./components/explore/ExploreIndexView').then(m => ({ default: m.ExploreIndexView })));
 const FinanceHubView = lazy(() => import('./components/finance/FinanceHubView').then(m => ({ default: m.FinanceHubView })));
 const ToolsHubView = lazy(() => import('./components/tools/ToolsHubView').then(m => ({ default: m.ToolsHubView })));
+const AccountView = lazy(() => import('./components/account/AccountView').then(m => ({ default: m.AccountView })));
 
 // Specialized Functional Sub-Views
 const NepseMarketView = lazy(() => import('./components/finance/NepseMarketView').then(m => ({ default: m.NepseMarketView })));
@@ -34,7 +47,6 @@ const CalendarBsAdView = lazy(() => import('./components/utilities/CalendarBsAdV
 const BluebookTaxView = lazy(() => import('./components/documents/BluebookTaxView').then(m => ({ default: m.BluebookTaxView })));
 const DocumentVaultView = lazy(() => import('./components/documents/DocumentVaultView').then(m => ({ default: m.DocumentVaultView })));
 const SajiloView = lazy(() => import('./components/sajilo/SajiloView').then(m => ({ default: m.SajiloView })));
-const GovServicesView = lazy(() => import('./components/government/GovServicesView').then(m => ({ default: m.GovServicesView })));
 const ServicesCentralDirectory = lazy(() => import('./components/services/ServicesCentralDirectory').then(m => ({ default: m.ServicesCentralDirectory })));
 const LokSewaJobsView = lazy(() => import('./components/employment/LokSewaJobsView').then(m => ({ default: m.LokSewaJobsView })));
 const DevTrackProjectTrackerView = lazy(() => import('./components/government/DevTrackProjectTrackerView').then(m => ({ default: m.DevTrackProjectTrackerView })));
@@ -54,12 +66,27 @@ const AccountDeletionView = lazy(() => import('./components/public/AccountDeleti
 const SupportHelpView = lazy(() => import('./components/public/SupportHelpView').then(m => ({ default: m.SupportHelpView })));
 const SupportProjectView = lazy(() => import('./components/public/SupportProjectView').then(m => ({ default: m.SupportProjectView })));
 
-import { RadioAudioProvider } from './context/RadioAudioContext';
-import { RadioMiniPlayer } from './components/sajilo/RadioMiniPlayer';
-import { SajiloTrayPopover } from './components/sajilo/SajiloTrayPopover';
-import { getTabFromPath, syncUrlWithTab, AppTabRoute } from './utils/routingEngine';
+function SaarthiAppShell({
+  currentLang,
+  toggleLanguage,
+  devanagariNumerals,
+  onToggleDevanagariNumerals,
+}: {
+  currentLang: 'en' | 'ne';
+  toggleLanguage: () => void;
+  devanagariNumerals: boolean;
+  onToggleDevanagariNumerals: () => void;
+}) {
+  const { resolvedTheme } = useTheme();
+  const {
+    userProfile,
+    setLocalUserProfile,
+    signOutAll,
+    conflicts,
+    resolveSyncConflict,
+    vaultDocs,
+  } = useSyncAuth();
 
-export function App() {
   const [activeTab, setActiveTabState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return getTabFromPath(window.location.pathname, window.location.search);
@@ -69,53 +96,41 @@ export function App() {
 
   const setActiveTab = (tab: string) => {
     setActiveTabState(tab);
+    recordRecentModule(tab);
     syncUrlWithTab(tab as AppTabRoute);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Sync active tab with browser history Back/Forward navigation
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window !== 'undefined') {
-        const routeTab = getTabFromPath(window.location.pathname, window.location.search);
-        setActiveTabState(routeTab);
+        setActiveTabState(getTabFromPath(window.location.pathname, window.location.search));
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const [currentLang, setCurrentLang] = useState<'en' | 'ne'>('en');
-  const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-  const [isSajiloTrayOpen, setIsSajiloTrayOpen] = useState<boolean>(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSajiloTrayOpen, setIsSajiloTrayOpen] = useState(false);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
 
-  // Devanagari numerals preference
-  const [devanagariNumerals, setDevanagariNumerals] = useState<boolean>(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        return window.localStorage.getItem('sajilo_devanagari_numerals') === 'true';
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
+  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('admin') === 'true' || window.location.hash === '#admin') {
+        setIsAdminLoginModalOpen(true);
       }
-    } catch {}
-    return false;
-  });
+    }
+  }, []);
 
-  const handleToggleDevanagariNumerals = () => {
-    const nextVal = !devanagariNumerals;
-    setDevanagariNumerals(nextVal);
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('sajilo_devanagari_numerals', String(nextVal));
-      }
-    } catch {}
-  };
-
-  // Global keyboard shortcuts:
-  // 1. Cmd+K / Ctrl+K opens Search
-  // 2. Alt+S or Cmd+J toggles Sajilo Tray
-  // 3. Alt+Shift+A opens Private Admin Gateway
   useEffect(() => {
     const handleKeyShortcut = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -136,72 +151,6 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyShortcut);
   }, []);
 
-  // Hidden Isolated Administration Portal State (Rule 11 & 12)
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(false);
-  const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
-  const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('admin') === 'true' || window.location.hash === '#admin') {
-        setIsAdminLoginModalOpen(true);
-      }
-    }
-  }, []);
-
-  // User Profile Local Storage State
-  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    try {
-      const active = getActiveCitizenSession();
-      if (active) return active;
-      const saved = typeof window !== 'undefined' ? window.localStorage.getItem('saarthi_user_profile') : null;
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && typeof parsed.isLoggedIn === 'boolean') {
-          return parsed;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to read saved user profile:', e);
-    }
-    return {
-      name: '',
-      email: '',
-      isLoggedIn: false,
-    };
-  });
-
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem('saarthi_user_profile', JSON.stringify(userProfile));
-      }
-      setActiveCitizenSession(userProfile.isLoggedIn ? userProfile : null);
-    } catch {}
-  }, [userProfile]);
-
-  const handleLogin = (user: UserProfile) => {
-    setUserProfile(user);
-    setActiveCitizenSession(user);
-    setIsAuthModalOpen(false);
-  };
-
-  const handleLogout = () => {
-    const loggedOutProfile: UserProfile = {
-      name: '',
-      email: '',
-      isLoggedIn: false,
-    };
-    setUserProfile(loggedOutProfile);
-    setActiveCitizenSession(null);
-    setIsAuthModalOpen(false);
-  };
-
-  const toggleLanguage = () => {
-    setCurrentLang((prev) => (prev === 'en' ? 'ne' : 'en'));
-  };
-
   const handleSelectModule = (moduleId: string) => {
     switch (moduleId) {
       case 'nepse-market':
@@ -210,169 +159,161 @@ export function App() {
       case 'custom-alerts':
         setActiveTab('nepse');
         break;
-
       case 'tax-calculator':
       case 'budget-planner':
       case 'insurance-tracker':
         setActiveTab('tax');
         break;
-
       case 'loan-emi-calc':
         setActiveTab('emi');
         break;
-
       case 'receipt-scanner':
         setActiveTab('receipt');
         break;
-
       case 'forex-converter':
       case 'remittance-tracker':
         setActiveTab('forex');
         break;
-
       case 'gold-silver-price':
         setActiveTab('gold');
         break;
-
       case 'fuel-price':
         setActiveTab('fuel');
         break;
-
       case 'secure-vault':
       case 'citizenship-passport':
       case 'nid-tracker':
         setActiveTab('vault');
         break;
-
       case 'bluebook-tax':
       case 'driving-license':
         setActiveTab('bluebook');
         break;
-
       case 'gov-service-directory':
       case 'gov-form-library':
       case 'gov-updates':
         setActiveTab('services');
         break;
-
       case 'lok-sewa-alerts':
       case 'job-listings':
       case 'foreign-employment':
         setActiveTab('loksewa');
         break;
-
       case 'devtrack':
       case 'infrastructure':
         setActiveTab('devtrack');
         break;
-
       case 'public-calendar':
       case 'tithi-festival':
         setActiveTab('calendar');
         break;
-
       case 'rashifal':
       case 'rashifal-panchanga':
       case 'horoscope':
         setActiveTab('rashifal');
         break;
-
       case 'useful-links':
       case 'links':
       case 'fmhy':
       case 'resources':
         setActiveTab('links');
         break;
-
       case 'sitehub':
       case 'allsitehub':
       case 'streaming':
         setActiveTab('sitehub');
         break;
-
       case 'sajilo':
       case 'sajilo-essentials':
       case 'kalimati':
       case 'radio':
         setActiveTab('sajilo');
         break;
-
       case 'public-apis':
       case 'apis':
         setActiveTab('public-apis');
         break;
-
       case 'osint4all':
       case 'osint':
         setActiveTab('osint4all');
         break;
-
       default:
         setActiveTab('explore');
         break;
     }
   };
 
-  // If logged into the Restricted Administration Portal, render protected Admin Layout
   if (isAdminLoggedIn && currentAdmin) {
     return (
-      <ProtectedRoute
-        currentAdmin={currentAdmin}
-        isAdminLoggedIn={isAdminLoggedIn}
-        requiredRole="ADMIN"
-        onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
-      >
-        <AdminLayout
+      <Suspense fallback={<LoadingSpinner label="Loading Admin Portal..." />}>
+        <ProtectedRoute
           currentAdmin={currentAdmin}
-          onLogoutAdmin={() => {
-            void logoutAdminAsync();
-            setIsAdminLoggedIn(false);
-            setCurrentAdmin(null);
-          }}
-          onReturnToPublicApp={() => setIsAdminLoggedIn(false)}
+          isAdminLoggedIn={isAdminLoggedIn}
+          requiredRole="ADMIN"
           onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
-        />
-      </ProtectedRoute>
+        >
+          <AdminLayout
+            currentAdmin={currentAdmin}
+            onLogoutAdmin={() => {
+              void logoutAdminAsync();
+              setIsAdminLoggedIn(false);
+              setCurrentAdmin(null);
+            }}
+            onReturnToPublicApp={() => setIsAdminLoggedIn(false)}
+            onOpenAdminLogin={() => setIsAdminLoginModalOpen(true)}
+          />
+        </ProtectedRoute>
+      </Suspense>
     );
   }
 
   return (
     <RadioAudioProvider>
-      <div className="min-h-screen min-h-[100dvh] flex flex-col font-sans bg-[#090A0F] text-[#edeef0] selection:bg-white/20 selection:text-white antialiased">
-        {/* Editorial Top Header */}
-        <EditorialHeader
+      <div className="min-h-screen min-h-[100dvh] flex flex-col md:flex-row font-sans bg-[#F6F8FB] dark:bg-[#080D18] text-slate-900 dark:text-slate-100 selection:bg-blue-600/20 selection:text-[#0B1F3A] dark:selection:text-blue-100 antialiased">
+        <DesktopSidebar
+          activeTab={activeTab}
           currentLang={currentLang}
           onToggleLang={toggleLanguage}
-          onOpenSearch={() => setIsSearchOpen(true)}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          userProfile={userProfile}
-          onOpenAuthModal={() => setIsAuthModalOpen(true)}
-          onOpenSajiloTray={() => setIsSajiloTrayOpen(true)}
+          onSelectTab={setActiveTab}
+          onOpenAccount={() => setActiveTab('account')}
+          isLoggedIn={userProfile.isLoggedIn}
+          userName={userProfile.name}
         />
 
-        {/* Main Content Body */}
-        <main id="main-content" role="main" aria-label="Main Content Area" className="flex-1 min-w-0 w-full flex flex-col justify-between">
+        <div className="flex-1 min-w-0 flex flex-col">
+          <EditorialHeader
+            currentLang={currentLang}
+            onToggleLang={toggleLanguage}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            userProfile={userProfile}
+            onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            onOpenSajiloTray={() => setIsSajiloTrayOpen(true)}
+            onOpenConflicts={() => setIsConflictModalOpen(true)}
+          />
+
+          <main
+            id="main-content"
+            role="main"
+            aria-label="Main Content Area"
+            className="flex-1 min-w-0 w-full flex flex-col justify-between"
+          >
           <ErrorBoundary>
             <Suspense fallback={<LoadingSpinner label="Loading SAARTHI..." />}>
-              {/* 1. Home Page */}
               {(activeTab === 'home' || activeTab === 'dashboard') && (
                 <EditorialHomeView
                   currentLang={currentLang}
                   onNavigateTab={setActiveTab}
                   onOpenSearch={() => setIsSearchOpen(true)}
+                  onOpenAccount={() => setActiveTab('account')}
                 />
               )}
 
-              {/* 2. Explore Main Index */}
               {(activeTab === 'explore' || activeTab === 'modules') && (
-                <ExploreIndexView
-                  currentLang={currentLang}
-                  onNavigateTab={setActiveTab}
-                />
+                <ExploreIndexView currentLang={currentLang} onNavigateTab={setActiveTab} />
               )}
 
-              {/* 3. Finance Dedicated Experience */}
               {activeTab === 'finance' && (
                 <FinanceHubView
                   currentLang={currentLang}
@@ -381,7 +322,6 @@ export function App() {
                 />
               )}
 
-              {/* 4. Tools Dedicated Experience */}
               {activeTab === 'tools' && (
                 <ToolsHubView
                   currentLang={currentLang}
@@ -390,12 +330,23 @@ export function App() {
                   userProfile={userProfile}
                   onOpenAuthModal={() => setIsAuthModalOpen(true)}
                   devanagariNumerals={devanagariNumerals}
-                  onToggleDevanagariNumerals={handleToggleDevanagariNumerals}
+                  onToggleDevanagariNumerals={onToggleDevanagariNumerals}
                   onOpenTrayModal={() => setIsSajiloTrayOpen(true)}
                 />
               )}
 
-              {/* Dedicated Detail Views */}
+              {activeTab === 'account' && (
+                <AccountView
+                  currentLang={currentLang}
+                  onToggleLang={toggleLanguage}
+                  devanagariNumerals={devanagariNumerals}
+                  onToggleDevanagariNumerals={onToggleDevanagariNumerals}
+                  onNavigateTab={setActiveTab}
+                  onOpenAuthModal={() => setIsAuthModalOpen(true)}
+                  onOpenConflicts={() => setIsConflictModalOpen(true)}
+                />
+              )}
+
               {activeTab === 'nepse' && (
                 <DetailViewWrapper
                   title="NEPSE Market & IPO Suite"
@@ -496,10 +447,10 @@ export function App() {
 
               {activeTab === 'receipt' && (
                 <DetailViewWrapper
-                  title="Receipt & Expense Scanner"
-                  subtitle="Private, client-side expense document scanning and OCR budgeting assistant."
+                  title="Receipt & Expense Ledger"
+                  subtitle="Record, structure, and export expense receipts into clean PDF statements."
                   category="Finance"
-                  sourceName="Local Encrypted Storage"
+                  sourceName="Local Storage & PDF Export"
                   backTab="finance"
                   backLabel="Back to Finance"
                   onNavigateTab={setActiveTab}
@@ -551,7 +502,7 @@ export function App() {
               {activeTab === 'sajilo' && (
                 <DetailViewWrapper
                   title="Sajilo Everyday Essentials"
-                  subtitle="Kalimati wholesale vegetable prices, 18+ live Nepal FM radio stations, quick reminders, and emergency helplines."
+                  subtitle="Kalimati produce reference rates, live streaming Nepal FM radio stations, quick reminders, and emergency helplines."
                   category="Tools"
                   sourceName="Kalimati Board & Broadcasters"
                   backTab="tools"
@@ -565,7 +516,7 @@ export function App() {
                   <SajiloView
                     currentLang={currentLang}
                     devanagariNumerals={devanagariNumerals}
-                    onToggleDevanagariNumerals={handleToggleDevanagariNumerals}
+                    onToggleDevanagariNumerals={onToggleDevanagariNumerals}
                     onOpenTrayModal={() => setIsSajiloTrayOpen(true)}
                   />
                 </DetailViewWrapper>
@@ -573,16 +524,16 @@ export function App() {
 
               {activeTab === 'vault' && (
                 <DetailViewWrapper
-                  title="Encrypted Document Vault"
-                  subtitle="Private, offline-first client storage for Citizenship, e-Passport, National ID, and educational records."
+                  title="Citizen Digital Document Vault"
+                  subtitle="Offline-first personal storage synced with your unified SAARTHI cloud account."
                   category="Tools"
-                  sourceName="Client-Side 256-bit AES"
+                  sourceName="IndexedDB + Cloud Firestore"
                   backTab="tools"
                   backLabel="Back to Tools"
                   onNavigateTab={setActiveTab}
                   relatedLinks={[
                     { label: 'Bluebook Tax', tab: 'bluebook' },
-                    { label: 'Citizen Account', tab: 'about' },
+                    { label: 'About SAARTHI', tab: 'about' },
                   ]}
                 >
                   <DocumentVaultView
@@ -607,11 +558,10 @@ export function App() {
                     { label: 'AllSite Hub', tab: 'sitehub' },
                   ]}
                 >
-                  <PublicApisHubView currentLang={currentLang} theme="dark" />
+                  <PublicApisHubView currentLang={currentLang} theme={resolvedTheme} />
                 </DetailViewWrapper>
               )}
 
-              {/* Civic Services Views */}
               {activeTab === 'services' && (
                 <DetailViewWrapper
                   title="Government Services Directory"
@@ -628,7 +578,7 @@ export function App() {
                 >
                   <ServicesCentralDirectory
                     currentLang={currentLang}
-                    theme="dark"
+                    theme={resolvedTheme}
                     onSelectService={(service) => handleSelectModule(service.id)}
                   />
                 </DetailViewWrapper>
@@ -673,7 +623,7 @@ export function App() {
               {activeTab === 'rashifal' && (
                 <DetailViewWrapper
                   title="Daily Rashifal & Panchanga"
-                  subtitle="Authentic Vedic astrological readings for all 12 zodiac signs with auspicious tithi timings."
+                  subtitle="Astrological readings for all 12 zodiac signs with tithi timings."
                   category="Resources"
                   sourceName="Vedic Astrology"
                   backTab="explore"
@@ -691,7 +641,7 @@ export function App() {
               {activeTab === 'sitehub' && (
                 <DetailViewWrapper
                   title="AllSite Hub Directory"
-                  subtitle="Curated web portal and verified streaming directory inspired by allsitehub.site."
+                  subtitle="Curated web portal directory."
                   category="Resources"
                   sourceName="AllSiteHub"
                   backTab="explore"
@@ -709,7 +659,7 @@ export function App() {
               {activeTab === 'osint4all' && (
                 <DetailViewWrapper
                   title="OSINT4ALL Intelligence Directory"
-                  subtitle="Curated open-source intelligence directory modeled after osint4all.com across DNS, surface, email, social, geolocation, and verification vectors."
+                  subtitle="Curated open-source intelligence directory across DNS, surface, email, social, geolocation, and verification vectors."
                   category="Tools"
                   sourceName="osint4all.com"
                   sourceUrl="https://osint4all.com/"
@@ -729,7 +679,7 @@ export function App() {
               {activeTab === 'links' && (
                 <DetailViewWrapper
                   title="Useful Links & FMHY Directory"
-                  subtitle="Curated open source resources, developer bookmarks, and tools from Sajilo and FreeMediaHeckYeah."
+                  subtitle="Curated open source resources, developer bookmarks, and tools."
                   category="Resources"
                   sourceName="Sajilo & FMHY"
                   backTab="explore"
@@ -743,148 +693,190 @@ export function App() {
                   <SajiloView
                     currentLang={currentLang}
                     devanagariNumerals={devanagariNumerals}
-                    onToggleDevanagariNumerals={handleToggleDevanagariNumerals}
+                    onToggleDevanagariNumerals={onToggleDevanagariNumerals}
                     onOpenTrayModal={() => setIsSajiloTrayOpen(true)}
                     initialTab="links"
                   />
                 </DetailViewWrapper>
               )}
 
-              {/* Static About & Project Pages */}
               {activeTab === 'about' && (
-                <AboutView
-                  currentLang={currentLang}
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                  theme="dark"
-                />
+                <AboutView currentLang={currentLang} onNavigateTab={setActiveTab} theme={resolvedTheme} />
               )}
 
               {activeTab === 'vision' && (
-                <VisionView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <VisionView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
 
               {activeTab === 'roadmap' && (
-                <RoadmapView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <RoadmapView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
 
               {activeTab === 'contact' && (
-                <ContactView currentLang={currentLang} theme="dark" />
+                <ContactView currentLang={currentLang} theme={resolvedTheme} />
               )}
 
               {activeTab === 'terms' && (
-                <TermsView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <TermsView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
 
               {activeTab === 'privacy' && (
-                <PrivacyView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <PrivacyView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
 
               {activeTab === 'account-deletion' && (
-                <AccountDeletionView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <AccountDeletionView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
 
               {activeTab === 'support' && (
-                <SupportHelpView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <SupportHelpView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
 
               {activeTab === 'donate' && (
-                <SupportProjectView
-                  currentLang={currentLang}
-                  theme="dark"
-                  onNavigateTab={(tab) => setActiveTab(tab)}
-                />
+                <SupportProjectView currentLang={currentLang} theme={resolvedTheme} onNavigateTab={setActiveTab} />
               )}
             </Suspense>
           </ErrorBoundary>
         </main>
 
-        {/* Minimal Editorial Footer */}
         <EditorialFooter
           currentLang={currentLang}
           onNavigateTab={setActiveTab}
           onOpenAdminModal={() => setIsAdminLoginModalOpen(true)}
         />
+        </div>
 
-        {/* Global Search Modal (Cmd+K) */}
-        <GlobalSearchModal
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
+        <MobileBottomNav
+          activeTab={activeTab}
           currentLang={currentLang}
-          onSelectModule={(id) => {
-            setIsSearchOpen(false);
-            handleSelectModule(id);
-          }}
+          isLoggedIn={userProfile.isLoggedIn}
+          onSelectTab={setActiveTab}
+          onOpenAccount={() => setActiveTab('account')}
         />
 
-        {/* Citizen Account & Login Modal */}
-        <AuthLoginModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-          userProfile={userProfile}
-          onLogin={handleLogin}
-          onLogout={handleLogout}
-          onUpdateProfile={(updatedProfile) => setUserProfile(updatedProfile)}
-          onOpenAccountDeletion={() => {
-            setIsAuthModalOpen(false);
-            setActiveTab('account-deletion');
-          }}
-          currentLang={currentLang}
-          theme="dark"
+        <Suspense fallback={null}>
+          {isSearchOpen && (
+            <GlobalSearchModal
+              isOpen={isSearchOpen}
+              onClose={() => setIsSearchOpen(false)}
+              currentLang={currentLang}
+              onSelectModule={(id) => {
+                setIsSearchOpen(false);
+                handleSelectModule(id);
+              }}
+            />
+          )}
+
+          {isAuthModalOpen && (
+            <AuthLoginModal
+              isOpen={isAuthModalOpen}
+              onClose={() => setIsAuthModalOpen(false)}
+              userProfile={userProfile}
+              onLogin={(user) => {
+                setLocalUserProfile(user);
+                setIsAuthModalOpen(false);
+              }}
+              onLogout={() => {
+                void signOutAll();
+                setIsAuthModalOpen(false);
+              }}
+              onUpdateProfile={(updatedProfile) => setLocalUserProfile(updatedProfile)}
+              onOpenAccountDeletion={() => {
+                setIsAuthModalOpen(false);
+                setActiveTab('account-deletion');
+              }}
+              currentLang={currentLang}
+              theme={resolvedTheme}
+              vaultDocCount={vaultDocs.length}
+            />
+          )}
+
+          {isAdminLoginModalOpen && (
+            <AdminLoginModal
+              isOpen={isAdminLoginModalOpen}
+              onClose={() => setIsAdminLoginModalOpen(false)}
+              onLoginSuccess={(admin) => {
+                setCurrentAdmin(admin);
+                setIsAdminLoggedIn(true);
+              }}
+            />
+          )}
+
+          {isSajiloTrayOpen && (
+            <SajiloTrayPopover
+              isOpen={isSajiloTrayOpen}
+              onClose={() => setIsSajiloTrayOpen(false)}
+              onOpenFullView={() => setActiveTab('sajilo')}
+              currentLang={currentLang}
+              devanagariNumerals={devanagariNumerals}
+            />
+          )}
+
+          <AppUpdateChecker />
+        </Suspense>
+
+        <ConflictResolutionModal
+          conflicts={isConflictModalOpen ? conflicts : []}
+          onResolve={resolveSyncConflict}
+          onClose={() => setIsConflictModalOpen(false)}
         />
 
-        {/* Restricted Admin Gateway Modal */}
-        <AdminLoginModal
-          isOpen={isAdminLoginModalOpen}
-          onClose={() => setIsAdminLoginModalOpen(false)}
-          onLoginSuccess={(admin) => {
-            setCurrentAdmin(admin);
-            setIsAdminLoggedIn(true);
-          }}
-        />
-
-        {/* Floating Persistent Live FM Radio Mini Player */}
         <RadioMiniPlayer onOpenFullRadio={() => setActiveTab('sajilo')} />
-
-        {/* Offline Connectivity Indicator */}
         <OfflineIndicator />
-
-        {/* Native APK Update Notification */}
-        <AppUpdateChecker />
-
-        {/* Sajilo Tray Popover */}
-        <SajiloTrayPopover
-          isOpen={isSajiloTrayOpen}
-          onClose={() => setIsSajiloTrayOpen(false)}
-          onOpenFullView={() => setActiveTab('sajilo')}
-          currentLang={currentLang}
-          devanagariNumerals={devanagariNumerals}
-        />
       </div>
     </RadioAudioProvider>
+  );
+}
+
+function AppWithSyncBridge() {
+  const { themePreference } = useTheme();
+  const { lang: currentLang, toggleLang } = useLanguage();
+  const [devanagariNumerals, setDevanagariNumerals] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return window.localStorage.getItem('sajilo_devanagari_numerals') === 'true';
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  });
+
+  const handleToggleDevanagariNumerals = () => {
+    const nextVal = !devanagariNumerals;
+    setDevanagariNumerals(nextVal);
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('sajilo_devanagari_numerals', String(nextVal));
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  return (
+    <SyncAuthProvider
+      preferredTheme={themePreference}
+      preferredLang={currentLang}
+      devanagariNumerals={devanagariNumerals}
+    >
+      <SaarthiAppShell
+        currentLang={currentLang}
+        toggleLanguage={toggleLang}
+        devanagariNumerals={devanagariNumerals}
+        onToggleDevanagariNumerals={handleToggleDevanagariNumerals}
+      />
+    </SyncAuthProvider>
+  );
+}
+
+export function App() {
+  return (
+    <ThemeProvider>
+      <LanguageProvider>
+        <AppWithSyncBridge />
+      </LanguageProvider>
+    </ThemeProvider>
   );
 }
 

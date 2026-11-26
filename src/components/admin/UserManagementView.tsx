@@ -33,6 +33,7 @@ export const UserManagementView: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
 
   useEffect(() => {
     setDelegatedAccounts(getDelegatedAdmins());
@@ -81,11 +82,10 @@ export const UserManagementView: React.FC = () => {
     }, 1500);
   };
 
-  const handleRevokeAccount = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to REVOKE administrative access for ${name}? They will no longer be able to log in.`)) {
-      revokeDelegatedAdmin(id);
-      setDelegatedAccounts(getDelegatedAdmins());
-    }
+  const handleRevokeAccount = (id: string) => {
+    revokeDelegatedAdmin(id);
+    setDelegatedAccounts(getDelegatedAdmins());
+    setConfirmRevokeId(null);
   };
 
   const filteredDelegated = delegatedAccounts.filter((u) => {
@@ -222,13 +222,33 @@ export const UserManagementView: React.FC = () => {
                     </td>
                     <td className="p-3.5 text-right">
                       {u.status === 'Active' ? (
-                        <button
-                          onClick={() => handleRevokeAccount(u.id, u.name)}
-                          className="px-2.5 py-1 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 text-xs font-semibold transition-all flex items-center gap-1.5 ml-auto"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          <span>Revoke Access</span>
-                        </button>
+                        confirmRevokeId === u.id ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleRevokeAccount(u.id)}
+                              className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all"
+                            >
+                              Confirm Revoke
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setConfirmRevokeId(null)}
+                              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRevokeId(u.id)}
+                            className="px-2.5 py-1 rounded bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 text-xs font-semibold transition-all flex items-center gap-1.5 ml-auto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Revoke Access</span>
+                          </button>
+                        )
                       ) : (
                         <span className="text-[10px] text-slate-500 italic">Access Revoked</span>
                       )}

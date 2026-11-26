@@ -212,13 +212,16 @@ export const PullToRefreshContainer: React.FC<PullToRefreshContainerProps> = ({
                         ? 'अझै तल तान्नुहोस्...'
                         : 'Pull down to refresh...'}
                     </span>
-                    <div className="w-32 bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
-                      <div
-                        className={`h-full transition-all ${
-                          pullDistance >= PULL_THRESHOLD ? 'bg-emerald-400' : 'bg-amber-400'
-                        }`}
-                        style={{ width: `${pullPercentage}%` }}
-                      ></div>
+                    <div className="w-32 bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1">
+                      <svg viewBox="0 0 100 6" preserveAspectRatio="none" className="w-full h-full block">
+                        <rect
+                          x="0"
+                          y="0"
+                          width={pullPercentage}
+                          height="6"
+                          className={pullDistance >= PULL_THRESHOLD ? 'fill-emerald-500' : 'fill-amber-500'}
+                        />
+                      </svg>
                     </div>
                   </div>
                 </>

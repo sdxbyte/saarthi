@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -21,38 +21,42 @@ export const Input: React.FC<InputProps> = ({
   const inputId = id || (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   return (
-    <div className="w-full space-y-1">
+    <div className="w-full space-y-1.5">
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-xs font-medium text-[var(--color-text-secondary)]"
+          className="block text-xs font-medium text-slate-700 dark:text-slate-300"
         >
           {label}
         </label>
       )}
       <div className="relative flex items-center">
         {leftIcon && (
-          <div className="absolute left-2.5 text-[var(--color-text-muted)] pointer-events-none flex items-center justify-center">
+          <div className="absolute left-3 text-slate-400 dark:text-slate-500 pointer-events-none flex items-center justify-center">
             {leftIcon}
           </div>
         )}
         <input
           id={inputId}
-          className={`w-full control-field ${leftIcon ? 'pl-8' : 'pl-3'} ${rightIcon ? 'pr-8' : 'pr-3'} ${
-            error ? '!border-[var(--color-negative)] focus:!border-[var(--color-negative)]' : ''
+          className={`w-full control-field ${leftIcon ? 'pl-9' : 'pl-3.5'} ${
+            rightIcon ? 'pr-9' : 'pr-3.5'
+          } ${
+            error
+              ? '!border-rose-500 focus:!border-rose-500 dark:!border-rose-500'
+              : ''
           } ${className}`}
           {...props}
         />
         {rightIcon && (
-          <div className="absolute right-2.5 text-[var(--color-text-muted)] flex items-center justify-center">
+          <div className="absolute right-3 text-slate-400 dark:text-slate-500 flex items-center justify-center">
             {rightIcon}
           </div>
         )}
       </div>
       {error ? (
-        <p className="text-[11px] text-[var(--color-negative)] font-medium mt-0.5">{error}</p>
+        <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{error}</p>
       ) : helperText ? (
-        <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{helperText}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{helperText}</p>
       ) : null}
     </div>
   );

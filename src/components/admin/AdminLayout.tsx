@@ -28,6 +28,8 @@ import { ContactInboxView } from './ContactInboxView';
 import { LiveDataMonitoringView } from './LiveDataMonitoringView';
 import { AdminReleaseCenterView } from './AdminReleaseCenterView';
 import { PlayStoreLaunchPortal } from './PlayStoreLaunchPortal';
+import { AnnouncementsView } from './AnnouncementsView';
+import { DonationAuditLogView } from './DonationAuditLogView';
 import { SaarthiLogo } from '../brand/SaarthiLogo';
 
 interface AdminLayoutProps {
@@ -56,6 +58,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     } else if (['playstore-launch', 'playstore'].includes(target)) {
       setActiveTab('system');
       setSystemSubTab('playstore');
+    } else if (target === 'reports') {
+      setActiveTab('system');
+      setSystemSubTab('analytics');
+    } else if (target === 'announcements') {
+      setActiveTab('announcements');
+    } else if (target === 'donation-audit') {
+      setActiveTab('donation-audit');
     } else {
       setActiveTab(target);
     }
@@ -65,8 +74,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard },
     { id: 'operations', label: 'Operations & Verifications', icon: Users },
     { id: 'support-tickets', label: 'Support & Contact Tickets', icon: Inbox },
+    { id: 'announcements', label: 'Civic Broadcasts', icon: Radio },
     { id: 'system', label: 'System & Live Data', icon: Activity },
     { id: 'support-qr', label: 'Donations & Payment Channels', icon: QrCode },
+    { id: 'donation-audit', label: 'Donation Audit Log', icon: History },
   ];
 
   return (
@@ -290,6 +301,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           {activeTab === 'support-qr' && (
             <SupportQrManagerView currentAdmin={currentAdmin} />
           )}
+
+          {/* 6. CIVIC BROADCASTS & ANNOUNCEMENTS */}
+          {activeTab === 'announcements' && <AnnouncementsView />}
+
+          {/* 7. DONATION AUDIT LOG */}
+          {activeTab === 'donation-audit' && <DonationAuditLogView />}
         </main>
       </div>
     </div>

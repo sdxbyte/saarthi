@@ -27,5 +27,12 @@
       "vite-plugin-pwa/client",
       "node"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dev-dist",
+    "android",
+    "coverage"
+  ]
 }

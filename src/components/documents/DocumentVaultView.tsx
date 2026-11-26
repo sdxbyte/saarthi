@@ -1,8 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Lock, Plus, ShieldCheck, Trash2, Calendar, IdCard, Copy, Check, AlertTriangle, Clock, User, BellRing, Sparkles } from 'lucide-react';
-import { VaultDocument, UserProfile } from '../../types';
-import { getUserDocuments, saveUserDocuments } from '../../utils/citizenAuthStore';
+import React, { useState } from 'react';
+import {
+  AlertTriangle,
+  Check,
+  Clock,
+  Copy,
+  IdCard,
+  Lock,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  User,
+} from 'lucide-react';
+import { UserProfile, VaultDocument } from '../../types';
 import { formatDualDate } from '../../utils/bsAdConverter';
+import { useSyncAuth } from '../../context/SyncAuthContext';
+import { SyncStatusBadge } from '../common/SyncStatusBadge';
 
 interface DocumentVaultViewProps {
   currentLang: 'en' | 'ne';
@@ -15,46 +27,19 @@ export const DocumentVaultView: React.FC<DocumentVaultViewProps> = ({
   userProfile,
   onOpenAuthModal,
 }) => {
-  const [documents, setDocuments] = useState<VaultDocument[]>(() => {
-    if (userProfile?.isLoggedIn && userProfile.email) {
-      const userDocs = getUserDocuments(userProfile.email);
-      if (userDocs && userDocs.length > 0) return userDocs;
-    }
-    const saved = localStorage.getItem('saarthi_vault_docs');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // fallback
-      }
-    }
-    return [
-      {
-        id: 'v1',
-        title: 'Citizenship Certificate',
-        documentType: 'Citizenship',
-        docNumber: '27-01-75-01234',
-        issueDate: '2075-02-14',
-        issuer: 'District Administration Office, Kathmandu',
-        createdAt: '2026-01-10',
-      },
-      {
-        id: 'v2',
-        title: 'Nepali e-Passport',
-        documentType: 'Passport',
-        docNumber: 'PA0987654',
-        issueDate: '2022-06-10',
-        expiryDate: '2032-06-09',
-        issuer: 'Department of Passports, Kathmandu',
-        createdAt: '2026-01-10',
-      },
-    ];
-  });
+  const {
+    vaultDocs,
+    upsertVaultDoc,
+    deleteVaultDoc,
+    syncStatus,
+    pendingCount,
+    conflicts,
+    triggerManualSync,
+  } = useSyncAuth();
 
   const [isAdding, setIsAdding] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // New Doc Form
   const [title, setTitle] = useState('');
   const [documentType, setDocumentType] = useState<VaultDocument['documentType']>('Citizenship');
   const [docNumber, setDocNumber] = useState('');
@@ -62,45 +47,22 @@ export const DocumentVaultView: React.FC<DocumentVaultViewProps> = ({
   const [expiryDate, setExpiryDate] = useState('');
   const [issuer, setIssuer] = useState('');
 
-  // Reload user documents whenever active user email changes
-  useEffect(() => {
-    if (userProfile?.isLoggedIn && userProfile.email) {
-      const docs = getUserDocuments(userProfile.email);
-      if (docs && docs.length > 0) {
-        setDocuments(docs);
-      }
-    }
-  }, [userProfile?.email, userProfile?.isLoggedIn]);
-
-  // Persist documents whenever documents list or userProfile changes
-  useEffect(() => {
-    if (userProfile?.isLoggedIn && userProfile.email) {
-      saveUserDocuments(userProfile.email, documents);
-    } else {
-      localStorage.setItem('saarthi_vault_docs', JSON.stringify(documents));
-    }
-  }, [documents, userProfile?.email, userProfile?.isLoggedIn]);
-
-  const handleAddDoc = (e: React.FormEvent) => {
+  const handleAddDoc = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !docNumber) return;
+    if (!title.trim() || !docNumber.trim()) return;
 
     const newDoc: VaultDocument = {
-      id: Date.now().toString(),
-      title,
+      id: `doc-${Date.now().toString(36)}`,
+      title: title.trim(),
       documentType,
-      docNumber,
+      docNumber: docNumber.trim(),
       issueDate: issueDate || new Date().toISOString().split('T')[0],
       expiryDate: expiryDate || undefined,
-      issuer: issuer || 'Government Authority',
+      issuer: issuer.trim() || 'Government Authority',
       createdAt: new Date().toISOString().split('T')[0],
     };
 
-    const updated = [newDoc, ...documents];
-    setDocuments(updated);
-    if (userProfile?.isLoggedIn && userProfile.email) {
-      saveUserDocuments(userProfile.email, updated);
-    }
+    await upsertVaultDoc(newDoc);
     setIsAdding(false);
     setTitle('');
     setDocNumber('');
@@ -109,213 +71,216 @@ export const DocumentVaultView: React.FC<DocumentVaultViewProps> = ({
     setIssuer('');
   };
 
-  const handleDelete = (id: string) => {
-    const updated = documents.filter((d) => d.id !== id);
-    setDocuments(updated);
-    if (userProfile?.isLoggedIn && userProfile.email) {
-      saveUserDocuments(userProfile.email, updated);
-    }
+  const handleDelete = async (id: string) => {
+    await deleteVaultDoc(id);
   };
 
   const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard?.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Expiry calculation helper
   const getExpiryStatus = (expDateStr?: string) => {
-    if (!expDateStr) return { status: 'no_expiry', label: 'Lifetime Valid', color: 'text-slate-400 bg-slate-800 border-slate-700' };
+    if (!expDateStr) {
+      return {
+        status: 'no_expiry',
+        label: 'Lifetime Valid',
+        color: 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+      };
+    }
 
     const today = new Date();
     const expDate = new Date(expDateStr);
-    const diffTime = expDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      return { status: 'expired', label: 'EXPIRED (Action Required)', color: 'text-rose-400 bg-rose-500/10 border-rose-500/30 font-bold', days: diffDays };
-    } else if (diffDays <= 90) {
-      return { status: 'urgent', label: `Expires in ${diffDays} days!`, color: 'text-amber-400 bg-amber-500/10 border-amber-500/30 font-bold', days: diffDays };
-    } else if (diffDays <= 180) {
-      return { status: 'warning', label: `Expires in ${diffDays} days`, color: 'text-yellow-300 bg-yellow-500/10 border-yellow-500/30', days: diffDays };
-    } else {
-      return { status: 'valid', label: `Valid (${diffDays} days left)`, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', days: diffDays };
+      return {
+        status: 'expired',
+        label: 'Expired — Renewal Needed',
+        color: 'text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800 font-semibold',
+      };
     }
+    if (diffDays <= 90) {
+      return {
+        status: 'urgent',
+        label: `Expires in ${diffDays} days`,
+        color: 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 font-semibold',
+      };
+    }
+    return {
+      status: 'valid',
+      label: `Valid (${diffDays} days left)`,
+      color: 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
+    };
   };
 
-  const expiringDocs = documents.filter((d) => {
+  const expiringDocs = vaultDocs.filter((d) => {
     if (!d.expiryDate) return false;
     const exp = getExpiryStatus(d.expiryDate);
-    return exp.status === 'urgent' || exp.status === 'warning' || exp.status === 'expired';
+    return exp.status === 'urgent' || exp.status === 'expired';
   });
 
   return (
     <div className="space-y-6">
-      {/* Title & Login Account Sync Header */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-800 shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Lock className="w-6 h-6 text-red-500" />
-            <h1 className="text-xl font-extrabold text-white">
-              {currentLang === 'ne' ? 'सुरक्षित नागरिक डिजिटल भल्ट र म्याद ट्र्याकर' : 'Secure Citizen Digital Vault & Expiry Tracker'}
+      {/* Header Card */}
+      <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-sm flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <h1 className="text-xl font-bold text-[#0B1F3A] dark:text-white">
+              {currentLang === 'ne' ? 'सुरक्षित नागरिक डिजिटल भल्ट' : 'Citizen Digital Document Vault'}
             </h1>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {currentLang === 'ne'
-              ? 'नागरिकता, राहदानी, सवारी लाइसेन्स र ब्लुबुक नवीकरण म्याद स्वचालित सेभ र अलर्ट'
-              : 'Encrypted storage & automated expiration tracking for Passport, License & Bluebook'}
+              ? 'नागरिकता, राहदानी, लाइसेन्स र ब्लुबुक विवरण IndexedDB र क्लाउड सिङ्क सहित।'
+              : 'Offline-first document registry & expiry tracking synced across Website and Android APK.'}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* User Account Login Status Pill */}
+          <SyncStatusBadge
+            status={syncStatus}
+            pendingCount={pendingCount}
+            conflictCount={conflicts.length}
+            onClick={() => void triggerManualSync()}
+          />
+
           <button
+            type="button"
             onClick={onOpenAuthModal}
-            className={`px-3.5 py-2 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
-              userProfile?.isLoggedIn
-                ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/50'
-                : 'bg-red-950/40 border-red-500/40 text-red-300 hover:bg-red-900/50'
-            }`}
+            className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-semibold flex items-center gap-2 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
           >
-            <User className="w-4 h-4 text-emerald-400" />
+            <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>
               {userProfile?.isLoggedIn
-                ? (currentLang === 'ne' ? `खाता जोडिएको: ${userProfile.name.split(' ')[0]}` : `Saved to: ${userProfile.email}`)
-                : (currentLang === 'ne' ? 'विवरण सेभ गर्न लगइन गर्नुहोस्' : 'Login to Sync Details')}
+                ? userProfile.email || userProfile.name
+                : 'Sign In to Cloud Sync'}
             </span>
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
           </button>
 
           <button
+            type="button"
             onClick={() => setIsAdding(!isAdding)}
-            className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs sm:text-sm flex items-center gap-2 transition-all shadow-md shadow-red-900/30"
+            className="px-4 py-2 bg-[#0B1F3A] hover:bg-[#132f57] dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>{currentLang === 'ne' ? 'नयाँ कागजात थप्नुहोस्' : 'Add Document'}</span>
+            <span>{currentLang === 'ne' ? 'कागजात थप्नुहोस्' : 'Add Document'}</span>
           </button>
         </div>
       </div>
 
-      {/* Document Expiry Tracker Dashboard Alert Banner */}
-      <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-md">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-          <div className="flex items-center gap-2">
-            <BellRing className="w-5 h-5 text-amber-400 animate-pulse" />
-            <h2 className="font-bold text-white text-sm sm:text-base">
-              {currentLang === 'ne' ? 'कागजात म्याद समाप्त हुने अलर्ट (Document Expiry Radar)' : 'Document Expiry Radar & Renewal Alerts'}
-            </h2>
-          </div>
-          <span className="text-xs text-amber-400 font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-            {expiringDocs.length} Action(s) Needed
+      {/* Summary Strip */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex items-center justify-between">
+          <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+            <IdCard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            Total Saved Docs
+          </span>
+          <span className="font-mono font-bold text-sm tabular-nums text-[#0B1F3A] dark:text-white">
+            {vaultDocs.length}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IdCard className="w-4 h-4 text-blue-400" />
-              <span className="text-slate-300 font-medium">Total Saved Docs</span>
-            </div>
-            <span className="font-mono font-bold text-white text-sm">{documents.length}</span>
-          </div>
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex items-center justify-between">
+          <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            Expiring Within 90 Days
+          </span>
+          <span className="font-mono font-bold text-sm tabular-nums text-amber-600 dark:text-amber-400">
+            {expiringDocs.length}
+          </span>
+        </div>
 
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              <span className="text-slate-300 font-medium">Expiring Soon (&lt; 90 Days)</span>
-            </div>
-            <span className="font-mono font-bold text-amber-400 text-sm">{expiringDocs.length}</span>
-          </div>
-
-          <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span className="text-slate-300 font-medium">Synced Cloud Status</span>
-            </div>
-            <span className="font-mono font-bold text-emerald-400 text-xs">
-              {userProfile?.isLoggedIn ? 'Active Sync' : 'Local Storage'}
-            </span>
-          </div>
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex items-center justify-between">
+          <span className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            Storage Layer
+          </span>
+          <span className="font-mono font-semibold text-xs text-slate-700 dark:text-slate-200">
+            {userProfile?.isLoggedIn ? 'IndexedDB + Cloud' : 'IndexedDB Local'}
+          </span>
         </div>
       </div>
 
-      {/* Add Document Form Modal / Drawer */}
+      {/* Add Document Form */}
       {isAdding && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl animate-in fade-in duration-200">
-          <h2 className="font-bold text-white text-base">
+        <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] shadow-sm space-y-4">
+          <h2 className="font-semibold text-base text-[#0B1F3A] dark:text-white">
             {currentLang === 'ne' ? 'नयाँ डिजिटल कागजात प्रविष्टि' : 'Add New Document to Vault'}
           </h2>
 
-          <form onSubmit={handleAddDoc} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <form onSubmit={(e) => void handleAddDoc(e)} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Document Title</label>
+              <label className="block font-medium text-slate-600 dark:text-slate-300 mb-1">Document Title</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. My Driving License"
+                placeholder="e.g. Driving License"
                 required
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none"
+                className="w-full control-field"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Document Type</label>
+              <label className="block font-medium text-slate-600 dark:text-slate-300 mb-1">Document Type</label>
               <select
                 value={documentType}
-                onChange={(e) => setDocumentType(e.target.value as any)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none"
+                onChange={(e) => setDocumentType(e.target.value as VaultDocument['documentType'])}
+                className="w-full control-field"
               >
-                <option value="Citizenship">Citizenship (नागरिकता)</option>
-                <option value="Passport">Passport (राहदानी)</option>
-                <option value="Driving License">Driving License (लाइसेन्स)</option>
-                <option value="Bluebook">Vehicle Bluebook (नीलो किताब)</option>
-                <option value="PAN Card">PAN Card (स्थायी लेखा नम्बर)</option>
+                <option value="Citizenship">Citizenship</option>
+                <option value="Passport">Passport</option>
+                <option value="Driving License">Driving License</option>
+                <option value="Bluebook">Vehicle Bluebook</option>
+                <option value="PAN Card">PAN Card</option>
                 <option value="Academic">Academic Certificate</option>
                 <option value="Other">Other Document</option>
               </select>
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Document Number</label>
+              <label className="block font-medium text-slate-600 dark:text-slate-300 mb-1">Document Number</label>
               <input
                 type="text"
                 value={docNumber}
                 onChange={(e) => setDocNumber(e.target.value)}
-                placeholder="27-01-75-01234"
+                placeholder="Document reference number"
                 required
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono outline-none"
+                className="w-full control-field font-mono"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Issue Date</label>
+              <label className="block font-medium text-slate-600 dark:text-slate-300 mb-1">Issue Date</label>
               <input
                 type="date"
                 value={issueDate}
                 onChange={(e) => setIssueDate(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono outline-none"
+                className="w-full control-field font-mono"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Expiry Date (If applicable)</label>
+              <label className="block font-medium text-slate-600 dark:text-slate-300 mb-1">Expiry Date (Optional)</label>
               <input
                 type="date"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white font-mono outline-none"
+                className="w-full control-field font-mono"
               />
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Issuing Authority</label>
+              <label className="block font-medium text-slate-600 dark:text-slate-300 mb-1">Issuing Authority</label>
               <input
                 type="text"
                 value={issuer}
                 onChange={(e) => setIssuer(e.target.value)}
-                placeholder="DAO Kathmandu / DoTM"
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white outline-none"
+                placeholder="e.g. DAO Kathmandu / DoTM"
+                className="w-full control-field"
               />
             </div>
 
@@ -323,13 +288,13 @@ export const DocumentVaultView: React.FC<DocumentVaultViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold"
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-medium cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold"
+                className="px-5 py-2 rounded-xl bg-[#0B1F3A] hover:bg-[#132f57] dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-semibold cursor-pointer"
               >
                 Save Document
               </button>
@@ -338,73 +303,101 @@ export const DocumentVaultView: React.FC<DocumentVaultViewProps> = ({
         </div>
       )}
 
-      {/* Document Grid Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {documents.map((doc) => {
-          const expInfo = getExpiryStatus(doc.expiryDate);
-          return (
-            <div
-              key={doc.id}
-              className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all space-y-3 relative group shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <IdCard className="w-5 h-5 text-red-400" />
-                  <div>
-                    <span className="font-bold text-white text-sm block">{doc.title}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">{doc.documentType}</span>
+      {/* Document Grid or Empty State */}
+      {vaultDocs.length === 0 ? (
+        <div className="p-10 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0F172A] text-center space-y-3">
+          <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 mx-auto" />
+          <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white">
+            Your Document Vault is Empty
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Add your Citizenship, Passport, PAN, Driving License, or Bluebook metadata to track expiry dates offline and sync across your devices.
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsAdding(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0B1F3A] dark:bg-blue-600 text-white text-xs font-semibold cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Add First Document
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {vaultDocs.map((doc) => {
+            const expInfo = getExpiryStatus(doc.expiryDate);
+            return (
+              <div
+                key={doc.id}
+                className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 transition-colors space-y-3 relative group shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
+                      {doc.documentType}
+                    </span>
+                    <span className="font-semibold text-sm text-[#0B1F3A] dark:text-white block truncate">
+                      {doc.title}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete(doc.id)}
+                    className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                    title="Delete Document"
+                    aria-label={`Delete ${doc.title}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#0B1220] border border-slate-200 dark:border-slate-800 font-mono text-xs flex items-center justify-between">
+                  <span className="font-semibold tracking-wide truncate">{doc.docNumber}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(doc.id, doc.docNumber)}
+                    className="text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 p-1 cursor-pointer"
+                    title="Copy Number"
+                  >
+                    {copiedId === doc.id ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+
+                <div className={`p-2.5 rounded-xl border text-[11px] flex items-center justify-between gap-2 ${expInfo.color}`}>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Clock className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{expInfo.label}</span>
+                  </div>
+                  {doc.expiryDate && (
+                    <span className="font-mono text-[10px] tabular-nums shrink-0">
+                      {formatDualDate(doc.expiryDate).combined}
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1 text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                  <div className="flex justify-between gap-2">
+                    <span>Issuer</span>
+                    <span className="text-slate-800 dark:text-slate-200 font-medium truncate">
+                      {doc.issuer}
+                    </span>
+                  </div>
+                  <div className="flex justify-between gap-2">
+                    <span>Issued</span>
+                    <span className="text-slate-700 dark:text-slate-300 font-mono tabular-nums">
+                      {formatDualDate(doc.issueDate).combined}
+                    </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(doc.id)}
-                  className="text-slate-500 hover:text-rose-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Delete Document"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
-
-              {/* Document Number */}
-              <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800 font-mono text-xs text-white flex items-center justify-between">
-                <span className="font-semibold tracking-wider">{doc.docNumber}</span>
-                <button
-                  onClick={() => handleCopy(doc.id, doc.docNumber)}
-                  className="text-slate-400 hover:text-white p-1"
-                  title="Copy Number"
-                >
-                  {copiedId === doc.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-
-              {/* Expiry Status Badge */}
-              <div className={`p-2 rounded-xl border text-[11px] flex items-center justify-between ${expInfo.color}`}>
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>{expInfo.label}</span>
-                </div>
-                {doc.expiryDate && (
-                  <span className="font-mono text-[10px]" title="Expiry Date (B.S. / A.D.)">
-                    {formatDualDate(doc.expiryDate).combined}
-                  </span>
-                )}
-              </div>
-
-              <div className="space-y-1 text-[11px] text-slate-400 pt-1">
-                <div className="flex justify-between">
-                  <span>Issuer:</span>
-                  <span className="text-slate-200 font-medium truncate max-w-[150px]">{doc.issuer}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Issued Date:</span>
-                  <span className="text-slate-300 font-mono">
-                    {formatDualDate(doc.issueDate).combined}
-                  </span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

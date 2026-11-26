@@ -1,16 +1,17 @@
 import { formatCentralDualDate } from './timeCalendarEngine';
+import { convertAdToBs } from './bsAdConverter';
 
 export interface PlatformVersionInfo {
-  version: string;             // e.g. "v1.4.1"
-  buildNumber: number;         // e.g. 241
-  releaseId: string;           // e.g. "REL-20260806-241"
-  releaseDateAd: string;       // "2026-08-06"
-  releaseDateBs: string;       // "2083-04-22"
-  releaseTime: string;         // "14:35 NPT"
+  version: string;             // e.g. "v2.0.0"
+  buildNumber: number;         // e.g. 300
+  releaseId: string;           // e.g. "REL-20261125-300"
+  releaseDateAd: string;       // "2026-11-25"
+  releaseDateBs: string;       // Computed from convertAdToBs
+  releaseTime: string;         // "14:00 NPT"
   timezone: string;            // "Asia/Kathmandu (GMT+5:45)"
   environment: 'Development' | 'Staging' | 'Production';
   commitHash: string;
-  footerText: string;          // "SAARTHI v1.4.1 • Build #241 • Released 2026-08-06 • BS 2083-04-22"
+  footerText: string;          // "SAARTHI v2.0.0 • Build #300 • Released 2026-11-25 • ..."
 }
 
 export interface ReleaseNoteItem {
@@ -28,20 +29,49 @@ export interface ReleaseNoteItem {
   author: string;
 }
 
+const V2_RELEASE_DATE_AD = '2026-11-25';
+const V2_RELEASE_DATE_BS = convertAdToBs(V2_RELEASE_DATE_AD);
+
 export const CURRENT_VERSION_INFO: PlatformVersionInfo = {
-  version: 'v1.7.0',
-  buildNumber: 270,
-  releaseId: 'REL-20260919-270',
-  releaseDateAd: '2026-09-19',
-  releaseDateBs: '2083-06-03',
-  releaseTime: '13:45 NPT',
+  version: 'v2.0.0',
+  buildNumber: 300,
+  releaseId: 'REL-20261125-300',
+  releaseDateAd: V2_RELEASE_DATE_AD,
+  releaseDateBs: V2_RELEASE_DATE_BS,
+  releaseTime: '14:00 NPT',
   timezone: 'Asia/Kathmandu (GMT+5:45)',
   environment: 'Production',
-  commitHash: 'e9d1f4b',
-  footerText: 'SAARTHI v1.7.0 • Build #270 • Released 2026-09-19 • BS 2083-06-03',
+  commitHash: 'unified-v2',
+  footerText: `SAARTHI v2.0.0 • Build #300 • Released ${V2_RELEASE_DATE_AD} • BS ${V2_RELEASE_DATE_BS}`,
 };
 
 export const RELEASE_HISTORY_CATALOG: ReleaseNoteItem[] = [
+  {
+    id: 'rel-200',
+    version: 'v2.0.0',
+    buildNumber: 300,
+    releaseDateAd: V2_RELEASE_DATE_AD,
+    releaseDateBs: V2_RELEASE_DATE_BS,
+    title: 'Unified Account, Cross-Device Offline Sync & Hybrid Material Design 3 Refresh',
+    whatsNew: [
+      'Introduced unified Account Center (/account) and cross-device cloud sync across Web, PWA, and Android APK via verified Firebase Auth + Cloud Firestore',
+      'Built 6-state offline-first IndexedDB outbox queue with field-level conflict detection, manual merge resolution, and device session revocation',
+      'Unified Hybrid Light & Dark Navy (#0B1F3A / #2563EB) Material Design 3 interface across all public portals, tools, and admin views',
+      'Enforced authentic live market/telemetry feeds across Sajilo Bazar, Public APIs Hub, and Admin Cluster Monitor with zero static fallback numbers',
+    ],
+    improvements: [
+      'Unified versioning and CI release pipeline across package.json, versionEngine, and Android APK/AAB workflows',
+      'Wired Support Help Center directly to /api/support/tickets and completed Admin sub-tab routing',
+      'Replaced browser blocking dialogs (alert/confirm) and inline styles with accessible inline controls and responsive SVG indicators',
+    ],
+    bugFixes: [
+      'Fixed light mode text contrast in About, Contact, Support, Roadmap, Account Deletion, and Public APIs Hub screens',
+      'Fixed broken Admin dashboard quick-links for Civic Broadcasts, Donation Audit Log, and Analytics Reports',
+    ],
+    knownIssues: [],
+    isImportant: true,
+    author: 'SAARTHI Core Engineering',
+  },
   {
     id: 'rel-170',
     version: 'v1.7.0',
