@@ -1,6 +1,6 @@
-# SAARTHI Verification & Test Report (`v1.9.1`)
+# SAARTHI Verification & Test Report (`v1.0.0`)
 
-**Verified Date:** `2026-11-22 A.D.` / `२०८३-०८-०६ B.S.` (`Asia/Kathmandu`)
+**Verified Date:** `2026-11-26 A.D.` / `२०८३-०८-१० B.S.` (`Asia/Kathmandu`)
 
 ---
 
@@ -50,5 +50,5 @@ Verified after `restart_dev_server`:
 - `GET /api/live/forex` -> HTTP `200` (Official NRB reference rates)
 - `GET /api/live/kalimati` -> HTTP `200` (Honest `isLive: false` / `OFFICIAL_FEED_UNAVAILABLE` when external endpoint unreachable—zero fake numbers)
 - `GET /api/live/sources/health` -> HTTP `200` (Live concurrent probe statuses)
-- `GET /api/app/sync-info` -> HTTP `200` (`v1.9.1`)
+- `GET /api/app/sync-info` -> HTTP `200` (`1.0.0`)
 - `GET /.well-known/assetlinks.json` -> HTTP `200` (Android package `com.sdxbyte.saarthi`)

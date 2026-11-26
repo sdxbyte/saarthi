@@ -429,7 +429,7 @@ export function getCurrentPackageVersion(): string {
   } catch (err) {
     console.warn('Failed to read package.json version:', err);
   }
-  return 'v2.0.0';
+  return 'v1.0.0';
 }
 
 // Auto-increment version (patch or minor)
@@ -438,7 +438,7 @@ export function calculateNextVersion(currentVer: string, isMajorChange: boolean 
   const parts = cleanVer.split('.').map((p) => parseInt(p, 10) || 0);
 
   if (parts.length < 3) {
-    return 'v1.4.1';
+    return 'v1.0.1';
   }
 
   if (isMajorChange) {
@@ -463,7 +463,7 @@ export function loadReleaseHistory(): VersionReleaseRecord[] {
   // Initial seed release history
   const defaultHistory: VersionReleaseRecord[] = [
     {
-      version: 'v1.4.0',
+      version: 'v1.0.0',
       title: 'Saarthi Developer Command Center & Enterprise Release Engine',
       date: formatDateTime(),
       timestamp: new Date().toISOString(),
@@ -1027,7 +1027,7 @@ export async function executeGitPushWithFallback(
     try { execSync('git remote remove origin', { stdio: 'pipe' }); } catch {}
     execSync(`git remote add origin ${authenticatedRemote}`, { stdio: 'pipe' });
 
-    let currentVer = '2.0.0';
+    let currentVer = '1.0.0';
     try {
       const pkgJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
       currentVer = pkgJson.version || currentVer;
@@ -1056,7 +1056,7 @@ export async function executeGitPushWithFallback(
   } catch {
     // Seamless fallback to direct GitHub REST API push if Git CLI encounters environment limitations
     try {
-      let currentVer = '2.0.0';
+      let currentVer = '1.0.0';
       try {
         const pkgJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
         currentVer = pkgJson.version || currentVer;

@@ -1,4 +1,4 @@
-# SAARTHI Security Specification & Controls (`v1.9.1`)
+# SAARTHI Security Specification & Controls (`v1.0.0`)
 
 ## 1. Secret & Credential Hygiene
 

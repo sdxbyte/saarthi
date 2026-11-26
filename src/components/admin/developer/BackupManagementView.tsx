@@ -569,7 +569,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
       if (data.version) setCurrentVersion(data.version);
 
       const newRecord: ReleaseRecord = {
-        version: data.version || 'v1.4.1',
+        version: data.version || CURRENT_VERSION_INFO.version,
         title: githubMsg || `SAARTHI ${data.version} Full Release`,
         date: formatFullDateTime(data.timestamp || data.time),
         timestamp: data.time || new Date().toISOString(),
@@ -1289,7 +1289,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
                 </div>
               )}
               <div>
-                <label className="block text-slate-300 font-bold mb-1">Release Tag (e.g. v1.4.8)</label>
+                <label className="block text-slate-300 font-bold mb-1">Release Tag (e.g. v1.0.0)</label>
                 <input
                   type="text"
                   value={newTagInput}
@@ -1512,7 +1512,7 @@ export const BackupManagementView: React.FC<BackupManagementViewProps> = ({
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto leading-relaxed">
-              {changelogContent || '# SAARTHI Platform Changelog\n\n## [1.4.1] - Complete Project Release & Hot News Homepage\n- Added Financial & Banking Information fetching on Homepage\n- Added Upcoming IPO status, allotment updates, and NRB rate trackers\n- Merged GitHub Release Management & Backup System into 2-button section\n- Ensured SAARTHI official permanent naming across all components'}
+              {changelogContent || `# SAARTHI Platform Changelog\n\n## [1.0.0] - Unified Web, PWA & Native Android App Release\n- Native Android App Experience & Background Pre-Downloaded APK Updater\n- Unified Firebase Auth, Firestore Sync & Offline IndexedDB Engine\n- Official NRB Forex, NEPSE, CDSC IPO & Kalimati Live Streams`}
             </div>
 
             <div className="pt-2 flex justify-end">

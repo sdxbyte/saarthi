@@ -8,9 +8,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 const pkgVersion = (() => {
   try {
     const raw = fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8');
-    return JSON.parse(raw).version || '2.0.0';
+    return JSON.parse(raw).version || '1.0.0';
   } catch {
-    return '2.0.0';
+    return '1.0.0';
   }
 })();
 

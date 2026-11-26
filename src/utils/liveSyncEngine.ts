@@ -8,12 +8,46 @@ export interface AppBuildInfo {
   canInstallPackages?: boolean;
 }
 
+export interface PendingApkUpdateStatus {
+  hasDownloadedApk: boolean;
+  isNewerThanInstalled: boolean;
+  signatureMatches: boolean;
+  canInstallPackages: boolean;
+  versionCode?: number;
+  versionName?: string;
+  fileSize?: number;
+  filePath?: string;
+  buildNumber?: number;
+  commitSha?: string;
+  tagName?: string;
+  apkUrl?: string;
+  downloadedAt?: string;
+}
+
 export interface SaarthiUpdaterPlugin {
   getAppBuildInfo(): Promise<AppBuildInfo>;
+  getPendingUpdateStatus(): Promise<PendingApkUpdateStatus>;
+  clearCachedUpdate(): Promise<{ cleared: boolean }>;
   requestInstallPermission(): Promise<{ opened: boolean }>;
-  downloadAndInstallApk(options: { url: string }): Promise<{
+  installDownloadedApk(): Promise<{
     started?: boolean;
     needsPermission?: boolean;
+    signatureMatches?: boolean;
+    filePath?: string;
+  }>;
+  setSystemBarsTheme(options: { dark: boolean }): Promise<{ updated: boolean }>;
+  downloadAndInstallApk(options: {
+    url: string;
+    buildNumber?: number;
+    commitSha?: string;
+    tagName?: string;
+    autoInstall?: boolean;
+  }): Promise<{
+    downloaded?: boolean;
+    readyToInstall?: boolean;
+    started?: boolean;
+    needsPermission?: boolean;
+    signatureMatches?: boolean;
     filePath?: string;
   }>;
   addListener(
@@ -22,8 +56,9 @@ export interface SaarthiUpdaterPlugin {
       percent: number;
       downloadedBytes: number;
       totalBytes: number;
-      stage: 'downloading' | 'installing' | 'permission_required' | 'error';
+      stage: 'downloading' | 'downloaded_ready' | 'installing' | 'permission_required' | 'error';
       message?: string;
+      signatureMatches?: boolean;
     }) => void
   ): Promise<{ remove: () => Promise<void> }>;
 }
@@ -54,6 +89,7 @@ export interface LiveSyncSnapshot {
   installedBuildNumber: number;
   installedCommitShort: string;
   latestRelease: RemoteReleaseInfo | null;
+  pendingApkUpdate: PendingApkUpdateStatus | null;
   updateAvailable: boolean;
   autoUpdateEnabled: boolean;
   lastCheckedAt: string | null;
@@ -87,7 +123,7 @@ export function setStoredAutoUpdatePreference(enabled: boolean): void {
 
 export function getInstalledBuildMetadata() {
   const version =
-    typeof __SAARTHI_APP_VERSION__ !== 'undefined' ? __SAARTHI_APP_VERSION__ : '2.0.0';
+    typeof __SAARTHI_APP_VERSION__ !== 'undefined' ? __SAARTHI_APP_VERSION__ : '1.0.0';
   const buildNumber =
     Number.parseInt(
       typeof __SAARTHI_BUILD_NUMBER__ !== 'undefined' ? __SAARTHI_BUILD_NUMBER__ : '0',
@@ -172,6 +208,7 @@ class LiveSyncCoordinator {
       installedBuildNumber: meta.buildNumber,
       installedCommitShort: meta.commitShort,
       latestRelease: null,
+      pendingApkUpdate: null,
       updateAvailable: false,
       autoUpdateEnabled: getStoredAutoUpdatePreference(),
       lastCheckedAt: null,
@@ -204,13 +241,26 @@ class LiveSyncCoordinator {
     this.emit({ autoUpdateEnabled: enabled });
   }
 
+  public async refreshPendingStatus(): Promise<PendingApkUpdateStatus | null> {
+    if (!this.isNativeUpdaterAvailable()) return null;
+    try {
+      const pending = await this.getNativeUpdaterPlugin().getPendingUpdateStatus();
+      this.emit({ pendingApkUpdate: pending });
+      return pending;
+    } catch {
+      return null;
+    }
+  }
+
   public start() {
     if (this.started || typeof window === 'undefined') return;
     this.started = true;
 
+    void this.refreshPendingStatus();
+
     setTimeout(() => {
       void this.syncNow();
-    }, 1200);
+    }, 800);
 
     this.intervalId = setInterval(() => {
       if (document.visibilityState === 'visible') {
@@ -220,6 +270,7 @@ class LiveSyncCoordinator {
 
     window.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        void this.refreshPendingStatus();
         void this.syncNow();
       }
     });
@@ -229,7 +280,7 @@ class LiveSyncCoordinator {
     });
   }
 
-  public async syncNow(): Promise<LiveSyncSnapshot> {
+  public async syncNow(force = false): Promise<LiveSyncSnapshot> {
     if (this.snapshot.checking) return this.snapshot;
     this.emit({ checking: true, error: null });
 
@@ -244,7 +295,8 @@ class LiveSyncCoordinator {
     let errorMsg: string | null = null;
 
     try {
-      const apiRes = await fetch('/api/app/sync-info', {
+      const endpoint = force ? '/api/app/sync-info?force=1' : '/api/app/sync-info';
+      const apiRes = await fetch(endpoint, {
         cache: 'no-store',
         headers: { Accept: 'application/json' },
       });
@@ -265,7 +317,7 @@ class LiveSyncCoordinator {
                 ? data.latestRelease.buildNumber
                 : null,
             commitSha: data.latestRelease.commitSha || '',
-            tagName: data.latestRelease.tagName || 'latest',
+            tagName: data.latestRelease.tag_name || data.latestRelease.tagName || 'latest',
             releaseName: data.latestRelease.releaseName || 'SAARTHI Latest APK',
             publishedAt: data.latestRelease.publishedAt || '',
             apkDownloadUrl: data.latestRelease.apkDownloadUrl || data.apkDownloadUrl || DIRECT_APK_DOWNLOAD_URL,
@@ -283,8 +335,8 @@ class LiveSyncCoordinator {
       errorMsg = err?.message || 'Unable to reach SAARTHI live server';
     }
 
-    // Fallback to public GitHub Releases API when server release cache is empty
-    if (!latestRelease || latestRelease.buildNumber === null) {
+    // Fallback to public GitHub Releases API when server release cache is empty or force-checking
+    if (force || !latestRelease || latestRelease.buildNumber === null) {
       try {
         const ghRes = await fetch(GITHUB_LATEST_RELEASE_URL, {
           cache: 'no-store',
@@ -299,7 +351,16 @@ class LiveSyncCoordinator {
       }
     }
 
-    const updateAvailable = hasNewerRelease(latestRelease);
+    let pendingApkUpdate = this.snapshot.pendingApkUpdate;
+    if (this.isNativeUpdaterAvailable()) {
+      try {
+        pendingApkUpdate = await this.getNativeUpdaterPlugin().getPendingUpdateStatus();
+      } catch {
+        // Keep prior pending status
+      }
+    }
+
+    const updateAvailable = hasNewerRelease(latestRelease) || Boolean(pendingApkUpdate?.hasDownloadedApk && pendingApkUpdate?.isNewerThanInstalled);
     const revisionChanged =
       Boolean(dataRevision) && this.lastRevision !== null && this.lastRevision !== dataRevision;
     if (dataRevision) {
@@ -316,6 +377,7 @@ class LiveSyncCoordinator {
       bsDate,
       dataRevision,
       latestRelease,
+      pendingApkUpdate,
       updateAvailable,
       lastCheckedAt: new Date().toISOString(),
       checking: false,

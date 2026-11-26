@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowDown,
@@ -7,24 +7,37 @@ import {
   ArrowUpRight,
   Bell,
   Bookmark,
+  Calculator,
   Calendar,
   Car,
   CheckCircle2,
   Clock,
   Coins,
+  Compass,
   DollarSign,
   Eye,
   EyeOff,
+  Flame,
+  FolderLock,
+  Landmark,
   Lock,
+  Pause,
+  PhoneCall,
+  Play,
   Plus,
+  Radio,
+  RefreshCw,
   RotateCcw,
   Search,
+  ShoppingBasket,
   SlidersHorizontal,
   TrendingUp,
 } from 'lucide-react';
 import himalayanHeroImg from '../../assets/images/saarthi_himalayan_hero_1795643294663.jpg';
 import { useGlobalTime } from '../../context/GlobalTimeContext';
 import { useSyncAuth } from '../../context/SyncAuthContext';
+import { useOptionalRadioAudio } from '../../context/RadioAudioContext';
+import { RadioStation } from '../../types/sajiloTypes';
 import {
   DASHBOARD_LAYOUT_SYNC_ID,
   DASHBOARD_WIDGET_CATALOG,
@@ -38,6 +51,9 @@ import {
   RecentModuleEntry,
   saveLocalDashboardPreferences,
 } from '../../services/dashboardPrefsService';
+import { isNativeAndroidShell } from '../../utils/apiClient';
+import { triggerHaptic } from '../../utils/appFeedback';
+import { liveSyncEngine } from '../../utils/liveSyncEngine';
 import { Button, Card, EmptyState, SectionHeader } from '../ui';
 
 interface EditorialHomeViewProps {
@@ -60,6 +76,22 @@ interface LiveHighlightState {
   notices: Array<{ title: string; source: string; url?: string; date?: string }>;
 }
 
+function getKathmanduGreeting(isNe: boolean): string {
+  try {
+    const hourStr = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      hour12: false,
+      timeZone: 'Asia/Kathmandu',
+    }).format(new Date());
+    const hr = Number.parseInt(hourStr, 10) || 12;
+    if (hr < 12) return isNe ? 'शुभ बिहानी' : 'Good Morning';
+    if (hr < 17) return isNe ? 'शुभ दिउँसो' : 'Good Afternoon';
+    return isNe ? 'शुभ साँझ' : 'Good Evening';
+  } catch {
+    return isNe ? 'नमस्ते' : 'Namaste';
+  }
+}
+
 export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
   currentLang,
   onNavigateTab,
@@ -77,13 +109,23 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
     toggleSavedItem,
     upsertSavedItemRecord,
   } = useSyncAuth();
+  const {
+    currentStation,
+    isPlaying: isRadioPlaying,
+    isLoading: isRadioLoading,
+    playStation,
+    togglePlay,
+  } = useOptionalRadioAudio();
 
   const isNe = currentLang === 'ne';
+  const isNativeApk = isNativeAndroidShell();
 
   const [prefs, setPrefs] = useState<DashboardPreferences>(() => loadLocalDashboardPreferences());
   const [isCustomizing, setIsCustomizing] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [recentModules, setRecentModules] = useState<RecentModuleEntry[]>(() => loadRecentModules());
+  const [radioStations, setRadioStations] = useState<RadioStation[]>([]);
+  const [isRefreshingAll, setIsRefreshingAll] = useState(false);
 
   // Sync dashboard preferences from cloud savedItems if newer
   useEffect(() => {
@@ -155,152 +197,171 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
     notices: [],
   });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadOfficialFeeds() {
-      try {
-        const [forexRes, metalsRes, fuelRes, nepseRes, ipoRes, newsRes] = await Promise.allSettled([
+  const loadOfficialFeeds = useCallback(async () => {
+    try {
+      const [forexRes, metalsRes, fuelRes, nepseRes, ipoRes, newsRes, radioRes] =
+        await Promise.allSettled([
           fetch('/api/live/forex').then((r) => (r.ok ? r.json() : null)),
           fetch('/api/live/metals').then((r) => (r.ok ? r.json() : null)),
           fetch('/api/live/fuel').then((r) => (r.ok ? r.json() : null)),
           fetch('/api/live/nepse').then((r) => (r.ok ? r.json() : null)),
           fetch('/api/live/nepse/ipo').then((r) => (r.ok ? r.json() : null)),
           fetch('/api/live/news').then((r) => (r.ok ? r.json() : null)),
+          isNativeApk
+            ? fetch('/api/live/radio-stations').then((r) => (r.ok ? r.json() : null))
+            : Promise.resolve(null),
         ]);
 
-        if (cancelled) return;
+      const unavailable = 'Official data is currently unavailable.';
 
-        const unavailable = 'Official data is currently unavailable.';
-
-        // 1. NRB Forex (never invent values)
-        let forexText = unavailable;
-        let forexMeta = 'Nepal Rastra Bank (NRB)';
-        if (forexRes.status === 'fulfilled' && forexRes.value?.data) {
-          const rates = Array.isArray(forexRes.value.data)
-            ? forexRes.value.data
-            : forexRes.value.data?.rates || [];
-          const usd = rates.find(
-            (r: any) => String(r.code || r.currency?.iso3 || '').toUpperCase() === 'USD'
-          );
-          if (usd && (usd.buy || usd.sell)) {
-            forexText = `USD ${usd.buy} buy / ${usd.sell} sell`;
-            forexMeta = forexRes.value.dataSource || forexMeta;
-          }
-        }
-
-        // 2. Bullion Metals (never invent values)
-        let goldText = unavailable;
-        let goldMeta = 'FENEGOSIDA';
-        if (metalsRes.status === 'fulfilled' && metalsRes.value?.data) {
-          const items = Array.isArray(metalsRes.value.data)
-            ? metalsRes.value.data
-            : metalsRes.value.data?.rates || [];
-          const fineGold = items.find(
-            (m: any) =>
-              m.id === 'fine-gold-24k' ||
-              /fine\s*gold|hallmark|chapawal|chhapawal/i.test(String(m.categoryEn || m.item || m.name || ''))
-          );
-          const tolaVal = fineGold?.nprPerTola ?? fineGold?.perTola;
-          if (fineGold && tolaVal) {
-            goldText = `NPR ${Number(tolaVal).toLocaleString()} / tola`;
-            goldMeta = metalsRes.value.dataSource || goldMeta;
-          }
-        }
-
-        // 2b. NOC Fuel Tariff
-        let fuelText = unavailable;
-        if (fuelRes.status === 'fulfilled' && fuelRes.value) {
-          const fuelItems = Array.isArray(fuelRes.value.tariffs)
-            ? fuelRes.value.tariffs
-            : Array.isArray(fuelRes.value.data)
-            ? fuelRes.value.data
-            : [];
-          const petrol = fuelItems.find((f: any) =>
-            /petrol/i.test(String(f.itemEn || f.item || ''))
-          );
-          if (petrol && petrol.priceNpr) {
-            fuelText = `Petrol NPR ${Number(petrol.priceNpr).toFixed(2)}/${petrol.unitEn || petrol.unit || 'L'}`;
-          }
-        }
-
-        // 3. NEPSE Market (never invent values)
-        let nepseText = unavailable;
-        let nepseMeta = 'Nepal Stock Exchange (NEPSE)';
-        if (nepseRes.status === 'fulfilled' && nepseRes.value?.data) {
-          const idx = nepseRes.value.data?.index || nepseRes.value.data?.indices?.[0];
-          if (idx && typeof idx.value === 'number') {
-            const sign = (idx.pChange ?? 0) >= 0 ? '+' : '';
-            nepseText = `${idx.value.toFixed(2)} (${sign}${Number(idx.pChange ?? 0).toFixed(2)}%)`;
-            nepseMeta = nepseRes.value.dataSource || nepseMeta;
-          }
-        }
-
-        // 4. IPO Pipeline count
-        let ipoCountText = unavailable;
-        if (ipoRes.status === 'fulfilled' && ipoRes.value?.data) {
-          const ipos = Array.isArray(ipoRes.value.data)
-            ? ipoRes.value.data
-            : ipoRes.value.data?.ipos || [];
-          const openIpos = ipos.filter(
-            (i: any) => String(i.status || '').toLowerCase() === 'open'
-          );
-          ipoCountText =
-            ipos.length > 0
-              ? `${openIpos.length} open / ${ipos.length} tracked`
-              : 'No active IPO entries';
-        }
-
-        // 5. Public notices / market headlines
-        const notices: Array<{ title: string; source: string; url?: string; date?: string }> = [];
-        if (newsRes.status === 'fulfilled' && newsRes.value?.data) {
-          const articles = Array.isArray(newsRes.value.data)
-            ? newsRes.value.data
-            : newsRes.value.data?.articles || [];
-          for (const art of articles.slice(0, 4)) {
-            if (art?.title) {
-              notices.push({
-                title: art.title,
-                source: art.source || art.publisher || 'Verified Feed',
-                url: art.url,
-                date: art.publishedAt || art.date,
-              });
-            }
-          }
-        }
-
-        setLiveState({
-          loading: false,
-          forexText,
-          forexMeta,
-          goldText,
-          goldMeta,
-          fuelText,
-          nepseText,
-          nepseMeta,
-          ipoCountText,
-          notices,
-        });
-      } catch {
-        if (!cancelled) {
-          setLiveState((prev) => ({
-            ...prev,
-            loading: false,
-            forexText: 'Official data is currently unavailable.',
-            goldText: 'Official data is currently unavailable.',
-            fuelText: 'Official data is currently unavailable.',
-            nepseText: 'Official data is currently unavailable.',
-            ipoCountText: 'Official data is currently unavailable.',
-          }));
+      // 1. NRB Forex (never invent values)
+      let forexText = unavailable;
+      let forexMeta = 'Nepal Rastra Bank (NRB)';
+      if (forexRes.status === 'fulfilled' && forexRes.value?.data) {
+        const rates = Array.isArray(forexRes.value.data)
+          ? forexRes.value.data
+          : forexRes.value.data?.rates || [];
+        const usd = rates.find(
+          (r: any) => String(r.code || r.currency?.iso3 || '').toUpperCase() === 'USD'
+        );
+        if (usd && (usd.buy || usd.sell)) {
+          forexText = `USD ${usd.buy} / ${usd.sell}`;
+          forexMeta = forexRes.value.dataSource || forexMeta;
         }
       }
-    }
 
+      // 2. Bullion Metals (never invent values)
+      let goldText = unavailable;
+      let goldMeta = 'FENEGOSIDA';
+      if (metalsRes.status === 'fulfilled' && metalsRes.value?.data) {
+        const items = Array.isArray(metalsRes.value.data)
+          ? metalsRes.value.data
+          : metalsRes.value.data?.rates || [];
+        const fineGold = items.find(
+          (m: any) =>
+            m.id === 'fine-gold-24k' ||
+            /fine\s*gold|hallmark|chapawal|chhapawal/i.test(String(m.categoryEn || m.item || m.name || ''))
+        );
+        const tolaVal = fineGold?.nprPerTola ?? fineGold?.perTola;
+        if (fineGold && tolaVal) {
+          goldText = `NPR ${Number(tolaVal).toLocaleString()} / tola`;
+          goldMeta = metalsRes.value.dataSource || goldMeta;
+        }
+      }
+
+      // 2b. NOC Fuel Tariff
+      let fuelText = unavailable;
+      if (fuelRes.status === 'fulfilled' && fuelRes.value) {
+        const fuelItems = Array.isArray(fuelRes.value.tariffs)
+          ? fuelRes.value.tariffs
+          : Array.isArray(fuelRes.value.data)
+          ? fuelRes.value.data
+          : [];
+        const petrol = fuelItems.find((f: any) =>
+          /petrol/i.test(String(f.itemEn || f.item || ''))
+        );
+        if (petrol && petrol.priceNpr) {
+          fuelText = `Petrol NPR ${Number(petrol.priceNpr).toFixed(2)}/${petrol.unitEn || petrol.unit || 'L'}`;
+        }
+      }
+
+      // 3. NEPSE Market (never invent values)
+      let nepseText = unavailable;
+      let nepseMeta = 'Nepal Stock Exchange (NEPSE)';
+      if (nepseRes.status === 'fulfilled' && nepseRes.value?.data) {
+        const idx = nepseRes.value.data?.index || nepseRes.value.data?.indices?.[0];
+        if (idx && typeof idx.value === 'number') {
+          const sign = (idx.pChange ?? 0) >= 0 ? '+' : '';
+          nepseText = `${idx.value.toFixed(2)} (${sign}${Number(idx.pChange ?? 0).toFixed(2)}%)`;
+          nepseMeta = nepseRes.value.dataSource || nepseMeta;
+        }
+      }
+
+      // 4. IPO Pipeline count
+      let ipoCountText = unavailable;
+      if (ipoRes.status === 'fulfilled' && ipoRes.value?.data) {
+        const ipos = Array.isArray(ipoRes.value.data)
+          ? ipoRes.value.data
+          : ipoRes.value.data?.ipos || [];
+        const openIpos = ipos.filter(
+          (i: any) => String(i.status || '').toLowerCase() === 'open'
+        );
+        ipoCountText =
+          ipos.length > 0
+            ? `${openIpos.length} open / ${ipos.length} tracked`
+            : 'No active IPO entries';
+      }
+
+      // 5. Public notices / market headlines
+      const notices: Array<{ title: string; source: string; url?: string; date?: string }> = [];
+      if (newsRes.status === 'fulfilled' && newsRes.value?.data) {
+        const articles = Array.isArray(newsRes.value.data)
+          ? newsRes.value.data
+          : newsRes.value.data?.articles || [];
+        for (const art of articles.slice(0, 4)) {
+          if (art?.title) {
+            notices.push({
+              title: art.title,
+              source: art.source || art.publisher || 'Verified Feed',
+              url: art.url,
+              date: art.publishedAt || art.date,
+            });
+          }
+        }
+      }
+
+      // 6. Radio Stations (for instant 1-tap Home companion in APK)
+      if (
+        radioRes.status === 'fulfilled' &&
+        radioRes.value?.stations &&
+        Array.isArray(radioRes.value.stations)
+      ) {
+        setRadioStations(radioRes.value.stations.slice(0, 4));
+      }
+
+      setLiveState({
+        loading: false,
+        forexText,
+        forexMeta,
+        goldText,
+        goldMeta,
+        fuelText,
+        nepseText,
+        nepseMeta,
+        ipoCountText,
+        notices,
+      });
+    } catch {
+      setLiveState((prev) => ({
+        ...prev,
+        loading: false,
+        forexText: 'Official data is currently unavailable.',
+        goldText: 'Official data is currently unavailable.',
+        fuelText: 'Official data is currently unavailable.',
+        nepseText: 'Official data is currently unavailable.',
+        ipoCountText: 'Official data is currently unavailable.',
+      }));
+    }
+  }, [isNativeApk]);
+
+  useEffect(() => {
     void loadOfficialFeeds();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  }, [loadOfficialFeeds]);
+
+  const handleRefreshAll = async () => {
+    triggerHaptic('medium');
+    setIsRefreshingAll(true);
+    try {
+      await Promise.allSettled([loadOfficialFeeds(), liveSyncEngine.syncNow(true)]);
+    } finally {
+      setIsRefreshingAll(false);
+    }
+  };
+
+  const navigateWithHaptic = (tab: string) => {
+    triggerHaptic('light');
+    onNavigateTab(tab);
+  };
 
   // Derive genuine notifications (upcoming expiry alerts + sync conflicts)
   const notifications = useMemo(() => {
@@ -358,6 +419,83 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
     () => savedItems.filter((item) => item.id !== DASHBOARD_LAYOUT_SYNC_ID),
     [savedItems]
   );
+
+  const appLauncherTiles = [
+    {
+      id: 'nepse',
+      label: isNe ? 'नेप्से/IPO' : 'NEPSE',
+      icon: TrendingUp,
+      tone: 'bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400',
+    },
+    {
+      id: 'forex',
+      label: isNe ? 'विदेशी मुद्रा' : 'Forex',
+      icon: DollarSign,
+      tone: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400',
+    },
+    {
+      id: 'gold',
+      label: isNe ? 'सुन/इन्धन' : 'Gold/Fuel',
+      icon: Coins,
+      tone: 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400',
+    },
+    {
+      id: 'calendar',
+      label: isNe ? 'पात्रो' : 'BS Patro',
+      icon: Calendar,
+      tone: 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400',
+    },
+    {
+      id: 'vault',
+      label: isNe ? 'भल्ट' : 'Vault',
+      icon: FolderLock,
+      tone: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400',
+      badge: vaultDocs.length > 0 ? String(vaultDocs.length) : undefined,
+    },
+    {
+      id: 'bluebook',
+      label: isNe ? 'ब्लुबुक' : 'Bluebook',
+      icon: Car,
+      tone: 'bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400',
+    },
+    {
+      id: 'tax',
+      label: isNe ? 'आयकर' : 'IRD Tax',
+      icon: Landmark,
+      tone: 'bg-teal-50 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400',
+    },
+    {
+      id: 'emi',
+      label: isNe ? 'ई.एम.आई.' : 'Loan EMI',
+      icon: Calculator,
+      tone: 'bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400',
+    },
+    {
+      id: 'sajilo',
+      label: isNe ? 'FM रेडियो' : 'FM Radio',
+      icon: Radio,
+      tone: 'bg-pink-50 text-pink-600 dark:bg-pink-950/60 dark:text-pink-400',
+    },
+    {
+      id: 'sajilo',
+      keyId: 'kalimati',
+      label: isNe ? 'कालिमाटी' : 'Kalimati',
+      icon: ShoppingBasket,
+      tone: 'bg-lime-50 text-lime-700 dark:bg-lime-950/60 dark:text-lime-400',
+    },
+    {
+      id: 'loksewa',
+      label: isNe ? 'लोक सेवा' : 'Lok Sewa',
+      icon: Compass,
+      tone: 'bg-orange-50 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400',
+    },
+    {
+      id: 'services',
+      label: isNe ? 'हेल्पलाइन' : 'Civic/SOS',
+      icon: PhoneCall,
+      tone: 'bg-red-50 text-red-600 dark:bg-red-950/60 dark:text-red-400',
+    },
+  ];
 
   const frequentServices = [
     {
@@ -457,6 +595,11 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
   };
 
   const renderWidget = (widgetId: DashboardWidgetId, index: number) => {
+    // On APK, the top Horizontal Snap Live Market Strip already presents live_snapshot prominently
+    if (isNativeApk && widgetId === 'live_snapshot' && !isCustomizing) {
+      return null;
+    }
+
     const isHidden = hiddenWidgetSet.has(widgetId);
     if (isHidden && !isCustomizing) return null;
 
@@ -475,7 +618,7 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
             action={
               <button
                 type="button"
-                onClick={() => onNavigateTab('finance')}
+                onClick={() => navigateWithHaptic('finance')}
                 className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer whitespace-nowrap"
               >
                 {isNe ? 'वित्त केन्द्र →' : 'Finance Hub →'}
@@ -485,8 +628,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <button
               type="button"
-              onClick={() => onNavigateTab('forex')}
-              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer"
+              onClick={() => navigateWithHaptic('forex')}
+              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-all active:scale-[0.98] cursor-pointer"
             >
               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
                 {liveState.forexMeta}
@@ -498,8 +641,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
 
             <button
               type="button"
-              onClick={() => onNavigateTab('gold')}
-              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer"
+              onClick={() => navigateWithHaptic('gold')}
+              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-all active:scale-[0.98] cursor-pointer"
             >
               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
                 {liveState.goldMeta}
@@ -511,8 +654,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
 
             <button
               type="button"
-              onClick={() => onNavigateTab('nepse')}
-              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer"
+              onClick={() => navigateWithHaptic('nepse')}
+              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-all active:scale-[0.98] cursor-pointer"
             >
               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block">
                 {liveState.nepseMeta}
@@ -524,8 +667,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
 
             <button
               type="button"
-              onClick={() => onNavigateTab('gold')}
-              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-colors cursor-pointer"
+              onClick={() => navigateWithHaptic('gold')}
+              className="p-4 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left hover:border-blue-400 dark:hover:border-blue-600 transition-all active:scale-[0.98] cursor-pointer"
             >
               <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block truncate">
                 NOC · CDSC {isNe ? 'ताजा विवरण' : 'Feed'}
@@ -556,8 +699,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => onNavigateTab(item.targetId)}
-                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 text-left transition-colors cursor-pointer flex items-center justify-between gap-2 min-h-[48px]"
+                  onClick={() => navigateWithHaptic(item.targetId)}
+                  className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 text-left transition-all active:scale-[0.98] cursor-pointer flex items-center justify-between gap-2 min-h-[48px]"
                 >
                   <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
                     {item.title}
@@ -573,7 +716,7 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
                   ? 'कुनै सर्टकट पिन गरिएको छैन। तलका सेवा कार्डको बुकमार्क आइकन थिचेर छिटो पहुँचमा थप्नुहोस्।'
                   : 'No shortcuts pinned yet. Tap the bookmark icon on any service card below to pin it across devices.'}
               </p>
-              <Button variant="secondary" size="sm" onClick={() => onNavigateTab('services')}>
+              <Button variant="secondary" size="sm" onClick={() => navigateWithHaptic('services')}>
                 {isNe ? 'सेवाहरू हेर्नुहोस्' : 'Browse Services'}
               </Button>
             </Card>
@@ -596,8 +739,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
                 <button
                   key={entry.tab}
                   type="button"
-                  onClick={() => onNavigateTab(entry.tab)}
-                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 text-left transition-colors cursor-pointer space-y-1 min-h-[48px]"
+                  onClick={() => navigateWithHaptic(entry.tab)}
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 text-left transition-all active:scale-[0.98] cursor-pointer space-y-1 min-h-[48px]"
                 >
                   <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
@@ -634,38 +777,39 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
             action={
               <button
                 type="button"
-                onClick={() => onNavigateTab('services')}
+                onClick={() => navigateWithHaptic('services')}
                 className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer whitespace-nowrap"
               >
                 {isNe ? 'सबै सेवा →' : 'All Services →'}
               </button>
             }
           />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {frequentServices.map((svc) => {
               const Icon = svc.icon;
               const isSaved = userShortcuts.some((s) => s.targetId === svc.id);
               return (
                 <div
                   key={svc.id}
-                  className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 transition-colors flex flex-col justify-between gap-4"
+                  className="p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] hover:border-blue-400 dark:hover:border-blue-600 transition-colors flex flex-col justify-between gap-3.5"
                 >
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
                         {svc.category} · {svc.source}
                       </span>
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          triggerHaptic('light');
                           void toggleSavedItem({
                             id: `shortcut-${svc.id}`,
                             kind: 'shortcut',
                             targetId: svc.id,
                             title: svc.title,
                             pinned: !isSaved,
-                          })
-                        }
+                          });
+                        }}
                         className={`min-h-[36px] min-w-[36px] flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
                           isSaved
                             ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60'
@@ -680,12 +824,12 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
 
                     <button
                       type="button"
-                      onClick={() => onNavigateTab(svc.id)}
+                      onClick={() => navigateWithHaptic(svc.id)}
                       className="w-full text-left group cursor-pointer space-y-1.5"
                     >
                       <div className="flex items-center gap-2">
                         <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                        <h3 className="text-base font-semibold text-[#0B1F3A] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        <h3 className="text-sm sm:text-base font-semibold text-[#0B1F3A] dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                           {svc.title}
                         </h3>
                       </div>
@@ -698,7 +842,7 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs">
                     <button
                       type="button"
-                      onClick={() => onNavigateTab(svc.id)}
+                      onClick={() => navigateWithHaptic(svc.id)}
                       className="text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer inline-flex items-center gap-1 min-h-[32px]"
                     >
                       <span>{isNe ? 'मोड्युल खोल्नुहोस्' : 'Open Module'}</span>
@@ -713,14 +857,14 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
       );
     } else if (widgetId === 'civic_tax') {
       body = (
-        <Card className="p-5 sm:p-6 space-y-4">
+        <Card className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-[#0B1F3A] dark:text-white">
+            <h2 className="text-sm sm:text-base font-semibold text-[#0B1F3A] dark:text-white">
               {isNe ? 'नागरिक तथा कर सेवाहरू' : 'Civic & Tax Services'}
             </h2>
             <button
               type="button"
-              onClick={() => onNavigateTab('services')}
+              onClick={() => navigateWithHaptic('services')}
               className="text-xs text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
             >
               {isNe ? 'सबै सेवा →' : 'All Services →'}
@@ -752,8 +896,8 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
               <button
                 key={item.tab}
                 type="button"
-                onClick={() => onNavigateTab(item.tab)}
-                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] hover:border-blue-400 dark:hover:border-blue-600 text-left transition-colors cursor-pointer space-y-1 min-h-[68px]"
+                onClick={() => navigateWithHaptic(item.tab)}
+                className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0B1220] hover:border-blue-400 dark:hover:border-blue-600 text-left transition-all active:scale-[0.98] cursor-pointer space-y-1 min-h-[68px]"
               >
                 <span className="font-semibold text-slate-900 dark:text-slate-100 block">{item.title}</span>
                 <span className="text-slate-600 dark:text-slate-400 block">{item.desc}</span>
@@ -764,9 +908,9 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
       );
     } else if (widgetId === 'important_notices') {
       body = (
-        <Card className="p-5 sm:p-6 space-y-4">
+        <Card className="p-4 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-[#0B1F3A] dark:text-white">
+            <h2 className="text-sm sm:text-base font-semibold text-[#0B1F3A] dark:text-white">
               {isNe ? 'महत्त्वपूर्ण सार्वजनिक सूचनाहरू' : 'Important Public Notices'}
             </h2>
             <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
@@ -820,107 +964,398 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
     );
   };
 
+  const featuredRadioStation = radioStations[0] || null;
+
   return (
-    <div className="max-w-6xl mx-auto w-full px-4 sm:px-8 py-6 sm:py-10 space-y-8">
-      {/* Himalayan Dawn Editorial Hero Banner */}
-      <section className="relative rounded-2xl overflow-hidden border border-[#1E3A5F] bg-[#0B1F3A] text-white shadow-sm">
-        <img
-          src={himalayanHeroImg}
-          alt={isNe ? 'हिमाली शृङ्खला पृष्ठभूमि' : 'Nepal Himalayan peaks at calm dawn'}
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-55 pointer-events-none select-none"
-        />
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-r from-[#081529]/95 via-[#0B1F3A]/85 to-[#0B1F3A]/60"
-        />
+    <div className={`max-w-6xl mx-auto w-full px-3.5 sm:px-8 ${isNativeApk ? 'py-4 sm:py-8 space-y-5' : 'py-6 sm:py-10 space-y-8'} app-screen-transition`}>
+      {/* =====================================================================
+          NATIVE ANDROID APK: APP-FIRST LAUNCHER HEADER + SWIPE STRIPS + BENTO
+          (Replaces website marketing hero banner so APK opens like a native app)
+         ===================================================================== */}
+      {isNativeApk ? (
+        <div className="space-y-4">
+          {/* App Command Card */}
+          <section className="rounded-2xl bg-[#0B1F3A] dark:bg-[#0F1E36] border border-[#1E3A5F] text-white p-4 sm:p-6 shadow-sm space-y-3.5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <p className="text-xs font-medium text-blue-200 truncate">
+                  {getKathmanduGreeting(isNe)}
+                  {userProfile.isLoggedIn && userProfile.name ? `, ${userProfile.name.split(' ')[0]}` : ''}
+                </p>
+                <h1 className="text-lg sm:text-2xl font-semibold tracking-tight text-white leading-snug">
+                  {isNe ? timeState.bsFormattedNp : timeState.bsFormattedEn}
+                </h1>
+                <p className="text-[11px] font-mono text-slate-300 tabular-nums truncate">
+                  {timeState.time12h} NPT · {timeState.adDateFormatted} AD
+                </p>
+              </div>
 
-        <div className="relative z-10 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-blue-200">
-              <span>
-                {userProfile.isLoggedIn
-                  ? isNe
-                    ? `स्वागत छ, ${userProfile.name}`
-                    : `Welcome back, ${userProfile.name}`
-                  : isNe
-                  ? 'सारथी एकीकृत डिजिटल मञ्च'
-                  : 'SAARTHI Unified Workspace'}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span>{isNe ? timeState.bsFormattedNp : `${timeState.bsFormattedEn} BS`}</span>
-              <span aria-hidden="true">·</span>
-              <span>{timeState.adDateFormatted} AD</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-white leading-tight [text-wrap:balance]">
-              {isNe
-                ? 'नेपालका आधिकारिक वित्तीय तथ्याङ्क, नागरिक सेवा र सिङ्क गरिएको व्यक्तिगत रेकर्ड।'
-                : 'Authentic financial feeds, civic tools, and synced personal records for Nepal.'}
-            </h1>
-
-            <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl">
-              {isNe
-                ? 'वेबसाइट, पी.डब्लु.ए. र एन्ड्रोइड ए.पी.के. भरि एउटै खाता, अफलाइन-प्रथम भण्डारण र प्रमाणित सार्वजनिक स्रोतहरू।'
-                : 'One unified account across Website, PWA, and Android APK with offline-first storage and verified public sources.'}
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-2.5 shrink-0">
-            <div className="flex flex-wrap items-center gap-2">
-              {onOpenSearch && (
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
-                  onClick={onOpenSearch}
-                  className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                  onClick={() => void handleRefreshAll()}
+                  disabled={isRefreshingAll}
+                  className="min-h-[40px] min-w-[40px] rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-transform active:scale-95 cursor-pointer disabled:opacity-60"
+                  aria-label="Sync live rates and updates"
+                  title="Sync now"
                 >
-                  <Search className="w-4 h-4" />
-                  <span>{isNe ? 'मोड्युल र दर खोज्नुहोस्' : 'Search Modules & Services'}</span>
+                  <RefreshCw className={`w-4 h-4 ${isRefreshingAll ? 'animate-spin' : ''}`} />
                 </button>
-              )}
 
-              <button
-                type="button"
-                onClick={() => setIsNotificationsOpen((prev) => !prev)}
-                className="relative min-h-[44px] min-w-[44px] px-3 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
-                aria-label="Open notifications"
-              >
-                <Bell className="w-4 h-4" />
-                {notifications.length > 0 && (
-                  <span className="font-mono text-[11px] tabular-nums">{notifications.length}</span>
-                )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setIsNotificationsOpen((prev) => !prev);
+                  }}
+                  className="relative min-h-[40px] min-w-[40px] rounded-xl border border-white/15 bg-white/10 hover:bg-white/20 text-white flex items-center justify-center gap-1 px-2.5 transition-transform active:scale-95 cursor-pointer"
+                  aria-label="Open notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {notifications.length > 0 && (
+                    <span className="font-mono text-[11px] font-bold text-amber-300 tabular-nums">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
+                    setIsCustomizing((prev) => !prev);
+                  }}
+                  className={`min-h-[40px] min-w-[40px] rounded-xl border flex items-center justify-center transition-transform active:scale-95 cursor-pointer ${
+                    isCustomizing
+                      ? 'border-blue-400 bg-blue-600 text-white'
+                      : 'border-white/15 bg-white/10 hover:bg-white/20 text-white'
+                  }`}
+                  aria-label="Customize app home layout"
+                  title={isNe ? 'विजेट मिलाउनुहोस्' : 'Customize layout'}
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Thumb-friendly native Search Input Bar */}
+            {onOpenSearch && (
               <button
                 type="button"
-                onClick={() => setIsCustomizing((prev) => !prev)}
-                className="min-h-[40px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-white/20 bg-[#0B1F3A]/80 hover:bg-[#102A4C] text-blue-100 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onOpenSearch();
+                }}
+                className="w-full min-h-[44px] px-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-left flex items-center gap-2.5 text-xs text-slate-200 transition-transform active:scale-[0.99] cursor-pointer"
               >
-                <SlidersHorizontal className="w-3.5 h-3.5" />
-                <span>
-                  {isCustomizing
-                    ? isNe
-                      ? 'सम्पन्न गर्नुहोस्'
-                      : 'Done Customizing'
-                    : isNe
-                    ? 'ड्यासबोर्ड मिलाउनुहोस्'
-                    : 'Customize Layout'}
+                <Search className="w-4 h-4 text-blue-300 shrink-0" />
+                <span className="truncate">
+                  {isNe
+                    ? 'नेप्से, विदेशी मुद्रा, कर, ब्लुबुक, रेडियो खोज्नुहोस्...'
+                    : 'Search NEPSE, Forex, Tax, Bluebook, Radio...'}
+                </span>
+              </button>
+            )}
+          </section>
+
+          {/* Horizontal Snap Swipeable Live Market Strip */}
+          <section aria-label="Live Official Rates Strip" className="-mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+            <div className="flex items-stretch gap-2.5 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-1">
+              <button
+                type="button"
+                onClick={() => navigateWithHaptic('forex')}
+                className="snap-start shrink-0 min-w-[168px] p-3.5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left active:scale-[0.97] transition-transform cursor-pointer space-y-1"
+              >
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <DollarSign className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{liveState.forexMeta}</span>
+                </span>
+                <span className="text-xs font-semibold font-mono tabular-nums text-[#0B1F3A] dark:text-white block truncate">
+                  {liveState.forexText}
                 </span>
               </button>
 
               <button
                 type="button"
-                onClick={() => onNavigateTab('services')}
-                className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                onClick={() => navigateWithHaptic('gold')}
+                className="snap-start shrink-0 min-w-[168px] p-3.5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left active:scale-[0.97] transition-transform cursor-pointer space-y-1"
               >
-                <span>{isNe ? 'सेवा निर्देशिका' : 'Services Directory'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span className="text-[10px] font-mono text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Coins className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{liveState.goldMeta}</span>
+                </span>
+                <span className="text-xs font-semibold font-mono tabular-nums text-[#0B1F3A] dark:text-white block truncate">
+                  {liveState.goldText}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigateWithHaptic('nepse')}
+                className="snap-start shrink-0 min-w-[168px] p-3.5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left active:scale-[0.97] transition-transform cursor-pointer space-y-1"
+              >
+                <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3 shrink-0" />
+                  <span className="truncate">{liveState.nepseMeta}</span>
+                </span>
+                <span className="text-xs font-semibold font-mono tabular-nums text-[#0B1F3A] dark:text-white block truncate">
+                  {liveState.nepseText}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigateWithHaptic('fuel')}
+                className="snap-start shrink-0 min-w-[168px] p-3.5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 text-left active:scale-[0.97] transition-transform cursor-pointer space-y-1"
+              >
+                <span className="text-[10px] font-mono text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                  <Flame className="w-3 h-3 shrink-0" />
+                  <span className="truncate">NOC · CDSC</span>
+                </span>
+                <span className="text-xs font-semibold font-mono tabular-nums text-[#0B1F3A] dark:text-white block truncate">
+                  {liveState.fuelText !== 'Official data is currently unavailable.'
+                    ? liveState.fuelText
+                    : liveState.ipoCountText}
+                </span>
               </button>
             </div>
-          </div>
+          </section>
+
+          {/* 4-Column Quick App Launcher Bento Grid */}
+          <section className="space-y-2.5">
+            <div className="flex items-center justify-between px-0.5">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {isNe ? 'द्रुत एप सेवाहरू' : 'Quick App Services'}
+              </h2>
+              <button
+                type="button"
+                onClick={() => navigateWithHaptic('tools')}
+                className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                {isNe ? 'सबै औजार →' : 'All Tools →'}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2.5">
+              {appLauncherTiles.map((tile) => {
+                const Icon = tile.icon;
+                return (
+                  <button
+                    key={tile.keyId || tile.id}
+                    type="button"
+                    onClick={() => navigateWithHaptic(tile.id)}
+                    className="relative min-h-[78px] p-2 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 flex flex-col items-center justify-center gap-1.5 text-center transition-transform active:scale-95 cursor-pointer"
+                  >
+                    {tile.badge && (
+                      <span className="absolute top-1.5 right-1.5 text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+                        {tile.badge}
+                      </span>
+                    )}
+                    <span className={`w-9 h-9 rounded-xl flex items-center justify-center ${tile.tone}`}>
+                      <Icon className="w-4 h-4" />
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-800 dark:text-slate-200 leading-tight truncate max-w-full">
+                      {tile.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Exclusive Mobile App Companion Strip: Live FM Radio + Offline Vault */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* 1-Tap Live Nepali Radio Player */}
+            <div className="p-3.5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Radio className="w-5 h-5" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-[#0B1F3A] dark:text-white block truncate">
+                    {currentStation
+                      ? isNe
+                        ? currentStation.nameNp
+                        : currentStation.name
+                      : featuredRadioStation
+                      ? isNe
+                        ? featuredRadioStation.nameNp
+                        : featuredRadioStation.name
+                      : isNe
+                      ? 'नेपाली लाइभ रेडियो'
+                      : 'Nepal Live FM Radio'}
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block truncate">
+                    {currentStation
+                      ? `${currentStation.frequency} · ${isRadioLoading ? 'Connecting...' : isRadioPlaying ? 'Playing Live' : 'Paused'}`
+                      : featuredRadioStation
+                      ? `${featuredRadioStation.frequency} · 1-Tap Background Stream`
+                      : isNe
+                      ? 'प्रत्यक्ष एफ.एम. स्ट्रिम सुन्नुहोस्'
+                      : 'Stream live stations in background'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {(currentStation || featuredRadioStation) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic('medium');
+                      if (currentStation) {
+                        togglePlay();
+                      } else if (featuredRadioStation) {
+                        playStation(featuredRadioStation);
+                      }
+                    }}
+                    className="min-h-[40px] min-w-[40px] rounded-xl bg-[#0B1F3A] dark:bg-blue-600 text-white flex items-center justify-center active:scale-95 transition-transform cursor-pointer"
+                    aria-label={isRadioPlaying ? 'Pause radio' : 'Play radio'}
+                  >
+                    {isRadioPlaying ? (
+                      <Pause className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4 ml-0.5" />
+                    )}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => navigateWithHaptic('sajilo')}
+                  className="min-h-[40px] px-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-transform cursor-pointer"
+                >
+                  {isNe ? 'स्टेशन' : 'Stations'}
+                </button>
+              </div>
+            </div>
+
+            {/* Offline Vault & Sync Readiness Card */}
+            <button
+              type="button"
+              onClick={() => navigateWithHaptic('vault')}
+              className="p-3.5 rounded-2xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-transform cursor-pointer"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5" />
+                </span>
+                <div className="min-w-0">
+                  <span className="text-xs font-semibold text-[#0B1F3A] dark:text-white block truncate">
+                    {isNe ? 'अफलाइन भल्ट र रिमाइन्डर' : 'Offline Vault & Reminders'}
+                  </span>
+                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 block truncate tabular-nums">
+                    {vaultDocs.length} {isNe ? 'कागजात' : 'docs'} · {keeperItems.length}{' '}
+                    {isNe ? 'रिमाइन्डर' : 'reminders'} · {syncStatus}
+                  </span>
+                </div>
+              </div>
+              <ArrowUpRight className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            </button>
+          </section>
         </div>
-      </section>
+      ) : (
+        /* =====================================================================
+           WEBSITE & DESKTOP EDITORIAL HERO BANNER
+           ===================================================================== */
+        <section className="relative rounded-2xl overflow-hidden border border-[#1E3A5F] bg-[#0B1F3A] text-white shadow-sm">
+          <img
+            src={himalayanHeroImg}
+            alt={isNe ? 'हिमाली शृङ्खला पृष्ठभूमि' : 'Nepal Himalayan peaks at calm dawn'}
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-55 pointer-events-none select-none"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-r from-[#081529]/95 via-[#0B1F3A]/85 to-[#0B1F3A]/60"
+          />
+
+          <div className="relative z-10 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-blue-200">
+                <span>
+                  {userProfile.isLoggedIn
+                    ? isNe
+                      ? `स्वागत छ, ${userProfile.name}`
+                      : `Welcome back, ${userProfile.name}`
+                    : isNe
+                    ? 'सारथी एकीकृत डिजिटल मञ्च'
+                    : 'SAARTHI Unified Workspace'}
+                </span>
+                <span aria-hidden="true">·</span>
+                <span>{isNe ? timeState.bsFormattedNp : `${timeState.bsFormattedEn} BS`}</span>
+                <span aria-hidden="true">·</span>
+                <span>{timeState.adDateFormatted} AD</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-4xl font-semibold tracking-tight text-white leading-tight [text-wrap:balance]">
+                {isNe
+                  ? 'नेपालका आधिकारिक वित्तीय तथ्याङ्क, नागरिक सेवा र सिङ्क गरिएको व्यक्तिगत रेकर्ड।'
+                  : 'Authentic financial feeds, civic tools, and synced personal records for Nepal.'}
+              </h1>
+
+              <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl">
+                {isNe
+                  ? 'वेबसाइट, पी.डब्लु.ए. र एन्ड्रोइड ए.पी.के. भरि एउटै खाता, अफलाइन-प्रथम भण्डारण र प्रमाणित सार्वजनिक स्रोतहरू।'
+                  : 'One unified account across Website, PWA, and Android APK with offline-first storage and verified public sources.'}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2.5 shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
+                {onOpenSearch && (
+                  <button
+                    type="button"
+                    onClick={onOpenSearch}
+                    className="min-h-[44px] inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                  >
+                    <Search className="w-4 h-4" />
+                    <span>{isNe ? 'मोड्युल र दर खोज्नुहोस्' : 'Search Modules & Services'}</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                  className="relative min-h-[44px] min-w-[44px] px-3 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer inline-flex items-center justify-center gap-1.5"
+                  aria-label="Open notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {notifications.length > 0 && (
+                    <span className="font-mono text-[11px] tabular-nums">{notifications.length}</span>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCustomizing((prev) => !prev)}
+                  className="min-h-[40px] inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-white/20 bg-[#0B1F3A]/80 hover:bg-[#102A4C] text-blue-100 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>
+                    {isCustomizing
+                      ? isNe
+                        ? 'सम्पन्न गर्नुहोस्'
+                        : 'Done Customizing'
+                      : isNe
+                      ? 'ड्यासबोर्ड मिलाउनुहोस्'
+                      : 'Customize Layout'}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onNavigateTab('services')}
+                  className="min-h-[40px] inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap"
+                >
+                  <span>{isNe ? 'सेवा निर्देशिका' : 'Services Directory'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Notification Inbox Drawer / Panel */}
       {isNotificationsOpen && (
@@ -950,7 +1385,7 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
                     if (n.targetTab === 'account' && onOpenAccount) {
                       onOpenAccount();
                     } else {
-                      onNavigateTab(n.targetTab);
+                      navigateWithHaptic(n.targetTab);
                     }
                   }}
                   className="w-full py-2.5 flex items-start justify-between gap-3 text-left hover:bg-slate-50 dark:hover:bg-slate-900/60 px-2 rounded-lg transition-colors cursor-pointer"
@@ -1031,7 +1466,7 @@ export const EditorialHomeView: React.FC<EditorialHomeViewProps> = ({
       )}
 
       {/* Dynamic Ordered Dashboard Widgets */}
-      <div className="space-y-10">
+      <div className={isNativeApk ? 'space-y-6' : 'space-y-10'}>
         {prefs.widgetOrder.map((widgetId, index) => renderWidget(widgetId, index))}
       </div>
     </div>

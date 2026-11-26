@@ -2,16 +2,16 @@ import { formatCentralDualDate } from './timeCalendarEngine';
 import { convertAdToBs } from './bsAdConverter';
 
 export interface PlatformVersionInfo {
-  version: string;             // e.g. "v2.0.0"
-  buildNumber: number;         // e.g. 300
-  releaseId: string;           // e.g. "REL-20261125-300"
-  releaseDateAd: string;       // "2026-11-25"
+  version: string;             // e.g. "v1.0.0"
+  buildNumber: number;         // e.g. 100
+  releaseId: string;           // e.g. "REL-20261126-100"
+  releaseDateAd: string;       // "2026-11-26"
   releaseDateBs: string;       // Computed from convertAdToBs
-  releaseTime: string;         // "14:00 NPT"
+  releaseTime: string;         // "14:30 NPT"
   timezone: string;            // "Asia/Kathmandu (GMT+5:45)"
   environment: 'Development' | 'Staging' | 'Production';
   commitHash: string;
-  footerText: string;          // "SAARTHI v2.0.0 • Build #300 • Released 2026-11-25 • ..."
+  footerText: string;          // "SAARTHI v1.0.0 • Build #100 • Released 2026-11-26 • ..."
 }
 
 export interface ReleaseNoteItem {
@@ -29,314 +29,50 @@ export interface ReleaseNoteItem {
   author: string;
 }
 
-const V2_RELEASE_DATE_AD = '2026-11-25';
-const V2_RELEASE_DATE_BS = convertAdToBs(V2_RELEASE_DATE_AD);
+const V1_RELEASE_DATE_AD = '2026-11-26';
+const V1_RELEASE_DATE_BS = convertAdToBs(V1_RELEASE_DATE_AD);
 
 export const CURRENT_VERSION_INFO: PlatformVersionInfo = {
-  version: 'v2.0.0',
-  buildNumber: 300,
-  releaseId: 'REL-20261125-300',
-  releaseDateAd: V2_RELEASE_DATE_AD,
-  releaseDateBs: V2_RELEASE_DATE_BS,
-  releaseTime: '14:00 NPT',
+  version: 'v1.0.0',
+  buildNumber: 100,
+  releaseId: 'REL-20261126-100',
+  releaseDateAd: V1_RELEASE_DATE_AD,
+  releaseDateBs: V1_RELEASE_DATE_BS,
+  releaseTime: '14:30 NPT',
   timezone: 'Asia/Kathmandu (GMT+5:45)',
   environment: 'Production',
-  commitHash: 'unified-v2',
-  footerText: `SAARTHI v2.0.0 • Build #300 • Released ${V2_RELEASE_DATE_AD} • BS ${V2_RELEASE_DATE_BS}`,
+  commitHash: 'v1.0.0',
+  footerText: `SAARTHI v1.0.0 • Build #100 • Released ${V1_RELEASE_DATE_AD} • BS ${V1_RELEASE_DATE_BS}`,
 };
 
 export const RELEASE_HISTORY_CATALOG: ReleaseNoteItem[] = [
   {
-    id: 'rel-200',
-    version: 'v2.0.0',
-    buildNumber: 300,
-    releaseDateAd: V2_RELEASE_DATE_AD,
-    releaseDateBs: V2_RELEASE_DATE_BS,
-    title: 'Unified Account, Cross-Device Offline Sync & Hybrid Material Design 3 Refresh',
+    id: 'rel-100',
+    version: 'v1.0.0',
+    buildNumber: 100,
+    releaseDateAd: V1_RELEASE_DATE_AD,
+    releaseDateBs: V1_RELEASE_DATE_BS,
+    title: 'SAARTHI v1.0.0 — Unified Web, PWA & Native Android App Release',
     whatsNew: [
-      'Introduced unified Account Center (/account) and cross-device cloud sync across Web, PWA, and Android APK via verified Firebase Auth + Cloud Firestore',
-      'Built 6-state offline-first IndexedDB outbox queue with field-level conflict detection, manual merge resolution, and device session revocation',
-      'Unified Hybrid Light & Dark Navy (#0B1F3A / #2563EB) Material Design 3 interface across all public portals, tools, and admin views',
-      'Enforced authentic live market/telemetry feeds across Sajilo Bazar, Public APIs Hub, and Admin Cluster Monitor with zero static fallback numbers',
+      'App-First Native Android APK Experience: Material 3 TopAppBar with sub-screen Back navigation, Android hardware back-stack support, status/navigation bar theme sync, tactile haptics, and distraction-free native shell layout',
+      'APK Mobile Home Launcher: Kathmandu greeting & live dual-date clock, thumb-first search bar, swipeable NRB/Gold/NEPSE/Fuel market strip, 12-tile quick services grid, 1-tap Live Nepali FM Radio player, and Offline Vault card',
+      'Background Pre-Downloaded APK Updater: Automatically downloads releases in the background, validates package ID and signing key parity, prompts 1-tap Install Downloaded Update, and resumes installer after Android permission grant',
+      'Unified Account & Cross-Device Sync: Firebase Auth + Cloud Firestore backed by resilient offline-first IndexedDB outbox with 3-way conflict resolution and remote device session management',
+      'Authentic Nepal Live Data Suites: Verified NRB Forex (160+ world currencies), NEPSE & CDSC IPO tools, Kalimati wholesale rates, FENEGOSIDA Gold/Silver, NOC fuel tariffs, IRD tax & Bluebook calculators, and DoTM services',
     ],
     improvements: [
-      'Unified versioning and CI release pipeline across package.json, versionEngine, and Android APK/AAB workflows',
-      'Wired Support Help Center directly to /api/support/tickets and completed Admin sub-tab routing',
-      'Replaced browser blocking dialogs (alert/confirm) and inline styles with accessible inline controls and responsive SVG indicators',
+      'Unified platform versioning cleanly at v1.0.0 across Web, PWA, API endpoints, documentation, and Android APK CI/CD release workflows',
+      'Lowered /api/app/sync-info release cache TTL to 20s with ?force=1 bypass for faster GitHub release discovery',
+      'Enforced strict Rule 16 zero-fabrication fallbacks when external official feeds are temporarily unreachable',
     ],
     bugFixes: [
-      'Fixed light mode text contrast in About, Contact, Support, Roadmap, Account Deletion, and Public APIs Hub screens',
-      'Fixed broken Admin dashboard quick-links for Civic Broadcasts, Donation Audit Log, and Analytics Reports',
+      'Resolved native IndexedDB transaction edge cases with automatic store repair and resilient fallback storage',
+      'Eliminated redundant APK re-downloads when a verified cached update is already stored on disk',
     ],
     knownIssues: [],
     isImportant: true,
     author: 'SAARTHI Core Engineering',
   },
-  {
-    id: 'rel-170',
-    version: 'v1.7.0',
-    buildNumber: 270,
-    releaseDateAd: '2026-09-19',
-    releaseDateBs: '2083-06-03',
-    title: 'Curated Links & Web Hub Integration (Sajilo Repo, FMHY Mega Directory & Custom Bookmarks)',
-    whatsNew: [
-      'Added dedicated "Links & Web Hub" tab inside Sajilo Daily Essentials and direct routing (/links, /resources, /fmhy)',
-      'Spotlight integration for Adarsha Acharya’s Sajilo repository (github.com/adarshaacharya/sajilo) with direct GitHub and live links',
-      'Spotlight integration for FMHY (fmhy.net) FreeMediaHeckYeah open-source knowledge and resource mega-directory',
-      'Category-filtered collection across Developer Tools, Privacy, Nepali Open-Source, and Official Government Portals',
-      'Interactive Custom Bookmarks feature allowing citizens to save, search, and manage personal bookmarks locally'
-    ],
-    improvements: [
-      'Integrated quick navigation banner in Sajilo Today overview and primary navigation sidebar',
-      'Synchronized routing engine and breadcrumbs navigation with deep-linking support'
-    ],
-    bugFixes: [],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Engineering',
-  },
-  {
-    id: 'rel-162',
-    version: 'v1.6.2',
-    buildNumber: 262,
-    releaseDateAd: '2026-08-19',
-    releaseDateBs: '2083-05-04',
-    title: 'Light Mode Visibility Overhaul, Responsive Design & Smart Currency Search/Multiplier',
-    whatsNew: [
-      'Comprehensive Light Mode Visibility & Contrast Fixes across Header, Hero, Tax Calculator, Currency/Forex/Gold/Fuel suite, Sidebar, and Breadcrumb navigation',
-      'Enhanced Currency Search Engine supporting Country Names, Currency Initials, ISO codes, and Aliases (e.g. "USA", "Dollar", "AED", "Emirates", "Riyadh")',
-      'Interactive Custom Quantity Multiplier in Currency Cards allowing real-time NPR conversion for any custom currency unit amount',
-      'Hardened Document Vault path traversal protection and token authorization'
-    ],
-    improvements: [
-      'Mobile and desktop responsive layout enhancements with fluid touch targets and adaptive typography',
-      'Refactored Tailwind CSS color tokens to ensure WCAG AA high-contrast legibility in both light and dark themes',
-      'Refined Gold Bullion, Jewellery Making Charge Calculator, Weight Units Converter, and Fuel Tariffs in both color modes'
-    ],
-    bugFixes: [
-      'Resolved low-contrast text readability issues on light backgrounds in cards, inputs, and badges',
-      'Fixed currency card unit calculation to dynamically recalculate when quantity is edited'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Engineering',
-  },
-  {
-    id: 'rel-150',
-    version: 'v1.5.0',
-    buildNumber: 250,
-    releaseDateAd: '2026-08-12',
-    releaseDateBs: '2083-04-27',
-    title: 'DevTrack Municipal Government Project Tracking Service',
-    whatsNew: [
-      'Integrated the DevTrack Municipal & Government Project Tracker Service for public information and citizen oversight',
-      'Added tracking for Kathmandu Metropolitan City (KMC) and municipal infrastructure projects with budget allocations, contractor details, and physical vs. financial progress metrics',
-      'Implemented dual AD & BS date scheduling on all project milestones (start dates, target close dates, and audit timestamps)',
-      'Created citizen quality audit and grievance reporting system allowing citizens to log observations into project logs'
-    ],
-    improvements: [
-      'Added dedicated "Project Tracker (DevTrack)" item to Sidebar navigation under Government & Civic',
-      'Featured DevTrack transparency highlight cards across Government Services and Civic Portal'
-    ],
-    bugFixes: [
-      'Resolved navigation tab routing for DevTrack municipal project views'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-148',
-    version: 'v1.4.8',
-    buildNumber: 248,
-    releaseDateAd: '2026-08-12',
-    releaseDateBs: '2083-04-27',
-    title: 'Incubate Nepal DevTrack Integration & Full Dual Date System Alignment',
-    whatsNew: [
-      'Added DevTrack municipal project tracking information and telemetry service',
-      'Unified dual AD & BS date display across Upcoming IPOs, NEPSE Market Feed, MeroShare Auto-Apply, and IRD Verified Tax Certificates',
-      'Configured automated GitHub release backup and email notification engine for platform codebases'
-    ],
-    improvements: [
-      'Added DevTrack connected partner repository manager in Developer Settings and Backup Command Center',
-      'Enhanced date conversion accuracy and dual AD/BS formatting across public and admin dashboards'
-    ],
-    bugFixes: [
-      'Resolved missing AD date translation on IPO issue closing widgets and IRD registration lookup results'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-146',
-    version: 'v1.4.6',
-    buildNumber: 246,
-    releaseDateAd: '2026-08-07',
-    releaseDateBs: '2083-04-22',
-    title: 'GitHub Real-time Sync & Repository Reconfiguration to @sdxbyte/saarthi',
-    whatsNew: [
-      'Updated default GitHub platform repository integration to https://github.com/sdxbyte/saarthi for automated real-time background code syncing',
-      'Synchronized GitHub username handle across developer command center, credentials manager, and automated release backup APIs',
-      'Reinforced permanent authentic financial and capital market data system rules for NRB exchange rates, NEPSE market feeds, and unedited prospectus documents'
-    ],
-    improvements: [
-      'Seamless real-time code backup and automated release sync directly to github.com/sdxbyte/saarthi',
-      'Enhanced credential verification with automatic user handle resolution and 1-click token setup'
-    ],
-    bugFixes: [
-      'Fixed repository path mismatch on automatic GitHub push API triggers'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-145',
-    version: 'v1.4.5',
-    buildNumber: 245,
-    releaseDateAd: '2026-08-06',
-    releaseDateBs: '2083-04-21',
-    title: 'Cross-Device Logo Compatibility & Prominent Footer Brand Redesign',
-    whatsNew: [
-      'Engineered multi-stage fail-safe image fallbacks for SAARTHI logo (PNG -> JPG -> Logo -> Crisp Vector SVG) ensuring 100% visibility on all mobile, desktop, TV, and webview screens',
-      'Redesigned Public Footer featuring a prominent BIG logo on the left side, accompanied by platform details, security badges, and fully responsive link columns',
-      'Enforced zero-break responsive layout across mobile phones (320px+), tablets, laptops, and ultra-wide desktop monitors'
-    ],
-    improvements: [
-      'Eliminated image clipping and aspect ratio distortion across all screen resolutions',
-      'Upgraded footer layout with a glass-morphism brand showcase header and structured navigation grid'
-    ],
-    bugFixes: [
-      'Fixed potential logo loading failures on restricted mobile networks and webviews',
-      'Resolved Vercel production deployment blank white screen caused by Rollup circular chunks'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-143',
-    version: 'v1.4.3',
-    buildNumber: 243,
-    releaseDateAd: '2026-08-06',
-    releaseDateBs: '2083-04-21',
-    title: 'Vercel Deployment White Screen Resolution & Build Optimization',
-    whatsNew: [
-      'Resolved production Vercel white screen issue caused by Rollup circular chunk dependencies in manualChunks configuration',
-      'Wrapped root React application mount point with an ErrorBoundary to prevent silent blank screens on client rendering exceptions',
-      'Optimized Vite build pipeline for zero-warning deployment bundling'
-    ],
-    improvements: [
-      'Eliminated circular vendor chunk dependencies between React, Framer Motion, and Lucide React',
-      'Enhanced Vercel serverless SPA rewrites for seamless frontend route handling'
-    ],
-    bugFixes: [
-      'Fixed blank white screen on Vercel production deployment URLs'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-142',
-    version: 'v1.4.2',
-    buildNumber: 242,
-    releaseDateAd: '2026-08-06',
-    releaseDateBs: '2083-04-21',
-    title: 'Permanent Version Synchronization & Prominent Footer Version Display',
-    whatsNew: [
-      'Enforced version bump to v1.4.2 across all system configuration files, release history catalogs, and package manifests',
-      'Integrated an interactive Version Badge directly into the main Public Footer with instant Release Notes modal launcher',
-      'Synchronized versioning across Admin Portal, Developer Command Center, and Public UI components'
-    ],
-    improvements: [
-      'Enhanced footer layout with clear, high-visibility version tags displaying current build number and dual AD/BS dates',
-      'Integrated automated release notes notification on initial platform load after every version update'
-    ],
-    bugFixes: [
-      'Fixed version string inconsistency across package.json, versionEngine, and administrative release logs'
-    ],
-    knownIssues: [],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-141',
-    version: 'v1.4.1',
-    buildNumber: 241,
-    releaseDateAd: '2026-08-06',
-    releaseDateBs: '2083-04-21',
-    title: 'Live Real-Time Data Engine & Centralized Time-Calendar Synchronization',
-    whatsNew: [
-      'Connected 12 official live data streams (Nepal Rastra Bank Forex, CoinGecko Crypto, NEGOSIDA Gold/Silver, NEPSE Index, Open-Meteo Weather, USGS Earthquake, Kalimati Veg Rates, NOC Fuel, Nager Holidays, Emergency Directories, Government Notices, Civic News)',
-      'Integrated centralized Time & Calendar Engine across every module, audit log, scheduler, and live card with dual AD/BS formatting',
-      'Implemented Permanent Version Management, Footer Version Display, and What\'s New release notification engine'
-    ],
-    improvements: [
-      'Automatic retry, failure detection, and admin email notification dispatch upon 3 consecutive live feed connection failures',
-      'Local caching layer preserves last valid snapshot if external feeds experience temporary network downtime',
-      'Full-stack Express/Node ESM CommonJS bundle compilation via esbuild for Cloud Run deployment'
-    ],
-    bugFixes: [
-      'Resolved time offset calculations for Bikram Sambat (BS) leap day transitions',
-      'Fixed timezone offset drift when formatting audit timestamps across regional clients',
-      'Removed all static mock arrays in favor of live endpoint streams with automatic cache fallback'
-    ],
-    knownIssues: [
-      'NRB Forex feed updates once daily at 10:00 AM NPT; off-peak queries return previous business day rates as expected',
-      'USGS seismic events filtered to magnitude 2.5+ within 1,000km radius of Kathmandu'
-    ],
-    isImportant: true,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-140',
-    version: 'v1.4.0',
-    buildNumber: 240,
-    releaseDateAd: '2026-08-01',
-    releaseDateBs: '2083-04-17',
-    title: 'Super Admin Customer Support & Complete Audit Logging System',
-    whatsNew: [
-      'Super Admin Customer Support control suite with full user profile edit, verification, suspension, and password reset',
-      'Immutable Audit & Activity Log tracking all admin actions, logins, and settings modifications',
-      'Official Donation QR Payment details section with strict QR protection policies'
-    ],
-    improvements: [
-      'Automated release note generation and email notification dispatches',
-      'Enhanced theme color presets (Crimson, Emerald, Sapphire, Pearl, Obsidian)'
-    ],
-    bugFixes: [
-      'Corrected navigation tab switching in mobile responsive drawer',
-      'Fixed CSV/JSON export formatting for administrative audit records'
-    ],
-    knownIssues: [],
-    isImportant: false,
-    author: 'SAARTHI Core Team',
-  },
-  {
-    id: 'rel-130',
-    version: 'v1.3.0',
-    buildNumber: 230,
-    releaseDateAd: '2026-07-15',
-    releaseDateBs: '2083-03-31',
-    title: 'Citizen Document Vault, IRD Tax Suite & Emergency Hotline Modules',
-    whatsNew: [
-      'Citizen Encrypted Document Vault for Citizenship, License, Bluebook, and PAN cards',
-      'IRD Income Tax Calculator and Bluebook Vehicle Renewal Tax Estimator',
-      'Integrated Emergency SOS Hotline modal with 100/101/102 direct dispatch'
-    ],
-    improvements: [
-      'Added dark/light contrast mode with high accessibility compliance',
-      'Optimized Vite bundle chunking for faster mobile page load'
-    ],
-    bugFixes: [
-      'Fixed calculation logic for single vs married IRD tax exemption slabs'
-    ],
-    knownIssues: [],
-    isImportant: false,
-    author: 'SAARTHI Core Team',
-  }
 ];
 
 const LAST_SEEN_VERSION_KEY = 'saarthi_last_seen_version_v1';

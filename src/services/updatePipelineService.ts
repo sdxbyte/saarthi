@@ -80,9 +80,9 @@ export function getCurrentVersion(): string {
       if (data && data.version) return data.version;
     }
     const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf-8'));
-    return pkg.version || '1.5.0';
+    return pkg.version || '1.0.0';
   } catch (e) {
-    return '1.5.0';
+    return '1.0.0';
   }
 }
 

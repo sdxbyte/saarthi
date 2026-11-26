@@ -375,7 +375,7 @@ export async function getGitHubReleases(limit = 10): Promise<{
     const data = await res.json();
     const releases = (Array.isArray(data) ? data : []).map((rel: any) => ({
       id: rel.id,
-      tagName: rel.tag_name || 'v1.4.7',
+      tagName: rel.tag_name || 'v1.0.0',
       name: rel.name || rel.tag_name || 'SAARTHI Release',
       body: rel.body || 'Production build and civic platform deployment.',
       draft: rel.draft || false,

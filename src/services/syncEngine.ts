@@ -1122,7 +1122,7 @@ export async function registerCurrentDeviceSession(
         ownerId: uid,
         platform,
         deviceLabel: clampStr(label, 120),
-        appVersion: clampStr(appVersion, 32, '2.0.0'),
+        appVersion: clampStr(appVersion, 32, '1.0.0'),
         revoked: false,
         lastSyncState: syncState,
         createdAt: serverTimestamp(),
@@ -1140,7 +1140,7 @@ export async function registerCurrentDeviceSession(
       ref,
       {
         deviceLabel: clampStr(label, 120),
-        appVersion: clampStr(appVersion, 32, '2.0.0'),
+        appVersion: clampStr(appVersion, 32, '1.0.0'),
         lastSyncState: syncState,
         updatedAt: serverTimestamp(),
       },

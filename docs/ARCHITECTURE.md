@@ -1,4 +1,4 @@
-# SAARTHI Cross-Platform Architecture (`v1.9.1`)
+# SAARTHI Cross-Platform Architecture (`v1.0.0`)
 
 ## 1. Unified Multi-Platform Topology
 

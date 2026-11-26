@@ -107,7 +107,7 @@ export async function runAllFailureSimulationTests(): Promise<FullTestSuiteRepor
           throw new Error('429 Resource has been exhausted (quota exceeded)');
         },
         () => {
-          return aiCircuitBreaker.generateDeterministicChangeSummary('1.6.0', [
+          return aiCircuitBreaker.generateDeterministicChangeSummary('1.0.0', [
             'src/services/forexData.ts',
             'src/services/goldData.ts',
           ]);

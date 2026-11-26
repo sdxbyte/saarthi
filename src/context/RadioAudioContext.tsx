@@ -193,3 +193,22 @@ export const useRadioAudio = (): RadioAudioContextType => {
   }
   return context;
 };
+
+const NOOP_RADIO_AUDIO: RadioAudioContextType = {
+  currentStation: null,
+  isPlaying: false,
+  isLoading: false,
+  error: null,
+  volume: 0.8,
+  isMuted: false,
+  playStation: () => {},
+  pauseStation: () => {},
+  togglePlay: () => {},
+  setVolume: () => {},
+  toggleMute: () => {},
+  stopStation: () => {},
+};
+
+export const useOptionalRadioAudio = (): RadioAudioContextType => {
+  return useContext(RadioAudioContext) ?? NOOP_RADIO_AUDIO;
+};

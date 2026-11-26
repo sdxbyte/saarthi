@@ -20,6 +20,8 @@ import { RadioAudioProvider } from './context/RadioAudioContext';
 import { RadioMiniPlayer } from './components/sajilo/RadioMiniPlayer';
 import { getTabFromPath, syncUrlWithTab, AppTabRoute } from './utils/routingEngine';
 import { recordRecentModule } from './services/dashboardPrefsService';
+import { isNativeAndroidShell } from './utils/apiClient';
+import { syncAndroidSystemBars } from './utils/appFeedback';
 
 // Lazy-loaded Modals & Heavy Shells (reduces initial bundle weight)
 const GlobalSearchModal = lazy(() => import('./components/search/GlobalSearchModal').then(m => ({ default: m.GlobalSearchModal })));
@@ -86,6 +88,11 @@ function SaarthiAppShell({
     resolveSyncConflict,
     vaultDocs,
   } = useSyncAuth();
+  const isNativeApk = isNativeAndroidShell();
+
+  useEffect(() => {
+    void syncAndroidSystemBars(resolvedTheme === 'dark');
+  }, [resolvedTheme]);
 
   const [activeTab, setActiveTabState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -269,7 +276,10 @@ function SaarthiAppShell({
 
   return (
     <RadioAudioProvider>
-      <div className="min-h-screen min-h-[100dvh] flex flex-col md:flex-row font-sans bg-[#F6F8FB] dark:bg-[#080D18] text-slate-900 dark:text-slate-100 selection:bg-blue-600/20 selection:text-[#0B1F3A] dark:selection:text-blue-100 antialiased">
+      <div
+        data-native-apk={isNativeApk ? 'true' : 'false'}
+        className="min-h-screen min-h-[100dvh] flex flex-col md:flex-row font-sans bg-[#F6F8FB] dark:bg-[#080D18] text-slate-900 dark:text-slate-100 selection:bg-blue-600/20 selection:text-[#0B1F3A] dark:selection:text-blue-100 antialiased"
+      >
         <DesktopSidebar
           activeTab={activeTab}
           currentLang={currentLang}
@@ -297,7 +307,9 @@ function SaarthiAppShell({
             id="main-content"
             role="main"
             aria-label="Main Content Area"
-            className="flex-1 min-w-0 w-full flex flex-col justify-between"
+            className={`flex-1 min-w-0 w-full flex flex-col justify-between ${
+              isNativeApk ? 'pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0' : ''
+            }`}
           >
           <ErrorBoundary>
             <Suspense fallback={<LoadingSpinner label="Loading SAARTHI..." />}>
@@ -739,11 +751,13 @@ function SaarthiAppShell({
           </ErrorBoundary>
         </main>
 
-        <EditorialFooter
-          currentLang={currentLang}
-          onNavigateTab={setActiveTab}
-          onOpenAdminModal={() => setIsAdminLoginModalOpen(true)}
-        />
+        {!isNativeApk && (
+          <EditorialFooter
+            currentLang={currentLang}
+            onNavigateTab={setActiveTab}
+            onOpenAdminModal={() => setIsAdminLoginModalOpen(true)}
+          />
+        )}
         </div>
 
         <MobileBottomNav

@@ -1,6 +1,6 @@
 # SAARTHI (सारथि) — Cross-Platform Civic & Financial Platform
 
-**Version:** `1.9.1` | **Web:** `https://saarthi.dpdns.org` | **Android Package:** `com.sdxbyte.saarthi` | **Repository:** `sdxbyte/saarthi`
+**Version:** `1.0.0` | **Web:** `https://saarthi.dpdns.org` | **Android Package:** `com.sdxbyte.saarthi` | **Repository:** `sdxbyte/saarthi`
 
 SAARTHI is a unified civic, capital-market, and personal citizen utility platform for Nepal built to share one account system, one cloud data layer, one offline synchronization engine, and one hybrid Material 3 + fintech design system across:
 

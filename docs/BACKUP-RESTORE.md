@@ -1,4 +1,4 @@
-# SAARTHI Backup, Export & Account Recovery Guide (`v1.9.1`)
+# SAARTHI Backup, Export & Account Recovery Guide (`v1.0.0`)
 
 ## 1. Citizen Self-Service Backup & Export
 

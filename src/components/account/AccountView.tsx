@@ -606,7 +606,7 @@ export const AccountView: React.FC<AccountViewProps> = ({
           <span>{t.account.dataPortability}</span>
         </h3>
 
-        <div className="flex flex-wrap items-center gap-2.5 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           <Button variant="secondary" size="sm" onClick={handleExportJson}>
             <Download className="w-3.5 h-3.5" />
             <span>{t.account.exportJson}</span>
@@ -614,6 +614,15 @@ export const AccountView: React.FC<AccountViewProps> = ({
           <Button variant="secondary" size="sm" onClick={() => onNavigateTab('vault')}>
             <FileText className="w-3.5 h-3.5" />
             <span>{t.nav.vault}</span>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => onNavigateTab('about')}>
+            <span>{t.footer.about}</span>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => onNavigateTab('roadmap')}>
+            <span>{isNe ? 'रोडम्याप' : 'Roadmap'}</span>
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => onNavigateTab('contact')}>
+            <span>{isNe ? 'सम्पर्क' : 'Contact'}</span>
           </Button>
           <Button variant="secondary" size="sm" onClick={() => onNavigateTab('privacy')}>
             <span>{t.footer.privacy}</span>

@@ -1813,17 +1813,17 @@
     }
   ],
   "status": {
-    "lastSyncIso": "2026-11-26T01:50:05.640Z",
+    "lastSyncIso": "2026-11-26T08:45:17.722Z",
     "lastSyncAd": "2026-11-26",
     "lastSyncBs": "2083-06-07",
-    "lastSyncTime": "1:50:05 AM",
+    "lastSyncTime": "8:45:17 AM",
     "totalSites": 97,
     "newSitesCount": 0,
     "status": "synced",
     "lastError": null,
     "triggerType": "startup",
-    "nextScheduledSyncIso": "2026-11-26T07:50:05.640Z",
+    "nextScheduledSyncIso": "2026-11-26T14:45:17.722Z",
     "sourceUrl": "https://www.allsitehub.site/"
   },
-  "savedAt": "2026-11-26T01:50:05.640Z"
+  "savedAt": "2026-11-26T08:45:17.722Z"
 }

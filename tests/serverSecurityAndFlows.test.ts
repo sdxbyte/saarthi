@@ -173,10 +173,10 @@ describe('SAARTHI Security Controls & Core API Flows (OWASP + Play Store)', () =
 
       const patchRes = await agent
         .patch(`/api/support/tickets/${bugRes.body.ticket.id}`)
-        .send({ status: 'RESOLVED', adminReply: 'Fixed in v1.9.1.' });
+        .send({ status: 'RESOLVED', adminReply: 'Fixed in v1.0.0.' });
       expect(patchRes.status).toBe(200);
       expect(patchRes.body.ticket.status).toBe('RESOLVED');
-      expect(patchRes.body.ticket.adminReply).toBe('Fixed in v1.9.1.');
+      expect(patchRes.body.ticket.adminReply).toBe('Fixed in v1.0.0.');
     });
 
     it('enforces rate limiting (429) on support/issue-report endpoint after 10 submissions', async () => {

@@ -289,7 +289,7 @@ export const SyncAuthProvider: React.FC<{
         try {
           setSyncError(null);
           const appVer =
-            typeof __SAARTHI_APP_VERSION__ !== 'undefined' ? __SAARTHI_APP_VERSION__ : '2.0.0';
+            typeof __SAARTHI_APP_VERSION__ !== 'undefined' ? __SAARTHI_APP_VERSION__ : '1.0.0';
           const sessionInfo = await registerCurrentDeviceSession(
             fbUser.uid,
             appVer,

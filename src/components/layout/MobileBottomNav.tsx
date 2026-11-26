@@ -2,6 +2,7 @@ import React from 'react';
 import { Building2, Calendar, Home, TrendingUp, User } from 'lucide-react';
 import { SupportedLanguage } from '../../i18n/translations';
 import { useOptionalLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/appFeedback';
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -32,7 +33,18 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       return ['calendar', 'rashifal'].includes(activeTab);
     }
     if (id === 'account') {
-      return activeTab === 'account';
+      return [
+        'account',
+        'about',
+        'vision',
+        'roadmap',
+        'contact',
+        'terms',
+        'privacy',
+        'support',
+        'donate',
+        'account-deletion',
+      ].includes(activeTab);
     }
     return false;
   };
@@ -77,7 +89,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B1628]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom,0px)]"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B1628]/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom,0px)] shadow-[0_-4px_20px_rgba(11,31,58,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.35)]"
     >
       <div className="grid grid-cols-5 h-16">
         {items.map((item) => {
@@ -87,8 +99,11 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             <button
               key={item.id}
               type="button"
-              onClick={item.action}
-              className={`relative min-h-[48px] flex flex-col items-center justify-center gap-1 px-1 transition-colors cursor-pointer ${
+              onClick={() => {
+                triggerHaptic('light');
+                item.action();
+              }}
+              className={`relative min-h-[48px] flex flex-col items-center justify-center gap-1 px-1 transition-all duration-150 active:scale-95 cursor-pointer ${
                 active
                   ? 'text-blue-600 dark:text-blue-400 font-semibold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-[#0B1F3A] dark:hover:text-slate-200'
@@ -98,10 +113,10 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
               {active && (
                 <span
                   aria-hidden="true"
-                  className="absolute top-0 w-7 h-0.5 rounded-full bg-blue-600 dark:bg-blue-400"
+                  className="absolute top-0 w-8 h-0.5 rounded-full bg-blue-600 dark:bg-blue-400"
                 />
               )}
-              <Icon className="w-5 h-5 shrink-0" />
+              <Icon className={`w-5 h-5 shrink-0 transition-transform ${active ? 'scale-105' : ''}`} />
               <span className="text-[11px] leading-none truncate max-w-full whitespace-nowrap">
                 {item.label}
               </span>

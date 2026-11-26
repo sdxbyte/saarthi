@@ -569,10 +569,10 @@ let cachedApkReleaseMeta: { fetchedAt: number; data: any | null } = {
   data: null,
 };
 
-async function getCachedLatestApkRelease() {
+async function getCachedLatestApkRelease(forceRefresh = false) {
   if (process.env.VITEST) return null;
   const now = Date.now();
-  if (cachedApkReleaseMeta.data && now - cachedApkReleaseMeta.fetchedAt < 45_000) {
+  if (!forceRefresh && cachedApkReleaseMeta.data && now - cachedApkReleaseMeta.fetchedAt < 20_000) {
     return cachedApkReleaseMeta.data;
   }
 
@@ -633,7 +633,8 @@ async function getCachedLatestApkRelease() {
 // App & APK Synchronization Info
 app.get('/api/app/sync-info', async (req, res) => {
   const now = new Date();
-  const latestRelease = await getCachedLatestApkRelease();
+  const forceRefresh = req.query.force === '1' || req.query.force === 'true';
+  const latestRelease = await getCachedLatestApkRelease(forceRefresh);
   const version = getCurrentPackageVersion();
   const updateCounter = getCurrentUpdateCounter();
   const revisionParts = [
@@ -920,7 +921,7 @@ app.post('/api/email/trigger-summary', verifyAdminAuth, async (req, res) => {
         'Android Play Store automated build workflow pipeline (AAB & APK) fixed with non-interactive Bubblewrap configuration',
       ],
       modified: [
-        'Updated twa-manifest.json to v1.6.2 (code 10602)',
+        'Unified platform release metadata to v1.0.0 across Web, PWA, and Android APK',
         'Updated version engine with comprehensive dual AD/BS release catalog',
       ],
       removed: [],
@@ -2897,7 +2898,7 @@ app.get('/api/live/kalimati', async (req, res) => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
       const upstream = await fetch('https://kalimatimarket.gov.np/price', {
-        headers: { 'User-Agent': 'Mozilla/5.0 SAARTHI-CivicTech/2.0.0' },
+        headers: { 'User-Agent': 'Mozilla/5.0 SAARTHI-CivicTech/1.0.0' },
         signal: controller.signal,
       });
       clearTimeout(timeout);
@@ -3485,7 +3486,7 @@ app.get('/api/live/sources/health', async (req, res) => {
       try {
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 2500);
-        const r = await fetch(t.url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'SAARTHI-HealthProbe/2.0.0' } });
+        const r = await fetch(t.url, { method: 'GET', signal: controller.signal, headers: { 'User-Agent': 'SAARTHI-HealthProbe/1.0.0' } });
         clearTimeout(timer);
         const elapsed = Date.now() - started;
         return {
@@ -3628,7 +3629,7 @@ app.post('/api/public-apis/proxy', proxyLimiter, async (req, res) => {
       method: upperMethod,
       redirect: 'error',
       headers: {
-        'User-Agent': 'SAARTHI-CivicTech-PublicApis/2.0.0',
+        'User-Agent': 'SAARTHI-CivicTech-PublicApis/1.0.0',
         'Accept': 'application/json, text/plain, */*',
         ...sanitizedHeaders,
       },

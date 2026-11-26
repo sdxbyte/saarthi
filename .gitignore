@@ -25,3 +25,4 @@ data_version_state.json
 data_email_history.json
 data_update_manifests.json
 public/assets/aistudio/
+.aistudio/

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import {
+  ArrowLeft,
   Compass,
   FolderLock,
+  Globe,
   Menu,
   Moon,
   Search,
@@ -21,6 +23,7 @@ import { SyncStatusBadge } from '../common/SyncStatusBadge';
 import { ThemeModeSelector } from '../common/ThemeModeSelector';
 import { isNativeAndroidShell } from '../../utils/apiClient';
 import { openAppSyncModal } from '../common/AppUpdateChecker';
+import { getTabScreenMeta, triggerHaptic } from '../../utils/appFeedback';
 
 interface EditorialHeaderProps {
   currentLang: 'en' | 'ne';
@@ -50,6 +53,11 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
   const { t } = useOptionalLanguage(currentLang);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
+  const isNativeApk = isNativeAndroidShell();
+  const isHomeTab = activeTab === 'home' || activeTab === 'dashboard';
+  const screenMeta = getTabScreenMeta(activeTab);
+  const screenTitle = currentLang === 'ne' ? screenMeta.titleNe : screenMeta.titleEn;
+
   const secondaryRoutes = [
     { id: 'tools', label: t.nav.tools, icon: Wrench },
     { id: 'vault', label: t.nav.vault, icon: FolderLock },
@@ -57,6 +65,7 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
   ];
 
   const handleSyncClick = () => {
+    triggerHaptic('light');
     if (conflicts.length > 0 && onOpenConflicts) {
       onOpenConflicts();
       return;
@@ -64,62 +73,104 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
     void triggerManualSync();
   };
 
+  const handleNativeBack = () => {
+    triggerHaptic('light');
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    setActiveTab(screenMeta.parentTab || 'home');
+  };
+
   return (
     <>
-      {/* Dual BS/AD Date Bar (flows smoothly at top on mobile to preserve <=15% sticky viewport budget) */}
-      <div className="w-full bg-[#0B1F3A] text-slate-200 px-4 sm:px-6 lg:px-8 py-1.5 text-[11px] font-mono flex items-center justify-between gap-3 border-b border-[#102A4C]">
-        <div className="flex items-center gap-2 overflow-hidden truncate">
-          <span className="font-semibold text-white whitespace-nowrap">
-            {currentLang === 'ne' ? timeState.bsFormattedNp : timeState.bsFormattedEn}
-          </span>
-          <span aria-hidden="true" className="text-slate-400 hidden sm:inline">
-            ·
-          </span>
-          <span className="text-slate-300 hidden sm:inline whitespace-nowrap">
-            {timeState.adDateFormatted} AD
-          </span>
-          <span aria-hidden="true" className="text-slate-400 hidden lg:inline">
-            ·
-          </span>
-          <span className="text-slate-300 hidden lg:inline whitespace-nowrap">
-            {t.header.kathmanduTz}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0">
-          <span className="tabular-nums text-white whitespace-nowrap">
-            {timeState.time12h}
-          </span>
-          <span aria-hidden="true" className="text-slate-500">
-            |
-          </span>
-          <button
-            type="button"
-            onClick={onToggleLang}
-            className="text-blue-200 hover:text-white transition-colors cursor-pointer text-[11px] font-semibold whitespace-nowrap shrink-0"
-            title="Switch Language"
-          >
-            {t.header.languageToggle}
-          </button>
-        </div>
-      </div>
-
-      {/* Streamlined Sticky Utility Bar (56px mobile, 64px desktop) */}
-      <header className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0B1628]/95 backdrop-blur-md pt-[env(safe-area-inset-top)]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-3">
-          {/* Mobile Brand Mark (Desktop brand lives in DesktopSidebar) */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('home')}
-            className="md:hidden flex items-center gap-2 cursor-pointer whitespace-nowrap shrink-0"
-          >
-            <span className="w-8 h-8 rounded-lg bg-[#0B1F3A] dark:bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
-              S
+      {/* Web Dual BS/AD Date Bar — Hidden inside Native Android APK so it feels like a genuine mobile app */}
+      {!isNativeApk && (
+        <div className="w-full bg-[#0B1F3A] text-slate-200 px-4 sm:px-6 lg:px-8 py-1.5 text-[11px] font-mono flex items-center justify-between gap-3 border-b border-[#102A4C]">
+          <div className="flex items-center gap-2 overflow-hidden truncate">
+            <span className="font-semibold text-white whitespace-nowrap">
+              {currentLang === 'ne' ? timeState.bsFormattedNp : timeState.bsFormattedEn}
             </span>
-            <span className="text-base font-bold tracking-tight text-[#0B1F3A] dark:text-white">
-              {t.brand}
+            <span aria-hidden="true" className="text-slate-400 hidden sm:inline">
+              ·
             </span>
-          </button>
+            <span className="text-slate-300 hidden sm:inline whitespace-nowrap">
+              {timeState.adDateFormatted} AD
+            </span>
+            <span aria-hidden="true" className="text-slate-400 hidden lg:inline">
+              ·
+            </span>
+            <span className="text-slate-300 hidden lg:inline whitespace-nowrap">
+              {t.header.kathmanduTz}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <span className="tabular-nums text-white whitespace-nowrap">
+              {timeState.time12h}
+            </span>
+            <span aria-hidden="true" className="text-slate-500">
+              |
+            </span>
+            <button
+              type="button"
+              onClick={onToggleLang}
+              className="text-blue-200 hover:text-white transition-colors cursor-pointer text-[11px] font-semibold whitespace-nowrap shrink-0"
+              title="Switch Language"
+            >
+              {t.header.languageToggle}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Streamlined Sticky Top AppBar */}
+      <header className="sticky top-0 z-30 w-full border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-[#0B1628]/95 backdrop-blur-md pt-[env(safe-area-inset-top)]">
+        <div className="max-w-6xl mx-auto px-3.5 sm:px-6 lg:px-8 h-14 md:h-16 flex items-center justify-between gap-2.5">
+          {/* Left: Native Back + Screen Title on APK sub-views, or App Mark on Home */}
+          {isNativeApk && !isHomeTab ? (
+            <div className="md:hidden flex items-center gap-2 min-w-0">
+              <button
+                type="button"
+                onClick={handleNativeBack}
+                className="min-h-[42px] min-w-[42px] rounded-xl text-[#0B1F3A] dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shrink-0"
+                aria-label="Back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div className="min-w-0">
+                <span className="block text-sm font-bold tracking-tight text-[#0B1F3A] dark:text-white truncate">
+                  {screenTitle}
+                </span>
+                <span className="block text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate tabular-nums">
+                  {currentLang === 'ne' ? timeState.bsFormattedNp : timeState.bsFormattedEn}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic('light');
+                setActiveTab('home');
+              }}
+              className="md:hidden flex items-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0 min-w-0"
+            >
+              <span className="w-8 h-8 rounded-xl bg-[#0B1F3A] dark:bg-blue-600 text-white text-xs font-bold flex items-center justify-center shadow-xs shrink-0">
+                S
+              </span>
+              <div className="text-left min-w-0">
+                <span className="block text-sm font-bold tracking-tight text-[#0B1F3A] dark:text-white leading-tight">
+                  {t.brand}
+                </span>
+                {isNativeApk && (
+                  <span className="block text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate leading-tight tabular-nums">
+                    {currentLang === 'ne' ? timeState.bsFormattedNp : timeState.bsFormattedEn}
+                  </span>
+                )}
+              </div>
+            </button>
+          )}
 
           {/* Desktop Global Search Input Trigger */}
           <button
@@ -149,8 +200,11 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
 
             <button
               type="button"
-              onClick={onOpenSearch}
-              className="md:hidden min-h-[40px] min-w-[40px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              onClick={() => {
+                triggerHaptic('light');
+                onOpenSearch();
+              }}
+              className="md:hidden min-h-[40px] min-w-[40px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shrink-0"
               aria-label="Open Global Search"
               title="Search (Cmd+K)"
             >
@@ -159,8 +213,11 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
 
             <button
               type="button"
-              onClick={toggleTheme}
-              className="md:hidden min-h-[40px] min-w-[40px] rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              onClick={() => {
+                triggerHaptic('light');
+                toggleTheme();
+              }}
+              className="md:hidden min-h-[40px] min-w-[40px] rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shrink-0"
               aria-label={resolvedTheme === 'dark' ? t.theme.switchToLight : t.theme.switchToDark}
             >
               {resolvedTheme === 'dark' ? (
@@ -170,24 +227,44 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
               )}
             </button>
 
-            <PWAInstallButton />
+            {!isNativeApk && <PWAInstallButton />}
+
+            {!isNativeApk && (
+              <button
+                type="button"
+                onClick={onOpenAuthModal}
+                className="min-h-[40px] flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-[#0B1F3A] hover:bg-[#102A4C] dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                title={userProfile?.isLoggedIn ? `Account (${userProfile.name})` : t.header.signIn}
+              >
+                <User className="w-3.5 h-3.5 shrink-0" />
+                <span className="hidden sm:inline">
+                  {userProfile?.isLoggedIn ? userProfile.name.split(' ')[0] : t.header.account}
+                </span>
+              </button>
+            )}
+
+            {isNativeApk && (
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic('light');
+                  onOpenAuthModal?.();
+                }}
+                className="hidden sm:flex min-h-[40px] items-center gap-1.5 px-3 rounded-xl text-xs font-semibold bg-[#0B1F3A] hover:bg-[#102A4C] dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                title={userProfile?.isLoggedIn ? `Account (${userProfile.name})` : t.header.signIn}
+              >
+                <User className="w-3.5 h-3.5 shrink-0" />
+                <span>{userProfile?.isLoggedIn ? userProfile.name.split(' ')[0] : t.header.account}</span>
+              </button>
+            )}
 
             <button
               type="button"
-              onClick={onOpenAuthModal}
-              className="min-h-[40px] flex items-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-[#0B1F3A] hover:bg-[#102A4C] dark:bg-blue-600 dark:hover:bg-blue-500 text-white transition-colors cursor-pointer whitespace-nowrap shrink-0"
-              title={userProfile?.isLoggedIn ? `Account (${userProfile.name})` : t.header.signIn}
-            >
-              <User className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">
-                {userProfile?.isLoggedIn ? userProfile.name.split(' ')[0] : t.header.account}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMobileDrawerOpen((prev) => !prev)}
-              className="md:hidden min-h-[40px] min-w-[40px] rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              onClick={() => {
+                triggerHaptic('light');
+                setMobileDrawerOpen((prev) => !prev);
+              }}
+              className="md:hidden min-h-[40px] min-w-[40px] rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center transition-transform active:scale-95 cursor-pointer shrink-0"
               aria-label="Open utilities and appearance drawer"
             >
               {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -195,7 +272,7 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
           </div>
         </div>
 
-        {/* Mobile Secondary Utilities & Appearance Drawer (Complements MobileBottomNav) */}
+        {/* Mobile Quick Sheet Drawer */}
         {mobileDrawerOpen && (
           <div className="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1628] px-4 py-4 space-y-4 max-h-[calc(100dvh-7.5rem)] overflow-y-auto">
             <div className="space-y-1.5">
@@ -211,6 +288,7 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
                       key={route.id}
                       type="button"
                       onClick={() => {
+                        triggerHaptic('light');
                         setActiveTab(route.id);
                         setMobileDrawerOpen(false);
                       }}
@@ -228,13 +306,31 @@ export const EditorialHeader: React.FC<EditorialHeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    triggerHaptic('light');
+                    onToggleLang();
+                    setMobileDrawerOpen(false);
+                  }}
+                  className="min-h-[44px] px-3 rounded-xl flex items-center justify-between gap-3 text-sm text-left text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  <span className="flex items-center gap-3">
+                    <Globe className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>{currentLang === 'en' ? 'Switch to नेपाली' : 'Switch to English'}</span>
+                  </span>
+                  <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                    {t.header.languageToggle}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic('light');
                     setMobileDrawerOpen(false);
                     openAppSyncModal();
                   }}
                   className="min-h-[44px] px-3 rounded-xl flex items-center gap-3 text-sm text-left text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 border border-blue-200 dark:border-blue-900 cursor-pointer"
                 >
                   <Smartphone className="w-4 h-4 shrink-0" />
-                  <span>{isNativeAndroidShell() ? t.footer.apkSelfUpdate : t.footer.apkUpdate}</span>
+                  <span>{isNativeApk ? t.footer.apkSelfUpdate : t.footer.apkUpdate}</span>
                 </button>
               </div>
             </div>

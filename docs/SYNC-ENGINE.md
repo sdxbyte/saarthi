@@ -1,4 +1,4 @@
-# SAARTHI Online / Offline Sync Engine (`v1.9.1`)
+# SAARTHI Online / Offline Sync Engine (`v1.0.0`)
 
 Implemented in `/src/services/offlineDb.ts`, `/src/services/syncEngine.ts`, and `/src/context/SyncAuthContext.tsx`.
 

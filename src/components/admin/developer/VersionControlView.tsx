@@ -16,6 +16,7 @@ import {
   FileCode,
   X
 } from 'lucide-react';
+import { CURRENT_VERSION_INFO, RELEASE_HISTORY_CATALOG } from '../../../utils/versionEngine';
 
 interface VersionControlViewProps {
   onAddAuditLog: (
@@ -43,13 +44,13 @@ export const VersionControlView: React.FC<VersionControlViewProps> = ({ onAddAud
   const [showChangelogModal, setShowChangelogModal] = useState<boolean>(false);
   const [changelogText, setChangelogText] = useState<string>('');
 
-  const [selectedRollbackVer, setSelectedRollbackVer] = useState<string>('v1.3.0');
+  const [selectedRollbackVer, setSelectedRollbackVer] = useState<string>(CURRENT_VERSION_INFO.version);
 
   // New release form state
-  const [newVersion, setNewVersion] = useState<string>('v1.5.0');
-  const [newTitle, setNewTitle] = useState<string>('SAARTHI Enterprise Release & Platform Update Summary');
+  const [newVersion, setNewVersion] = useState<string>(CURRENT_VERSION_INFO.version);
+  const [newTitle, setNewTitle] = useState<string>('SAARTHI v1.0.0 Unified Web, PWA & Android APK Release');
   const [newChangelog, setNewChangelog] = useState<string>(
-    'Added Pre-Sync Platform Security & Build Diagnostic Scanner\nAdded Automatic Version Tracking & Changelog Writer\nEnhanced GitHub Commit Messages with Detailed Update Summaries'
+    'Native Android App Experience & Background Pre-Downloaded APK Updater\nUnified Firebase Auth + Cloud Firestore & Offline IndexedDB Sync\nAuthentic Rule 16 NRB Forex, NEPSE, Gold & Fuel Live Streams'
   );
   const [isBreaking, setIsBreaking] = useState<boolean>(false);
 
@@ -90,7 +91,7 @@ export const VersionControlView: React.FC<VersionControlViewProps> = ({ onAddAud
         const histData = await histRes.json();
         if (histData.history && Array.isArray(histData.history) && histData.history.length > 0) {
           const loadedReleases: VersionRelease[] = histData.history.map((rec: any, idx: number) => ({
-            version: rec.version || 'v1.4.7',
+            version: rec.version || CURRENT_VERSION_INFO.version,
             title: rec.title || 'SAARTHI Release',
             date: formatWithSeconds(rec.timestamp || rec.date),
             status: idx === 0 ? 'CURRENT' : 'STABLE',
@@ -110,128 +111,17 @@ export const VersionControlView: React.FC<VersionControlViewProps> = ({ onAddAud
     }
   };
 
-  const [releases, setReleases] = useState<VersionRelease[]>([
-    {
-      version: 'v1.4.6',
-      title: 'GitHub Real-Time Sync & Repository Reconfiguration to @sdxbyte/saarthi',
-      date: formatWithSeconds(),
-      status: 'CURRENT',
-      changelog: [
-        'Updated default GitHub platform repository integration to https://github.com/sdxbyte/saarthi for automated real-time background code syncing.',
-        'Synchronized GitHub username handle across developer command center, credentials manager, and automated release backup APIs.',
-        'Reinforced permanent authentic financial and capital market data system rules for NRB exchange rates, NEPSE market feeds, and unedited prospectus documents.',
-      ],
+  const [releases, setReleases] = useState<VersionRelease[]>(() =>
+    RELEASE_HISTORY_CATALOG.map((item, idx) => ({
+      version: item.version,
+      title: item.title,
+      date: formatWithSeconds(item.releaseDateAd),
+      status: idx === 0 ? 'CURRENT' : 'STABLE',
+      changelog: [...item.whatsNew, ...item.improvements, ...item.bugFixes],
       breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.4.5',
-      title: 'Cross-Device Logo Compatibility & Prominent Big Footer Logo Redesign',
-      date: formatWithSeconds('2026-08-06T18:02:00-07:00'),
-      status: 'STABLE',
-      changelog: [
-        'Added multi-stage fail-safe image fallbacks for SAARTHI logo (PNG -> JPG -> Logo -> Vector SVG Emblem) ensuring 100% visibility on all mobile phones, tablets, desktops, and webviews.',
-        'Redesigned Public Footer featuring a prominent BIG logo on the left side, accompanied by platform details, security badges, and fully responsive link columns.',
-        'Validated zero-break responsive compatibility across all display sizes (320px to 4K).',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.4.3',
-      title: 'Vercel Deployment White Screen Fix & Build Chunk Optimization',
-      date: formatWithSeconds('2026-08-06T11:45:00-07:00'),
-      status: 'STABLE',
-      changelog: [
-        'Resolved Vercel blank white screen by removing circular vendor chunk dependencies in Vite Rollup manualChunks configuration.',
-        'Wrapped root React rendering hierarchy with global ErrorBoundary for fault-tolerant UI recovery.',
-        'Bumped platform version to v1.4.3 and triggered automated GitHub & Vercel deployment sync.',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.4.2',
-      title: 'Permanent Version Synchronization & Public Footer Integration',
-      date: formatWithSeconds('2026-08-06T11:25:00-07:00'),
-      status: 'STABLE',
-      changelog: [
-        'Enforced automatic version tracking and prominent Footer Version Badge display across the SAARTHI platform.',
-        'Synchronized versioning across package.json (v1.4.2), versionEngine, and administrative release logs.',
-        'Integrated internal release notes management within admin center.',
-        'Maintained complete release history with dual AD/BS date formatting.',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.4.1',
-      title: 'Saarthi Developer Command Center & Enterprise Release Engine',
-      date: formatWithSeconds('2026-08-06T11:00:00-07:00'),
-      status: 'STABLE',
-      changelog: [
-        'Added Pre-Sync Security & Build Diagnostic Scanner before GitHub push.',
-        'Implemented automatic version tracking (v1.4.1) and auto-increment engine.',
-        'Integrated automated change summaries for Added, Updated, Fixed, and Technical changes.',
-        'Maintained complete release history and automatic /docs/CHANGELOG.md generation.',
-        'Enhanced release package compilation and verification.',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.4.0',
-      title: 'Saarthi Developer Command Center & Live Timezone Clock',
-      date: formatWithSeconds('2026-08-01T02:00:00-07:00'),
-      status: 'STABLE',
-      changelog: [
-        'Added Saarthi Developer Command Center for Super Admin.',
-        'Implemented Live BS/AD Date & Kathmandu Timezone clock bar in header.',
-        'Restricted platform administration strictly to platform owner.',
-        'Added automated GitHub backup manager with release tags.',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.3.0',
-      title: 'Isolated Admin Portal & IRD Income Tax Slabs FY 2083/84',
-      date: formatWithSeconds('2026-07-25T10:15:30-07:00'),
-      status: 'STABLE',
-      changelog: [
-        'Created isolated SAARTHI Private Admin Portal with RBAC user management.',
-        'Updated IRD Income Tax Slabs for unmarried vs married taxpayers in Nepal.',
-        'Added Bluebook vehicle tax calculator for Bagmati & Gandaki provinces.',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.2.0',
-      title: 'NEPSE Live Market Index & MeroShare Suite',
-      date: formatWithSeconds('2026-07-10T14:22:15-07:00'),
-      status: 'ARCHIVED',
-      changelog: [
-        'Integrated NEPSE live market index ticker and top gainers/losers.',
-        'Added MeroShare IPO application status checker.',
-        'Integrated Nepal Rastra Bank forex exchange rates.',
-      ],
-      breakingChanges: false,
-      author: 'SAARTHI Core Team',
-    },
-    {
-      version: 'v1.0.0',
-      title: 'Initial SAARTHI Platform Launch',
-      date: formatWithSeconds('2026-06-01T09:00:00-07:00'),
-      status: 'ARCHIVED',
-      changelog: [
-        'Launched core civic modules in English and Nepali.',
-        'Document Vault, Tax Calculator, Notice Analysis Engine.',
-      ],
-      breakingChanges: true,
-      author: 'SAARTHI Core Team',
-    },
-  ]);
+      author: item.author,
+    }))
+  );
 
   useEffect(() => {
     fetchChangelog();
@@ -285,7 +175,7 @@ export const VersionControlView: React.FC<VersionControlViewProps> = ({ onAddAud
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">
-              ACTIVE VERSION: v1.4.6
+              ACTIVE VERSION: {CURRENT_VERSION_INFO.version}
             </span>
             <span className="text-xs text-slate-400 font-mono">Status: <strong>Enterprise Live</strong></span>
           </div>
@@ -522,7 +412,7 @@ export const VersionControlView: React.FC<VersionControlViewProps> = ({ onAddAud
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 space-y-2">
-              <div className="font-bold text-amber-400">Comparing v1.4.1 (Current) vs v1.4.0 (Stable)</div>
+              <div className="font-bold text-amber-400">Baseline Version: {CURRENT_VERSION_INFO.version} (Build #{CURRENT_VERSION_INFO.buildNumber})</div>
               <ul className="space-y-1 list-disc pl-4 text-emerald-300 text-[11px]">
                 <li>+ Enterprise Software Release Management System</li>
                 <li>+ Automatic Version Tracking & Increments</li>

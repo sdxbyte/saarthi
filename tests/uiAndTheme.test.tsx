@@ -294,4 +294,125 @@ describe('SAARTHI UI, Design System, Zero-Mock & Offline Vault Tests', () => {
     expect(screen.getAllByText(/Nabil Bank/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('09810017569896')).toBeInTheDocument();
   });
+
+  it('renders native App-First Home Launcher when inside Android APK shell instead of web marketing hero', async () => {
+    const apiClient = await import('../src/utils/apiClient');
+    const spy = vi.spyOn(apiClient, 'isNativeAndroidShell').mockReturnValue(true);
+
+    try {
+      render(
+        <GlobalTimeProvider>
+          <SyncAuthProvider>
+            <EditorialHomeView currentLang="en" onNavigateTab={vi.fn()} onOpenSearch={vi.fn()} />
+          </SyncAuthProvider>
+        </GlobalTimeProvider>
+      );
+
+      expect(screen.getByText('Quick App Services')).toBeInTheDocument();
+      expect(screen.getByText('Offline Vault & Reminders')).toBeInTheDocument();
+      expect(
+        screen.queryByText(/One unified account across Website, PWA, and Android APK/i)
+      ).not.toBeInTheDocument();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('shows ready-to-install 1-tap prompt and launches cached installer without re-downloading when APK is pre-downloaded', async () => {
+    const { AppUpdateChecker } = await import('../src/components/common/AppUpdateChecker');
+    const { liveSyncEngine } = await import('../src/utils/liveSyncEngine');
+
+    const installDownloadedApk = vi.fn().mockResolvedValue({
+      started: true,
+      needsPermission: false,
+      signatureMatches: true,
+    });
+    const downloadAndInstallApk = vi.fn();
+
+    const availSpy = vi.spyOn(liveSyncEngine, 'isNativeUpdaterAvailable').mockReturnValue(true);
+    const pluginSpy = vi.spyOn(liveSyncEngine, 'getNativeUpdaterPlugin').mockReturnValue({
+      getAppBuildInfo: vi.fn().mockResolvedValue({ versionCode: 10030 }),
+      getPendingUpdateStatus: vi.fn().mockResolvedValue({
+        hasDownloadedApk: true,
+        isNewerThanInstalled: true,
+        signatureMatches: true,
+        canInstallPackages: true,
+        versionCode: 10035,
+        buildNumber: 35,
+        fileSize: 6_250_000,
+      }),
+      clearCachedUpdate: vi.fn().mockResolvedValue({ cleared: true }),
+      requestInstallPermission: vi.fn().mockResolvedValue({ opened: true }),
+      installDownloadedApk,
+      setSystemBarsTheme: vi.fn().mockResolvedValue({ updated: true }),
+      downloadAndInstallApk,
+      addListener: vi.fn().mockResolvedValue({ remove: vi.fn() }),
+    });
+    const mockSnap = {
+      isNativeApk: true,
+      apiBaseUrl: 'https://saarthi.dpdns.org',
+      connected: true,
+      latencyMs: 25,
+      serverTimeIso: '2026-11-26T08:00:00.000Z',
+      adDate: '2026-11-26',
+      bsDate: '2083-08-10',
+      dataRevision: 'v1.0.0-35',
+      installedVersion: '1.0.0',
+      installedBuildNumber: 30,
+      installedCommitShort: '74bf43b',
+      latestRelease: {
+        buildNumber: 35,
+        commitSha: 'abc1234',
+        tagName: 'v1.0.0-android',
+        releaseName: 'SAARTHI v1.0.0',
+        publishedAt: '2026-11-26T08:00:00.000Z',
+        apkDownloadUrl: 'https://github.com/sdxbyte/saarthi/releases/latest/download/saarthi-latest.apk',
+        apkSizeBytes: 6_250_000,
+        releaseNotes: '',
+      },
+      pendingApkUpdate: {
+        hasDownloadedApk: true,
+        isNewerThanInstalled: true,
+        signatureMatches: true,
+        canInstallPackages: true,
+        versionCode: 10035,
+        buildNumber: 35,
+        fileSize: 6_250_000,
+      },
+      updateAvailable: true,
+      autoUpdateEnabled: true,
+      lastCheckedAt: '2026-11-26T08:00:00.000Z',
+      checking: false,
+      error: null,
+    };
+
+    const startSpy = vi.spyOn(liveSyncEngine, 'start').mockImplementation(() => {});
+    const refreshSpy = vi
+      .spyOn(liveSyncEngine, 'refreshPendingStatus')
+      .mockResolvedValue(mockSnap.pendingApkUpdate);
+    const subSpy = vi.spyOn(liveSyncEngine, 'subscribe').mockImplementation((cb) => {
+      cb(mockSnap);
+      return () => {};
+    });
+    const snapSpy = vi.spyOn(liveSyncEngine, 'getSnapshot').mockReturnValue(mockSnap);
+
+    try {
+      render(<AppUpdateChecker />);
+      expect(screen.getByText(/SAARTHI Update Downloaded & Ready/i)).toBeInTheDocument();
+      const installBtn = screen.getByRole('button', { name: /Install Downloaded Update/i });
+      fireEvent.click(installBtn);
+
+      await waitFor(() => {
+        expect(installDownloadedApk).toHaveBeenCalledTimes(1);
+      });
+      expect(downloadAndInstallApk).not.toHaveBeenCalled();
+    } finally {
+      availSpy.mockRestore();
+      pluginSpy.mockRestore();
+      startSpy.mockRestore();
+      refreshSpy.mockRestore();
+      subSpy.mockRestore();
+      snapSpy.mockRestore();
+    }
+  });
 });

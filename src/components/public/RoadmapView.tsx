@@ -48,7 +48,7 @@ export const RoadmapView: React.FC<RoadmapViewProps> = ({ currentLang, theme = '
       ],
     },
     {
-      phase: 'Phase 4 (v2.0.0)',
+      phase: 'Phase 4 (v1.0.0)',
       title: 'Unified Account, Cross-Device Offline Sync & Android APK',
       status: 'Active',
       period: 'Q4 2026 - 2027',

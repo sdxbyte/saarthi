@@ -115,7 +115,7 @@ export const DeveloperCommandCenter: React.FC<DeveloperCommandCenterProps> = ({ 
       action: 'GitHub Repository Push',
       category: 'GITHUB',
       severity: 'INFO',
-      details: 'Pushed v1.4.1-STABLE tag to private GitHub repository.',
+      details: `Pushed ${CURRENT_VERSION_INFO.version} release tag to GitHub repository.`,
       ipAddress: '103.10.28.14 (Kathmandu, NP)',
     },
   ]);
